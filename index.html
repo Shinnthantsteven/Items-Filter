@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Pro Inventory Manager</title>
+    <title>Chef2Chef | Master Portal</title>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
@@ -11,265 +14,185 @@
         :root {
             --brand-primary: #10b981;
             --brand-dark: #0f172a;
-            --brand-slate: #334155;
-            --brand-bg: #f1f5f9;
-            --accent-red: #ef4444;
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #334155;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
         }
 
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--brand-bg); margin: 0; padding: 15px; color: var(--brand-dark);
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --bg-page: #020617;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --brand-dark: #000000;
         }
 
-        .app-container { 
-            max-width: 1800px; margin: auto; background: white; 
-            border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            overflow: hidden; display: flex; flex-direction: column; height: 95vh;
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-page); color: var(--text-main); margin: 0; transition: 0.3s; }
+
+        /* Login Screen stays dark and professional */
+        #loginOverlay {
+            position: fixed; inset: 0; background: #0f172a;
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
+        .login-card { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; }
+        .login-card h2 { color: #0f172a; margin: 0; font-weight: 800; }
+        .login-card input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; text-align: center; }
+        
+        /* Main App Interface */
+        #mainApp { display: none; height: 100vh; padding: 15px; box-sizing: border-box; }
+        .app-container { max-width: 1800px; margin: auto; background: var(--bg-card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
+        
+        .header { background: var(--brand-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .dashboard { display: grid; grid-template-columns: 280px 1fr auto; gap: 20px; padding: 20px 30px; border-bottom: 1px solid var(--border); align-items: flex-end; }
+        
+        /* Controls */
+        input[type="text"], input[type="file"] { background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; }
+        
+        /* Dark Mode Toggle Button */
+        .theme-btn { background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; margin-right: 10px; }
 
-        /* Header Area */
-        .header {
-            background: var(--brand-dark); color: white;
-            padding: 15px 30px; display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .logo h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -1px; }
-        .logo span { color: var(--brand-primary); }
-
-        /* Controls Panel */
-        .dashboard {
-            display: grid; grid-template-columns: 280px 1fr auto; gap: 20px;
-            padding: 20px 30px; background: #fff; border-bottom: 1px solid #e2e8f0;
-            align-items: flex-end;
-        }
-
-        .group { display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .group label { font-weight: 800; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-
-        input {
-            padding: 12px 15px; border: 2px solid #f1f5f9; border-radius: 10px;
-            font-size: 14px; background: #f8fafc; outline: none; transition: 0.2s;
-        }
-        input:focus { border-color: var(--brand-primary); background: #fff; }
-
-        .step-badge {
-            position: absolute; right: 12px; bottom: 10px;
-            background: var(--brand-primary); color: white;
-            font-size: 10px; font-weight: 800; padding: 4px 8px;
-            border-radius: 6px; display: none; pointer-events: none;
-        }
-
-        #resetBtn {
-            background: var(--accent-red); color: white; border: none; padding: 0 25px;
-            height: 45px; border-radius: 10px; font-weight: 800; cursor: pointer;
-        }
-
-        /* Table Mapping */
+        /* Table */
         .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1500px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1500px; }
+        th { background: var(--bg-card); color: var(--text-muted); padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; font-weight: 800; border-bottom: 2px solid var(--border); }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
+        tr:hover td { background: rgba(16, 185, 129, 0.1); }
         
-        th { 
-            background: white; padding: 15px 10px; text-align: left; position: sticky; top: 0;
-            font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;
-            border-bottom: 2px solid #f1f5f9; z-index: 10;
-        }
-
-        td { 
-            padding: 12px 10px; border-bottom: 1px solid #f1f5f9; 
-            font-size: 13px; color: var(--brand-slate); 
-            cursor: pointer; transition: 0.1s;
-        }
-        tr:hover td { background: #f0fdf4; }
-
-        /* Status Colors */
-        .price-val { font-weight: 800; color: var(--brand-primary); }
-        .pack-val { font-weight: 600; color: #6366f1; }
-        .supplier-val { color: #8b5cf6; font-size: 12px; }
-        
-        .tag { font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; margin-right: 4px; }
-        .tag-brand { background: #eff6ff; color: #1e40af; }
-        .tag-origin { background: #f0fdf4; color: #166534; }
-
-        mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 3px; }
-        
-        .footer { padding: 10px 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; }
+        mark { background: #fef08a; color: #854d0e; }
+        .footer { padding: 10px 30px; background: var(--bg-page); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="header">
-        <div class="logo"><h1>CHEF2CHEF <span>MASTER</span></h1></div>
-        <div id="status" style="font-size: 11px; opacity: 0.7;">NO FILE LOADED</div>
+<div id="loginOverlay">
+    <div class="login-card">
+        <h2>CHEF2CHEF</h2>
+        <p style="color: #64748b;">Team Authorization Required</p>
+        <input type="text" id="userInput" placeholder="User Name">
+        <input type="password" id="passInput" placeholder="Password">
+        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">ACCESS SYSTEM</button>
+        <div id="errMsg" style="color: #ef4444; font-size: 12px; margin-top: 15px; display: none;">Invalid Access</div>
     </div>
+</div>
 
-    <div class="dashboard">
-        <div class="group">
-            <label>1. Import Inventory</label>
-            <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
+<div id="mainApp">
+    <div class="app-container">
+        <div class="header">
+            <div><h1>CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
+            <div style="display: flex; align-items: center;">
+                <button class="theme-btn" onclick="toggleTheme()">🌓 DARK MODE</button>
+                <div id="userBadge" style="font-size: 12px; font-weight: 800; border: 1px solid var(--brand-primary); padding: 5px 12px; border-radius: 20px;">USER: -</div>
+            </div>
         </div>
-        
-        <div class="group">
-            <label>2. Smart Search (Space to Narrow Down)</label>
-            <input type="text" id="searchIn" placeholder="e.g. 'Pepper Kenya' or 'Pastry Frozen'">
-            <div id="level" class="step-badge">0</div>
+
+        <div class="dashboard">
+            <div>
+                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">IMPORT DATA</label>
+                <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
+            </div>
+            <div>
+                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">SEARCH FILTERS</label>
+                <input type="text" id="searchIn" placeholder="Start typing to filter...">
+            </div>
+            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:10px; font-weight:800; cursor:pointer;">LOGOUT</button>
         </div>
 
-        <button id="resetBtn">CLEAR</button>
-    </div>
-
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Item ID</th>
-                    <th style="width: 250px;">Description</th>
-                    <th>Cost</th>
-                    <th>U/M</th>
-                    <th>Packing</th>
-                    <th>Supplier</th>
-                    <th>Brand/Origin</th>
-                    <th>Category</th>
-                    <th>State</th>
-                    <th>Manu. Part</th>
-                </tr>
-            </thead>
-            <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:100px; color:#94a3b8;">Upload your inventory to start. (Double-click any cell to copy)</td></tr>
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="footer">
-        <span id="count">Items: 0</span>
-        <span id="detailView" style="color: var(--brand-primary)">Select a cell to view full details...</span>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Item ID</th><th style="width: 300px;">Description</th><th>Cost</th><th>U/M</th><th>Packing</th><th>Supplier</th><th>Brand/Origin</th><th>Category</th><th>State</th><th>Part No.</th></tr>
+                </thead>
+                <tbody id="list"></tbody>
+            </table>
+        </div>
+        <div class="footer">
+            <span id="count">System Ready</span>
+            <span>Double-click to copy data</span>
+        </div>
     </div>
 </div>
 
 <script>
+    const TEAM_PASSWORD = "***REMOVED-PASSWORD***"; 
+    const ALLOWED_USERS = ["STEVE", "FATIMA", "ASWAN", "JOBY"];
+
+    function checkPass() {
+        const user = document.getElementById('userInput').value.trim().toUpperCase();
+        const pass = document.getElementById('passInput').value;
+        if(ALLOWED_USERS.includes(user) && pass === TEAM_PASSWORD) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('userBadge').innerText = `USER: ${user}`;
+        } else {
+            document.getElementById('errMsg').style.display = 'block';
+        }
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+    }
+
+    // Reuse your existing logic for Excel processing and searching
     let db = [];
-    const searchIn = document.getElementById('searchIn');
-    const level = document.getElementById('level');
-    const list = document.getElementById('list');
-    const detailView = document.getElementById('detailView');
-
-    // 1. Precise Mapping based on your provided format
     document.getElementById('fileIn').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (evt) => {
             const data = new Uint8Array(evt.target.result);
             const wb = XLSX.read(data, { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-
-            db = json.map(row => ({
+            db = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }).map(row => ({
                 id: String(row['Item'] || "").trim(),
                 desc: String(row['Description'] || "").trim(),
-                // Preference: Remove 'aed' from Cost
                 cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
                 um: String(row['U/M'] || "").trim(),
                 supplier: String(row['Preferred Supplier'] || "").trim(),
-                packing: String(row['Case Packing'] || row['Case Pack'] || row['Packing'] || "").trim(),
+                packing: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
                 cat: String(row['Cat 2'] || "").trim(),
                 state: String(row['State'] || "").trim(),
                 brand: String(row['Brand'] || "").trim(),
                 origin: String(row['Origin'] || "").trim(),
-                part: String(row['Manu. Part No.'] || row['Manu. Part'] || "").trim()
+                part: String(row['Manu. Part No.'] || "").trim()
             }));
-
-            document.getElementById('status').innerText = "SYSTEM ACTIVE";
-            document.getElementById('count').innerText = `Total Items: ${db.length}`;
             render(db);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(e.target.files[0]);
     });
 
-    // 2. Narrowing Search Logic
-    searchIn.addEventListener('input', () => {
-        const val = searchIn.value.trim();
-        if (!val) {
-            level.style.display = 'none';
-            render(db);
-            return;
-        }
-
-        const words = val.toLowerCase().split(/\s+/);
-        if (words.length > 1) {
-            level.innerText = `LVL ${words.length}`;
-            level.style.display = 'flex';
-        } else {
-            level.style.display = 'none';
-        }
-
+    document.getElementById('searchIn').addEventListener('input', (e) => {
+        const words = e.target.value.toLowerCase().split(/\s+/);
         const filtered = db.filter(row => {
-            const rowStr = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier} ${row.cat} ${row.state} ${row.part}`.toLowerCase();
+            const rowStr = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier}`.toLowerCase();
             return words.every(w => rowStr.includes(w));
         });
-
         render(filtered, words);
     });
 
     function render(data, terms = []) {
-        list.innerHTML = "";
-        data.slice(0, 300).forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td data-copy="${row.id}">${highlight(row.id, terms)}</td>
-                <td data-copy="${row.desc}"><strong>${highlight(row.desc, terms)}</strong></td>
-                <td data-copy="${row.cost}" class="price-val">${row.cost}</td>
-                <td data-copy="${row.um}">${row.um}</td>
-                <td data-copy="${row.packing}" class="pack-val">${highlight(row.packing, terms)}</td>
-                <td data-copy="${row.supplier}" class="supplier-val">${highlight(row.supplier, terms)}</td>
-                <td>
-                    <span class="tag tag-brand" data-copy="${row.brand}">${highlight(row.brand, terms)}</span>
-                    <span class="tag tag-origin" data-copy="${row.origin}">${highlight(row.origin, terms)}</span>
-                </td>
-                <td>${row.cat}</td>
-                <td>${row.state}</td>
-                <td data-copy="${row.part}">${highlight(row.part, terms)}</td>
-            `;
-
-            // Single click to view details
-            tr.addEventListener('click', (e) => {
-                const text = e.target.innerText;
-                detailView.innerText = `Full Content: ${text}`;
-            });
-
-            // Double click to copy any cell
-            tr.addEventListener('dblclick', (e) => {
-                const val = e.target.getAttribute('data-copy') || e.target.closest('[data-copy]')?.getAttribute('data-copy');
-                if (val) {
-                    navigator.clipboard.writeText(val);
-                    const cell = e.target.closest('td');
-                    cell.style.background = "#bbf7d0";
-                    setTimeout(() => cell.style.background = "", 400);
-                }
-            });
-
-            list.appendChild(tr);
-        });
+        const list = document.getElementById('list');
+        list.innerHTML = data.slice(0, 400).map(row => `
+            <tr>
+                <td data-copy="${row.id}">${row.id}</td>
+                <td data-copy="${row.desc}"><strong>${row.desc}</strong></td>
+                <td style="color:var(--brand-primary); font-weight:800;">${row.cost}</td>
+                <td>${row.um}</td>
+                <td style="color:#6366f1;">${row.packing}</td>
+                <td>${row.supplier}</td>
+                <td>${row.brand} / ${row.origin}</td>
+                <td>${row.cat}</td><td>${row.state}</td><td>${row.part}</td>
+            </tr>
+        `).join('');
+        document.getElementById('count').innerText = `${data.length} Items Found`;
     }
 
-    function highlight(text, words) {
-        if (!text || !words.length) return text;
-        let html = text;
-        words.forEach(w => {
-            if (w.length > 1) {
-                const regex = new RegExp(`(${w})`, 'gi');
-                html = html.replace(regex, '<mark>$1</mark>');
-            }
-        });
-        return html;
-    }
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        searchIn.value = "";
-        level.style.display = 'none';
-        render(db);
+    document.addEventListener('dblclick', (e) => {
+        const val = e.target.getAttribute('data-copy');
+        if (val) navigator.clipboard.writeText(val);
     });
 </script>
-
 </body>
 </html>
