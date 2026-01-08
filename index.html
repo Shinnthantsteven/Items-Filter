@@ -21,7 +21,6 @@
             --border: #e2e8f0;
         }
 
-        /* Dark Mode Variables */
         [data-theme="dark"] {
             --bg-page: #020617;
             --bg-card: #1e293b;
@@ -33,48 +32,45 @@
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-page); color: var(--text-main); margin: 0; transition: 0.3s; }
 
-        /* Login Screen stays dark and professional */
         #loginOverlay {
             position: fixed; inset: 0; background: #0f172a;
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
         .login-card { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; }
         .login-card h2 { color: #0f172a; margin: 0; font-weight: 800; }
-        .login-card input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; text-align: center; }
+        .login-card input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; text-align: center; font-family: inherit; }
         
-        /* Main App Interface */
         #mainApp { display: none; height: 100vh; padding: 15px; box-sizing: border-box; }
         .app-container { max-width: 1800px; margin: auto; background: var(--bg-card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
         
         .header { background: var(--brand-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .dashboard { display: grid; grid-template-columns: 280px 1fr auto; gap: 20px; padding: 20px 30px; border-bottom: 1px solid var(--border); align-items: flex-end; }
         
-        /* Controls */
-        input[type="text"], input[type="file"] { background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; }
+        input[type="text"], input[type="file"] { background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; font-family: inherit; }
         
-        /* Dark Mode Toggle Button */
-        .theme-btn { background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; margin-right: 10px; }
+        .theme-btn { background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; margin-right: 10px; font-family: inherit; }
 
-        /* Table */
         .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
         table { width: 100%; border-collapse: collapse; min-width: 1500px; }
-        th { background: var(--bg-card); color: var(--text-muted); padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; font-weight: 800; border-bottom: 2px solid var(--border); }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
+        th { background: var(--bg-card); color: var(--text-muted); padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; font-weight: 800; border-bottom: 2px solid var(--border); z-index: 10; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; transition: background 0.2s; }
         tr:hover td { background: rgba(16, 185, 129, 0.1); }
         
-        mark { background: #fef08a; color: #854d0e; }
+        mark { background: #fef08a; color: #854d0e; border-radius: 2px; padding: 0 2px; }
         .footer { padding: 10px 30px; background: var(--bg-page); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; }
+        
+        .copy-flash { background: #bbf7d0 !important; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-card">
-        <h2>CHEF2CHEF</h2>
-        <p style="color: #64748b;">Team Authorization Required</p>
+        <h2 style="letter-spacing:-1px">CHEF2CHEF</h2>
+        <p style="color: #64748b; font-size: 14px;">Team Authorization Required</p>
         <input type="text" id="userInput" placeholder="User Name">
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">ACCESS SYSTEM</button>
+        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer; font-family:inherit;">ACCESS SYSTEM</button>
         <div id="errMsg" style="color: #ef4444; font-size: 12px; margin-top: 15px; display: none;">Invalid Access</div>
     </div>
 </div>
@@ -82,10 +78,10 @@
 <div id="mainApp">
     <div class="app-container">
         <div class="header">
-            <div><h1>CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
+            <div><h1 style="margin:0; font-size:20px;">CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
             <div style="display: flex; align-items: center;">
-                <button class="theme-btn" onclick="toggleTheme()">🌓 DARK MODE</button>
-                <div id="userBadge" style="font-size: 12px; font-weight: 800; border: 1px solid var(--brand-primary); padding: 5px 12px; border-radius: 20px;">USER: -</div>
+                <button class="theme-btn" onclick="toggleTheme()">🌓 THEME</button>
+                <div id="userBadge" style="font-size: 11px; font-weight: 800; border: 1px solid var(--brand-primary); padding: 5px 12px; border-radius: 20px; color: var(--brand-primary)">USER: -</div>
             </div>
         </div>
 
@@ -95,10 +91,10 @@
                 <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
             </div>
             <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">SEARCH FILTERS</label>
+                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">SMART SEARCH</label>
                 <input type="text" id="searchIn" placeholder="Start typing to filter...">
             </div>
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:10px; font-weight:800; cursor:pointer;">LOGOUT</button>
+            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:10px; font-weight:800; cursor:pointer; font-family:inherit;">LOGOUT</button>
         </div>
 
         <div class="table-wrap">
@@ -111,7 +107,7 @@
         </div>
         <div class="footer">
             <span id="count">System Ready</span>
-            <span>Double-click to copy data</span>
+            <span>Double-click any cell to copy data</span>
         </div>
     </div>
 </div>
@@ -138,7 +134,6 @@
         document.documentElement.setAttribute('data-theme', next);
     }
 
-    // Reuse your existing logic for Excel processing and searching
     let db = [];
     document.getElementById('fileIn').addEventListener('change', (e) => {
         const reader = new FileReader();
@@ -164,24 +159,34 @@
     });
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
-        const words = e.target.value.toLowerCase().split(/\s+/);
+        const words = e.target.value.toLowerCase().split(/\s+/).filter(w => w.length > 0);
         const filtered = db.filter(row => {
-            const rowStr = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier}`.toLowerCase();
+            const rowStr = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier} ${row.packing}`.toLowerCase();
             return words.every(w => rowStr.includes(w));
         });
         render(filtered, words);
     });
 
+    function highlight(text, words) {
+        if (!text || !words.length) return text;
+        let html = text;
+        words.forEach(w => {
+            const regex = new RegExp(`(${w})`, 'gi');
+            html = html.replace(regex, '<mark>$1</mark>');
+        });
+        return html;
+    }
+
     function render(data, terms = []) {
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 400).map(row => `
             <tr>
-                <td data-copy="${row.id}">${row.id}</td>
-                <td data-copy="${row.desc}"><strong>${row.desc}</strong></td>
-                <td style="color:var(--brand-primary); font-weight:800;">${row.cost}</td>
+                <td data-copy="${row.id}">${highlight(row.id, terms)}</td>
+                <td data-copy="${row.desc}"><strong>${highlight(row.desc, terms)}</strong></td>
+                <td data-copy="${row.cost}" style="color:var(--brand-primary); font-weight:800;">${row.cost}</td>
                 <td>${row.um}</td>
-                <td style="color:#6366f1;">${row.packing}</td>
-                <td>${row.supplier}</td>
+                <td data-copy="${row.packing}" style="color:#6366f1; font-weight:600;">${highlight(row.packing, terms)}</td>
+                <td data-copy="${row.supplier}">${highlight(row.supplier, terms)}</td>
                 <td>${row.brand} / ${row.origin}</td>
                 <td>${row.cat}</td><td>${row.state}</td><td>${row.part}</td>
             </tr>
@@ -190,8 +195,13 @@
     }
 
     document.addEventListener('dblclick', (e) => {
-        const val = e.target.getAttribute('data-copy');
-        if (val) navigator.clipboard.writeText(val);
+        const val = e.target.getAttribute('data-copy') || e.target.closest('[data-copy]')?.getAttribute('data-copy');
+        if (val) {
+            navigator.clipboard.writeText(val);
+            const cell = e.target.closest('td');
+            cell.classList.add('copy-flash');
+            setTimeout(() => cell.classList.remove('copy-flash'), 400);
+        }
     });
 </script>
 </body>
