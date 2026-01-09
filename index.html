@@ -4,38 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chef2Chef | Master Portal</title>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         :root { --brand: #10b981; --dark: #0f172a; --bg: #f1f5f9; --card: #ffffff; --text: #334155; --border: #e2e8f0; }
+        [data-theme="dark"] { --bg: #020617; --card: #1e293b; --text: #f1f5f9; --border: #334155; --dark: #000000; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
+        
         #loginOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-card { background: white; padding: 40px; border-radius: 24px; width: 350px; text-align: center; }
+        .login-card img { width: 80px; margin-bottom: 10px; }
         input { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; }
+        
         #mainApp { display: none; height: 100vh; padding: 10px; box-sizing: border-box; }
         .app-container { max-width: 1800px; margin: auto; background: var(--card); border-radius: 16px; display: flex; flex-direction: column; height: 97vh; border: 1px solid var(--border); }
+        
         .header { background: var(--dark); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         .dashboard { display: grid; grid-template-columns: 1fr auto; gap: 15px; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+        
         .table-wrap { flex: 1; overflow-y: auto; padding: 0 20px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: var(--card); padding: 12px; text-align: left; position: sticky; top: 0; font-size: 11px; border-bottom: 2px solid var(--border); z-index: 5; color: #94a3b8; text-transform: uppercase; }
-        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; }
+        th { background: var(--card); padding: 12px; text-align: left; position: sticky; top: 0; font-size: 11px; border-bottom: 2px solid var(--border); z-index: 5; color: #94a3b8; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
-        .copy-flash { background: #bbf7d0 !important; transition: 0.2s; }
+
         .user-dot { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; margin-left: 5px; border: 2px solid white; }
+        .copy-flash { background: #bbf7d0 !important; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-card">
-        <h2 style="letter-spacing:-1px">CHEF2CHEF</h2>
-        <p style="font-size:12px; color:#64748b; margin-bottom:20px;">Master Database (13,000+ Items)</p>
+        <img src="logo.png" alt="Chef2Chef" onerror="this.style.display='none'">
+        <h2 style="margin:0">CHEF2CHEF</h2>
+        <p style="font-size:12px; color:#64748b">Master Database Portal</p>
         <input type="text" id="userInput" placeholder="User Name">
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer; font-family:inherit;">ACCESS SYSTEM</button>
-        <div id="errMsg" style="color:red; font-size:11px; margin-top:10px; display:none">Invalid Login</div>
+        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">ACCESS SYSTEM</button>
+        <div id="errMsg" style="color:red; font-size:11px; margin-top:10px; display:none">Access Denied</div>
     </div>
 </div>
 
@@ -46,11 +58,11 @@
             <div id="presenceBox"></div>
         </div>
         <div class="dashboard">
-            <input type="text" id="searchIn" placeholder="Search 13,343 items (e.g. 'Shombo' or 'Alannahs')...">
+            <input type="text" id="searchIn" placeholder="Search 13,000 items (e.g. 'Shombo')...">
             <button onclick="location.reload()" style="padding:10px 20px; background:#ef4444; color:white; border:none; border-radius:10px; font-weight:800; cursor:pointer;">LOGOUT</button>
         </div>
         <div class="table-wrap">
-            <table>
+            <table id="masterTable">
                 <thead>
                     <tr><th style="width:100px">ID</th><th>Description</th><th>Cost</th><th>U/M</th><th>Supplier</th><th>Brand</th></tr>
                 </thead>
@@ -58,8 +70,8 @@
             </table>
         </div>
         <div style="padding:10px 20px; font-size:11px; background:var(--bg); display:flex; justify-content:space-between">
-            <span id="count">Connecting to data...</span>
-            <span style="color:var(--brand); font-weight:800">● LIVE DATABASE</span>
+            <span id="count">Waiting for login...</span>
+            <span style="color:var(--brand)">● System Verified</span>
         </div>
     </div>
 </div>
@@ -81,10 +93,11 @@
     }
 
     async function autoLoad() {
-        document.getElementById('count').innerText = "Syncing 13,343 items... Please wait.";
+        document.getElementById('count').innerText = "Syncing 13,000 items...";
         try {
-            // Added Cache Buster (?v=...) to force GitHub to see the new data.csv
-            const res = await fetch('data.csv?v=' + Date.now());
+            // Fetch with timestamp to avoid cache
+            const res = await fetch('data.csv?t=' + Date.now());
+            if(!res.ok) throw new Error();
             const data = await res.arrayBuffer();
             const wb = XLSX.read(data, {type:'array'});
             db = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}).map(row => ({
@@ -97,14 +110,14 @@
             }));
             render(db);
         } catch(e) { 
-            document.getElementById('count').innerText = "Error: data.csv not found on server."; 
+            document.getElementById('count').innerText = "File 'data.csv' not found. Check GitHub!"; 
         }
     }
 
     function render(data) {
         const list = document.getElementById('list');
-        // VIRTUAL LOADING: Only draw first 100 items to keep speed high
-        const show = data.slice(0, 100); 
+        // VIRTUAL SCROLL: Only show 150 items to keep it fast
+        const show = data.slice(0, 150); 
         list.innerHTML = show.map(r => `
             <tr>
                 <td onclick="copy('${r.id}', event)">${r.id}</td>
@@ -115,7 +128,7 @@
                 <td>${r.brand}</td>
             </tr>
         `).join('');
-        document.getElementById('count').innerText = data.length + " Items Synced Successfully";
+        document.getElementById('count').innerText = data.length + " Items Loaded Successfully";
     }
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
@@ -133,9 +146,9 @@
         setTimeout(() => e.target.classList.remove('copy-flash'), 200);
     }
 
-    channel.presence.subscribe('enter', updatePresence);
-    channel.presence.subscribe('leave', updatePresence);
-    function updatePresence() {
+    channel.presence.subscribe('enter', updateUsers);
+    channel.presence.subscribe('leave', updateUsers);
+    function updateUsers() {
         channel.presence.get((err, members) => {
             const box = document.getElementById('presenceBox');
             box.innerHTML = members.map(m => `<div class="user-dot" style="background:#10b981" title="${m.data}">${m.data[0]}</div>`).join('');
