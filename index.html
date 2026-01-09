@@ -4,261 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chef2Chef | Master Portal</title>
-    
     <link rel="icon" type="image/png" href="logo.png">
-
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --brand-primary: #10b981;
-            --brand-dark: #0f172a;
-            --bg-page: #f1f5f9;
-            --bg-card: #ffffff;
-            --text-main: #334155;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-        }
-
-        [data-theme="dark"] {
-            --bg-page: #020617;
-            --bg-card: #1e293b;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --brand-dark: #000000;
-        }
-
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-page); color: var(--text-main); margin: 0; transition: 0.3s; overflow: hidden; }
-
-        #loginOverlay {
-            position: fixed; inset: 0; background: #0f172a;
-            display: flex; align-items: center; justify-content: center; z-index: 9999;
-        }
-        .login-card { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
-        .login-card img { width: 80px; margin-bottom: 15px; }
-        .login-card h2 { color: #0f172a; margin: 0; font-weight: 800; }
-        .login-card input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; text-align: center; font-family: inherit; font-size: 16px; }
-        
+        :root { --brand: #10b981; --dark: #0f172a; --bg: #f1f5f9; --card: #ffffff; --text: #334155; --border: #e2e8f0; }
+        [data-theme="dark"] { --bg: #020617; --card: #1e293b; --text: #f1f5f9; --border: #334155; --dark: #000000; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
+        #loginOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px; border-radius: 24px; width: 350px; text-align: center; }
+        input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; }
         #mainApp { display: none; height: 100vh; padding: 15px; box-sizing: border-box; }
-        .app-container { max-width: 1800px; margin: auto; background: var(--bg-card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
-        
-        .header { background: var(--brand-dark); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .presence-box { display: flex; align-items: center; gap: 8px; }
-        .user-dot { 
-            width: 32px; height: 32px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 12px; font-weight: 800; color: white;
-            border: 2px solid var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-
-        .dashboard { display: grid; grid-template-columns: 200px 1fr auto; gap: 20px; padding: 15px 30px; border-bottom: 1px solid var(--border); align-items: flex-end; }
-        input[type="text"], input[type="file"] { background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; font-family: inherit; }
-        
-        .theme-btn { background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; font-family: inherit; }
-
+        .app-container { max-width: 1800px; margin: auto; background: var(--card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
+        .header { background: var(--dark); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .dashboard { display: grid; grid-template-columns: 1fr auto; gap: 20px; padding: 15px 30px; border-bottom: 1px solid var(--border); }
         .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1500px; }
-        th { background: var(--bg-card); color: var(--text-muted); padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; font-weight: 800; border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase; }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; transition: background 0.2s; }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+        th { background: var(--card); color: #94a3b8; padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
-        
-        mark { background: #fef08a; color: #854d0e; border-radius: 2px; padding: 0 2px; }
-        .footer { padding: 10px 30px; background: var(--bg-page); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; }
-        .copy-flash { background: #bbf7d0 !important; transition: 0.1s; }
+        .footer { padding: 10px 30px; background: var(--bg); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; }
+        .copy-flash { background: #bbf7d0 !important; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-card">
-        <img src="logo.png" alt="C2C Logo" onerror="this.style.display='none'">
-        <h2 style="letter-spacing:-1px">CHEF2CHEF</h2>
-        <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">Master Inventory Access</p>
-        <input type="text" id="userInput" placeholder="User Name (e.g. STEVE)" autofocus>
+        <h2 style="margin:0">CHEF2CHEF</h2>
+        <p style="color:#64748b; font-size:14px">Master Inventory Access</p>
+        <input type="text" id="userInput" placeholder="User Name">
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer; font-family:inherit; font-size: 16px;">ACCESS SYSTEM</button>
-        <div id="errMsg" style="color: #ef4444; font-size: 12px; margin-top: 15px; display: none; font-weight: 600;">Invalid Credentials</div>
+        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">LOG IN</button>
+        <p id="errMsg" style="color:red; font-size:12px; display:none">Invalid Credentials</p>
     </div>
 </div>
 
 <div id="mainApp">
     <div class="app-container">
         <div class="header">
-            <div><h1 style="margin:0; font-size:18px; letter-spacing: 1px;">CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div class="presence-box" id="presenceBox">
-                    <span style="font-size: 10px; font-weight: 800; color: #94a3b8;">ONLINE:</span>
-                </div>
-                <button class="theme-btn" onclick="toggleTheme()">🌓 THEME</button>
-            </div>
+            <h1 style="margin:0; font-size:18px;">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></h1>
+            <button onclick="toggleTheme()" style="background:var(--brand); border:none; color:white; padding:8px 15px; border-radius:20px; font-weight:800; cursor:pointer;">THEME</button>
         </div>
-
         <div class="dashboard">
-            <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">BACKUP UPLOAD</label>
-                <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
-            </div>
-            <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">SEARCH INVENTORY</label>
-                <input type="text" id="searchIn" placeholder="Search by description, ID, supplier or brand...">
-            </div>
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-family:inherit;">LOGOUT</button>
+            <input type="text" id="searchIn" placeholder="Search by description, ID, supplier...">
+            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer;">LOGOUT</button>
         </div>
-
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr>
-                        <th>Item ID</th>
-                        <th style="width: 350px;">Description</th>
-                        <th>Cost</th>
-                        <th>U/M</th>
-                        <th>Packing</th>
-                        <th>Supplier</th>
-                        <th>Brand/Origin</th>
-                        <th>Category</th>
-                        <th>State</th>
-                        <th>Part No.</th>
-                    </tr>
+                    <tr><th>Item ID</th><th>Description</th><th>Cost</th><th>U/M</th><th>Packing</th><th>Supplier</th><th>Brand/Origin</th><th>Category</th><th>State</th></tr>
                 </thead>
-                <tbody id="list">
-                    <tr><td colspan="10" style="text-align:center; padding:50px;">System Loading...</td></tr>
-                </tbody>
+                <tbody id="list"></tbody>
             </table>
         </div>
         <div class="footer">
-            <span id="count">Ready for login...</span>
-            <span id="connectionStatus" style="color: var(--brand-primary)">● Real-time Linked</span>
+            <span id="count">Initialising...</span>
+            <span id="status" style="color:var(--brand)">● System Online</span>
         </div>
     </div>
 </div>
 
 <script>
-    const TEAM_PASSWORD = "***REMOVED-PASSWORD***"; 
-    const ALLOWED_USERS = ["STEVE", "FATIMA", "ASWAN", "JOBY"];
     let db = [];
-    
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
-    const channel = ably.channels.get('chef2chef-presence');
 
     function checkPass() {
-        const user = document.getElementById('userInput').value.trim().toUpperCase();
-        const pass = document.getElementById('passInput').value;
-        if(ALLOWED_USERS.includes(user) && pass === TEAM_PASSWORD) {
+        const u = document.getElementById('userInput').value.toUpperCase();
+        const p = document.getElementById('passInput').value;
+        if(["STEVE", "FATIMA", "ASWAN", "JOBY"].includes(u) && p === "***REMOVED-PASSWORD***") {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            channel.presence.enter(user);
-            autoLoadMasterFile(); 
-        } else {
-            document.getElementById('errMsg').style.display = 'block';
-        }
+            autoLoad();
+        } else { document.getElementById('errMsg').style.display = 'block'; }
     }
 
-    async function autoLoadMasterFile() {
-        document.getElementById('count').innerText = "Syncing 13,343 Items...";
+    async function autoLoad() {
+        document.getElementById('count').innerText = "Loading data.csv...";
         try {
-            const response = await fetch('data.csv?v=' + Date.now());
-            if (!response.ok) throw new Error();
+            // Fetch the CSV directly from your folder
+            const response = await fetch('data.csv?nocache=' + Date.now());
+            if (!response.ok) throw new Error("File not found");
             const data = await response.arrayBuffer();
             const wb = XLSX.read(data, { type: 'array' });
-            processData(wb);
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            
+            // SMART MAPPING: Finds the right columns even if names change
+            db = raw.map(r => ({
+                id: String(r['Item'] || r['Item ID'] || r['Item No'] || ""),
+                desc: String(r['Description'] || r['Name'] || ""),
+                cost: String(r['Cost'] || r['Price'] || r['Unit Cost'] || "0").toLowerCase().replace('aed', '').trim(),
+                um: String(r['U/M'] || r['Unit'] || ""),
+                packing: String(r['Case Packing'] || r['Case Pack'] || ""),
+                supplier: String(r['Preferred Supplier'] || r['Supplier'] || ""),
+                brand: String(r['Brand'] || ""),
+                origin: String(r['Origin'] || ""),
+                cat: String(r['Cat 2'] || r['Category'] || ""),
+                state: String(r['State'] || "")
+            }));
+            
+            render(db);
         } catch (e) {
-            document.getElementById('count').innerText = "GitHub Error. Upload file manually.";
+            document.getElementById('count').innerText = "Error: " + e.message;
+            console.error(e);
         }
     }
 
-    function processData(wb) {
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        db = XLSX.utils.sheet_to_json(sheet, { defval: "" }).map(row => ({
-            id: String(row['Item'] || row['Item ID'] || "").trim(),
-            desc: String(row['Description'] || "").trim(),
-            cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
-            um: String(row['U/M'] || "").trim(),
-            supplier: String(row['Preferred Supplier'] || "").trim(),
-            packing: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
-            cat: String(row['Cat 2'] || "").trim(),
-            state: String(row['State'] || "").trim(),
-            brand: String(row['Brand'] || "").trim(),
-            origin: String(row['Origin'] || "").trim(),
-            part: String(row['Manu. Part No.'] || "").trim()
-        }));
-        render(db);
+    function render(data) {
+        const list = document.getElementById('list');
+        // We show 150 items for speed, but the search looks through ALL 13,000
+        const view = data.slice(0, 150);
+        list.innerHTML = view.map(r => `
+            <tr>
+                <td onclick="copy('${r.id}', this)">${r.id}</td>
+                <td onclick="copy('${r.desc}', this)"><strong>${r.desc}</strong></td>
+                <td style="color:var(--brand); font-weight:800">${r.cost}</td>
+                <td>${r.um}</td>
+                <td>${r.packing}</td>
+                <td>${r.supplier}</td>
+                <td>${r.brand} / ${r.origin}</td>
+                <td>${r.cat}</td>
+                <td>${r.state}</td>
+            </tr>
+        `).join('');
+        document.getElementById('count').innerText = data.length + " Items Loaded";
     }
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
-        const terms = e.target.value.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-        const filtered = db.filter(row => {
-            const content = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier} ${row.packing}`.toLowerCase();
-            return terms.every(t => content.includes(t));
-        });
-        render(filtered, terms);
+        const val = e.target.value.toLowerCase();
+        const filtered = db.filter(r => 
+            `${r.id} ${r.desc} ${r.supplier} ${r.brand} ${r.cat}`.toLowerCase().includes(val)
+        );
+        render(filtered);
     });
 
-    function render(data, terms = []) {
-        const list = document.getElementById('list');
-        const viewData = data.slice(0, 150); // Performance cap
-        
-        list.innerHTML = viewData.map(row => `
-            <tr>
-                <td data-copy="${row.id}">${highlight(row.id, terms)}</td>
-                <td data-copy="${row.desc}"><strong>${highlight(row.desc, terms)}</strong></td>
-                <td data-copy="${row.cost}" style="color:var(--brand-primary); font-weight:800;">${row.cost}</td>
-                <td>${row.um}</td>
-                <td data-copy="${row.packing}" style="color:#6366f1; font-weight:600;">${highlight(row.packing, terms)}</td>
-                <td data-copy="${row.supplier}">${highlight(row.supplier, terms)}</td>
-                <td>${row.brand} / ${row.origin}</td>
-                <td>${row.cat}</td><td>${row.state}</td><td>${row.part}</td>
-            </tr>
-        `).join('');
-        document.getElementById('count').innerText = `${data.length} Items Loaded Successfully`;
+    function copy(txt, el) {
+        navigator.clipboard.writeText(txt);
+        el.classList.add('copy-flash');
+        setTimeout(() => el.classList.remove('copy-flash'), 200);
     }
-
-    function highlight(text, words) {
-        if (!text || !words.length) return text;
-        let html = text;
-        words.forEach(w => {
-            const regex = new RegExp(`(${w})`, 'gi');
-            html = html.replace(regex, '<mark>$1</mark>');
-        });
-        return html;
-    }
-
-    document.addEventListener('dblclick', (e) => {
-        const val = e.target.getAttribute('data-copy') || e.target.closest('[data-copy]')?.getAttribute('data-copy');
-        if (val) {
-            navigator.clipboard.writeText(val);
-            const cell = e.target.closest('td');
-            cell.classList.add('copy-flash');
-            setTimeout(() => cell.classList.remove('copy-flash'), 200);
-        }
-    });
 
     function toggleTheme() {
-        const current = document.documentElement.getAttribute('data-theme');
-        document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-    }
-
-    channel.presence.subscribe('enter', updatePresence);
-    channel.presence.subscribe('leave', updatePresence);
-    function updatePresence() {
-        channel.presence.get((err, members) => {
-            const box = document.getElementById('presenceBox');
-            box.innerHTML = '<span style="font-size: 10px; font-weight: 800; color: #94a3b8;">ONLINE:</span>';
-            members.forEach(m => {
-                const dot = document.createElement('div');
-                dot.className = 'user-dot';
-                dot.innerText = m.data.charAt(0);
-                dot.style.background = '#10b981';
-                dot.title = m.data;
-                box.appendChild(dot);
-            });
-        });
+        const c = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', c === 'dark' ? 'light' : 'dark');
     }
 </script>
 </body>
