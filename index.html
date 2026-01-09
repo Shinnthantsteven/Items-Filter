@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Master Pro</title>
+    <title>Chef2Chef | Master Engine</title>
     
     <link rel="icon" type="image/png" href="logo.png">
-
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -14,15 +13,16 @@
         :root {
             --brand: #10b981;
             --bg-color: #ffffff;
-            --header-bg: #0f172a; /* Solid Dark Header from Ref 1 */
             --text: #0f172a;
+            --header-bg: #0f172a; /* Dark Refill Header from Photo 1 */
             --glass-edge: rgba(255, 255, 255, 0.8);
         }
 
         [data-theme="dark"] {
             --bg-color: #020617;
             --text: #f1f5f9;
-            --glass-edge: rgba(255, 255, 255, 0.15);
+            --header-bg: #010409;
+            --glass-edge: rgba(255, 255, 255, 0.1);
         }
 
         body { 
@@ -32,18 +32,16 @@
             display: flex; flex-direction: column;
         }
 
-        /* HEADER DESIGN - Refill color like First Reference */
+        /* PHOTO 1: DARK REFILLED HEADER */
         .top-nav {
-            padding: 15px 40px; 
-            background: var(--header-bg); 
-            display: flex; justify-content: center; align-items: center;
-            position: relative;
+            padding: 15px 40px; background: var(--header-bg); 
+            display: flex; justify-content: center; align-items: center; position: relative;
         }
         .logo-text { font-weight: 800; font-size: 24px; color: #ffffff; letter-spacing: -0.5px; }
         .logo-text span { color: var(--brand); }
-        .system-active { position: absolute; right: 40px; color: #94a3b8; font-size: 11px; font-weight: 700; }
+        .theme-btn { position: absolute; left: 40px; background:none; border:none; cursor:pointer; font-size:20px; }
+        .sys-status { position: absolute; right: 40px; color: #94a3b8; font-size: 11px; font-weight: 800; }
 
-        /* TABLE CONTENT - Format from Second Reference */
         .content-container {
             flex: 1; overflow-y: auto; padding: 0 40px 250px 40px;
         }
@@ -59,64 +57,61 @@
             font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* PILL BADGE FORMATTING - Ref 2 Style */
-        .pill {
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+        /* PHOTO 2: CLEAN PILL FORMAT FOR DESCRIPTION & ORIGIN */
+        .desc-pill {
+            background: #eff6ff; color: #1e40af; padding: 5px 12px; 
+            border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;
         }
-        .pill-blue { background: #eff6ff; color: #1e40af; }
-        .pill-green { background: #f0fdf4; color: #166534; margin-left: 5px; }
+        .origin-pill {
+            background: #f0fdf4; color: #166534; padding: 5px 12px; 
+            border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block; margin-left: 8px;
+        }
 
-        /* ACTIVE GHOST BAR */
+        /* 10/10 GHOST SEARCH BAR */
         .liquid-portal-container {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 1200px; z-index: 1000;
         }
         .liquid-lens {
-            display: grid; grid-template-columns: 140px 1fr auto auto auto; 
-            gap: 20px; align-items: center;
-            padding: 12px 25px; border-radius: 60px;
-            background: transparent;
-            backdrop-filter: blur(50px) saturate(180%);
-            -webkit-backdrop-filter: blur(50px) saturate(180%);
-            border: 1.5px solid var(--glass-edge);
-            box-shadow: 0 30px 70px rgba(0,0,0,0.15);
+            display: grid; grid-template-columns: 140px 1fr auto auto auto; gap: 20px; align-items: center;
+            padding: 12px 25px; border-radius: 60px; background: transparent;
+            backdrop-filter: blur(50px) saturate(180%); -webkit-backdrop-filter: blur(50px) saturate(180%);
+            border: 1.5px solid var(--glass-edge); box-shadow: 0 30px 70px rgba(0,0,0,0.15);
         }
         input#searchIn {
             background: transparent; border: none; color: var(--text);
-            font-size: 24px; font-weight: 700; outline: none; width: 100%;
+            font-size: 26px; font-weight: 700; outline: none; width: 100%;
         }
         .lvl-badge { background: var(--brand); color: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-align: center; line-height: 1.2; }
         .sync-count { font-weight: 800; font-size: 13px; opacity: 0.8; padding: 0 15px; }
-        .exit-btn { background: #ef4444; color: white; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); }
+        .exit-btn { background: #ef4444; color: white; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 800; cursor: pointer; }
 
         .price-text { color: var(--brand); font-weight: 800; }
+        .supplier-text { color: #8b5cf6; font-weight: 600; }
         mark { background: #fef08a; border-radius: 4px; color: #000; }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
+        <button class="theme-btn" onclick="toggleTheme()">🌓</button>
         <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
-        <div class="system-active">SYSTEM ACTIVE</div>
+        <div class="sys-status">SYSTEM ACTIVE</div>
     </nav>
 
     <div class="content-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 100px;">Supplier</th>
-                    <th style="width: 350px;">Description / Category</th>
-                    <th style="width: 100px;">Cost</th>
+                    <th style="width: 150px;">Supplier</th>
+                    <th style="width: 450px;">Description & Origin</th>
+                    <th style="width: 80px;">Cost</th>
                     <th style="width: 80px;">Packing</th>
                     <th style="width: 120px;">Category</th>
-                    <th style="width: 120px;">State</th>
-                    <th style="width: 100px;">Part No.</th>
+                    <th style="width: 120px;">Part No.</th>
                 </tr>
             </thead>
-            <tbody id="list">
-                <tr><td colspan="7" style="text-align:center; padding:150px; opacity:0.3;">Load CSV to see Badge Format...</td></tr>
-            </tbody>
+            <tbody id="list"></tbody>
         </table>
     </div>
 
@@ -149,9 +144,8 @@
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
             cat: String(r['Cat 2'] || "").trim(),
-            state: String(r['State'] || "").trim(),
             part: String(r['Manu. Part No.'] || r['Part No.'] || "").trim(),
-            brand: String(r['Brand'] || "").trim()
+            brand: String(r['Brand'] || r['Origin'] || "UAE").trim()
         }));
         render(db);
     }
@@ -162,7 +156,7 @@
         document.getElementById('lvlBadge').innerHTML = `LVL<br>${words.length}`;
         document.getElementById('lvlBadge').style.display = val ? 'block' : 'none';
         const filtered = db.filter(r => {
-            const rowText = `${r.desc} ${r.sup} ${r.part} ${r.cat}`.toLowerCase();
+            const rowText = `${r.desc} ${r.sup} ${r.part} ${r.brand}`.toLowerCase();
             return words.every(w => rowText.includes(w));
         });
         render(filtered, words);
@@ -172,15 +166,14 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 100).map(r => `
             <tr>
-                <td style="color:#8b5cf6;">${highlight(r.sup, terms)}</td>
+                <td class="supplier-text">${highlight(r.sup, terms)}</td>
                 <td>
-                    <span class="pill pill-blue">${highlight(r.desc, terms)}</span>
-                    <span class="pill pill-green">${highlight(r.brand || 'UAE', terms)}</span>
+                    <span class="desc-pill">${highlight(r.desc, terms)}</span>
+                    <span class="origin-pill">${highlight(r.brand, terms)}</span>
                 </td>
                 <td class="price-text">${r.cost}</td>
                 <td style="color:#6366f1; font-weight:700;">${r.pack}</td>
                 <td>${highlight(r.cat, terms)}</td>
-                <td>${r.state}</td>
                 <td style="font-weight:600; color:#64748b;">${highlight(r.part, terms)}</td>
             </tr>
         `).join('');
@@ -192,6 +185,11 @@
         let html = t;
         words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark>$1</mark>'); });
         return html;
+    }
+
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
     }
 
     document.getElementById('fileIn').addEventListener('change', (e) => {
