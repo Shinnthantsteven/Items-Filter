@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chef2Chef | Master Portal</title>
     
-    <link rel="icon" type="image/png" href="logo.png?v=7">
+    <link rel="icon" type="image/png" href="logo.png?v=8">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
@@ -46,7 +46,6 @@
         
         .header { background: var(--brand-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* User Presence Styles */
         .presence-box { display: flex; align-items: center; gap: 8px; }
         .user-dot { 
             width: 32px; height: 32px; border-radius: 50%; 
@@ -90,14 +89,14 @@
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="presence-box" id="presenceBox">
                     <span style="font-size: 10px; font-weight: 800; color: #94a3b8; margin-right: 5px;">TEAM ONLINE:</span>
-                    </div>
+                </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌓 THEME</button>
             </div>
         </div>
 
         <div class="dashboard">
             <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">IMPORT DATA</label>
+                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">MANUAL IMPORT (BACKUP)</label>
                 <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
             </div>
             <div>
@@ -126,7 +125,6 @@
     const TEAM_PASSWORD = "***REMOVED-PASSWORD***"; 
     const ALLOWED_USERS = ["STEVE", "FATIMA", "ASWAN", "JOBY"];
     
-    // Ably Real-time Setup
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
@@ -137,14 +135,58 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             
-            // Enter Presence
             channel.presence.enter(user);
+            loadDefaultData(); // AUTO-LOAD DATA ON LOGIN
         } else {
             document.getElementById('errMsg').style.display = 'block';
         }
     }
 
-    // Handle Real-time Presence Updates
+    // --- NEW: AUTO-LOAD FUNCTION ---
+    async function loadDefaultData() {
+        document.getElementById('count').innerText = "Syncing master file...";
+        try {
+            // Fetch the file named data.csv from your GitHub
+            const response = await fetch('data.csv');
+            if (!response.ok) throw new Error('Default data.csv not found');
+            const data = await response.arrayBuffer();
+            const wb = XLSX.read(data, { type: 'array' });
+            processExcel(wb);
+        } catch (e) {
+            console.error(e);
+            document.getElementById('count').innerText = "No default file found. Please upload manually.";
+        }
+    }
+
+    function processExcel(wb) {
+        db = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }).map(row => ({
+            id: String(row['Item'] || "").trim(),
+            desc: String(row['Description'] || "").trim(),
+            cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(row['U/M'] || "").trim(),
+            supplier: String(row['Preferred Supplier'] || "").trim(),
+            packing: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
+            cat: String(row['Cat 2'] || "").trim(),
+            state: String(row['State'] || "").trim(),
+            brand: String(row['Brand'] || "").trim(),
+            origin: String(row['Origin'] || "").trim(),
+            part: String(row['Manu. Part No.'] || "").trim()
+        }));
+        render(db);
+    }
+
+    // Handle Manual Uploads as backup
+    document.getElementById('fileIn').addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = new Uint8Array(evt.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            processExcel(wb);
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    // Real-time Presence
     channel.presence.subscribe('enter', updatePresence);
     channel.presence.subscribe('leave', updatePresence);
     channel.presence.subscribe('present', updatePresence);
@@ -152,14 +194,11 @@
     function updatePresence() {
         channel.presence.get((err, members) => {
             const box = document.getElementById('presenceBox');
-            // Remove old dots but keep the label
             box.innerHTML = '<span style="font-size: 10px; font-weight: 800; color: #94a3b8; margin-right: 5px;">TEAM ONLINE:</span>';
-            
             members.forEach(m => {
                 const dot = document.createElement('div');
                 dot.className = 'user-dot';
                 dot.innerText = m.data.charAt(0);
-                // Assign unique color based on name
                 const colors = ['#10b981', '#6366f1', '#f59e0b', '#ef4444'];
                 dot.style.background = colors[ALLOWED_USERS.indexOf(m.data) % colors.length];
                 dot.title = m.data;
@@ -175,29 +214,6 @@
     }
 
     let db = [];
-    document.getElementById('fileIn').addEventListener('change', (e) => {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            const wb = XLSX.read(data, { type: 'array' });
-            db = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }).map(row => ({
-                id: String(row['Item'] || "").trim(),
-                desc: String(row['Description'] || "").trim(),
-                cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
-                um: String(row['U/M'] || "").trim(),
-                supplier: String(row['Preferred Supplier'] || "").trim(),
-                packing: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
-                cat: String(row['Cat 2'] || "").trim(),
-                state: String(row['State'] || "").trim(),
-                brand: String(row['Brand'] || "").trim(),
-                origin: String(row['Origin'] || "").trim(),
-                part: String(row['Manu. Part No.'] || "").trim()
-            }));
-            render(db);
-        };
-        reader.readAsArrayBuffer(e.target.files[0]);
-    });
-
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const words = e.target.value.toLowerCase().split(/\s+/).filter(w => w.length > 0);
         const filtered = db.filter(row => {
