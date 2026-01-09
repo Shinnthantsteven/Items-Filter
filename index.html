@@ -3,296 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Master Narrowing Search</title>
+    <title>Chef2Chef | Master Inventory v3</title>
     
-    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --brand-primary: #10b981;
-            --brand-dark: #0f172a;
-            --bg-page: #f1f5f9;
-            --bg-card: #ffffff;
-            --text-main: #334155;
-            --text-muted: #94a3b8;
+            --brand: #10b981;
+            --brand-hover: #059669;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
             --border: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.8);
         }
 
         [data-theme="dark"] {
-            --bg-page: #020617;
-            --bg-card: #1e293b;
+            --bg: #020617;
+            --card: #1e293b;
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
             --border: #334155;
-            --brand-dark: #000000;
+            --dark: #000000;
+            --glass: rgba(30, 41, 59, 0.8);
         }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-page); color: var(--text-main); margin: 0; transition: 0.3s; overflow: hidden; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
 
+        /* Login Overlay */
         #loginOverlay {
-            position: fixed; inset: 0; background: #0f172a;
-            display: flex; align-items: center; justify-content: center; z-index: 9999;
+            position: fixed; inset: 0; background: var(--dark);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
         }
-        .login-card { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
-        .login-card h2 { color: #0f172a; margin: 0; font-weight: 800; }
-        .login-card input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; text-align: center; font-family: inherit; font-size: 16px; }
-        
-        #mainApp { display: none; height: 100vh; padding: 15px; box-sizing: border-box; }
-        .app-container { max-width: 1800px; margin: auto; background: var(--bg-card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
-        
-        .header { background: var(--brand-dark); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Presence Dots */
-        .presence-box { display: flex; align-items: center; gap: 8px; }
-        .user-dot { 
-            width: 32px; height: 32px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 12px; font-weight: 800; color: white;
-            border: 2px solid var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .login-card {
+            background: white; padding: 50px; border-radius: 32px; width: 380px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .login-card h2 { font-weight: 800; font-size: 28px; letter-spacing: -1px; margin-bottom: 8px; color: #0f172a; }
+        .login-card p { color: #64748b; margin-bottom: 30px; font-size: 14px; }
+        .login-card input {
+            width: 100%; padding: 16px; margin-bottom: 12px; border: 2px solid #f1f5f9;
+            border-radius: 14px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s;
+        }
+        .login-card input:focus { border-color: var(--brand); }
+        .login-card button {
+            width: 100%; padding: 16px; background: var(--brand); color: white; border: none;
+            border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 10px;
         }
 
-        .dashboard { display: grid; grid-template-columns: 200px 1fr auto; gap: 20px; padding: 15px 30px; border-bottom: 1px solid var(--border); align-items: flex-end; }
+        /* Main Interface */
+        #mainApp { display: none; height: 100vh; flex-direction: column; }
         
-        /* Search Box with Level Badge */
-        .search-wrapper { position: relative; width: 100%; }
-        #searchIn { background: var(--bg-page); border: 2px solid var(--border); color: var(--text-main); padding: 12px 60px 12px 15px; border-radius: 10px; width: 100%; box-sizing: border-box; font-family: inherit; transition: 0.2s; }
-        #searchIn:focus { border-color: var(--brand-primary); background: var(--bg-card); }
+        .top-nav {
+            background: var(--dark); color: white; padding: 12px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .logo { font-weight: 800; font-size: 20px; letter-spacing: 1px; }
+        .logo span { color: var(--brand); }
+
+        .presence-container { display: flex; align-items: center; gap: 8px; }
+        .u-dot {
+            width: 34px; height: 34px; border-radius: 50%; background: var(--brand);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; border: 2px solid white;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            padding: 20px 40px; display: grid; grid-template-columns: 240px 1fr auto;
+            gap: 24px; background: var(--card); border-bottom: 1px solid var(--border);
+            align-items: end;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .input-group label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         
+        #searchIn {
+            background: var(--bg); border: 2px solid var(--border); color: var(--text-main);
+            padding: 14px 70px 14px 16px; border-radius: 12px; font-size: 15px; outline: none;
+        }
+        
+        /* The LVL Badge */
         .lvl-badge {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: var(--brand-primary); color: white;
-            font-size: 10px; font-weight: 800; padding: 4px 8px;
-            border-radius: 6px; display: none; pointer-events: none;
+            position: absolute; right: 12px; bottom: 10px;
+            background: var(--brand); color: white; padding: 4px 10px;
+            border-radius: 8px; font-size: 11px; font-weight: 800;
+            display: none; animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* Table */
+        .content-area { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1600px; }
+        th {
+            position: sticky; top: 0; background: var(--card); padding: 20px 12px;
+            text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted);
+            border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
+        }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; }
+        tr:hover td { background: rgba(16, 185, 129, 0.04); }
+
+        mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 4px; }
+        .price-tag { color: var(--brand); font-weight: 800; font-size: 15px; }
+
+        .footer {
+            padding: 12px 40px; background: var(--bg); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;
         }
 
-        .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1500px; }
-        th { background: var(--bg-card); color: var(--text-muted); padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; font-weight: 800; border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase; }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; transition: 0.2s; }
-        tr:hover td { background: rgba(16, 185, 129, 0.05); }
-        
-        /* Highlighting and Copy Styles */
-        mark { background: #fef08a; color: #854d0e; border-radius: 2px; padding: 0 2px; }
-        .copy-flash { background: #bbf7d0 !important; transition: 0.1s; }
+        button.theme-toggle {
+            background: var(--brand); color: white; border: none; padding: 8px 18px;
+            border-radius: 20px; font-weight: 800; cursor: pointer; transition: 0.2s;
+        }
+        button.theme-toggle:hover { background: var(--brand-hover); }
 
-        .footer { padding: 10px 30px; background: var(--bg-page); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; }
+        .copy-anim { background: #bbf7d0 !important; transition: 0.1s; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-card">
-        <h2 style="letter-spacing:-1px">CHEF2CHEF</h2>
-        <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">Master Inventory Access</p>
-        <input type="text" id="userInput" placeholder="User Name (e.g. STEVE)" autofocus>
+        <h2>CHEF2CHEF</h2>
+        <p>Advanced Inventory System 2026</p>
+        <input type="text" id="userInput" placeholder="User Name" autofocus>
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer; font-family:inherit; font-size: 16px;">ACCESS SYSTEM</button>
-        <div id="errMsg" style="color: #ef4444; font-size: 12px; margin-top: 15px; display: none; font-weight: 600;">Invalid Credentials</div>
+        <button onclick="login()">SECURE LOGIN</button>
     </div>
 </div>
 
 <div id="mainApp">
-    <div class="app-container">
-        <div class="header">
-            <div><h1 style="margin:0; font-size:18px; letter-spacing: 1px;">CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div class="presence-box" id="presenceBox">
-                    <span style="font-size: 10px; font-weight: 800; color: #94a3b8;">ONLINE:</span>
-                </div>
-                <button class="theme-btn" onclick="toggleTheme()" style="background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer;">🌓 THEME</button>
-            </div>
+    <nav class="top-nav">
+        <div class="logo">CHEF2CHEF <span>MASTER</span></div>
+        <div class="presence-container">
+            <div id="presenceBox" style="display: flex; gap: 6px;"></div>
+            <button class="theme-toggle" onclick="toggleTheme()">DARK MODE</button>
         </div>
+    </nav>
 
-        <div class="dashboard">
-            <div>
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">DATABASE BACKUP</label>
-                <input type="file" id="fileIn" accept=".xlsx, .xls, .csv">
-            </div>
-            <div class="search-wrapper">
-                <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 5px;">NARROWING SEARCH (SPACE TO DRILL DOWN)</label>
-                <input type="text" id="searchIn" placeholder="e.g. 'Ali Chili Kenya'">
-                <div id="lvlBadge" class="lvl-badge">LVL 0</div>
-            </div>
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-family:inherit;">LOGOUT</button>
+    <div class="dashboard">
+        <div class="input-group">
+            <label>Auto-Sync / Upload</label>
+            <input type="file" id="fileIn" style="font-size: 12px;">
         </div>
+        <div class="input-group">
+            <label>Narrowing Search Engine</label>
+            <input type="text" id="searchIn" placeholder="Start typing... (Space to filter deeper)">
+            <div id="lvlBadge" class="lvl-badge">LVL 0</div>
+        </div>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
+    </div>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr><th>Item ID</th><th style="width: 350px;">Description</th><th>Cost</th><th>U/M</th><th>Packing</th><th>Supplier</th><th>Brand/Origin</th><th>Category</th><th>State</th><th>Part No.</th></tr>
-                </thead>
-                <tbody id="list"></tbody>
-            </table>
-        </div>
-        <div class="footer">
-            <span id="count">Ready...</span>
-            <span id="connectionStatus" style="color: var(--brand-primary)">● Real-time Narrowing Engine Active</span>
-        </div>
+    <div class="content-area">
+        <table id="masterTable">
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th style="width: 400px;">Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Category</th>
+                    <th>State</th>
+                    <th>Manu. Part</th>
+                </tr>
+            </thead>
+            <tbody id="list">
+                <tr><td colspan="10" style="text-align:center; padding:150px; color:#94a3b8; font-weight:600;">Authenticating Database...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <span id="statCount">Items: 0</span>
+        <span style="color: var(--brand)">● Real-time Presence Linked</span>
     </div>
 </div>
 
 <script>
-    const TEAM_PASSWORD = "***REMOVED-PASSWORD***"; 
-    const ALLOWED_USERS = ["STEVE", "FATIMA", "ASWAN", "JOBY"];
-    let db = [];
-    
-    // Ably Presence Logic
+    let inventory = [];
+    // REAL-TIME API
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
-    function checkPass() {
-        const user = document.getElementById('userInput').value.trim().toUpperCase();
-        const pass = document.getElementById('passInput').value;
-        if(ALLOWED_USERS.includes(user) && pass === TEAM_PASSWORD) {
+    function login() {
+        const u = document.getElementById('userInput').value.toUpperCase();
+        const p = document.getElementById('passInput').value;
+        if(["STEVE", "FATIMA", "ASWAN", "JOBY"].includes(u) && p === "***REMOVED-PASSWORD***") {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            channel.presence.enter(user);
-            autoLoad(); 
-        } else {
-            document.getElementById('errMsg').style.display = 'block';
-        }
+            document.getElementById('mainApp').style.display = 'flex';
+            channel.presence.enter(u);
+            autoLoad();
+        } else { alert("Invalid Access"); }
     }
 
     async function autoLoad() {
-        document.getElementById('count').innerText = "Syncing...";
         try {
-            const response = await fetch('data.csv?v=' + Date.now());
-            if (!response.ok) throw new Error();
-            const data = await response.arrayBuffer();
-            const wb = XLSX.read(data, { type: 'array' });
-            processData(wb);
-        } catch (e) {
-            document.getElementById('count').innerText = "GitHub Load Failed. Use Manual Upload.";
-        }
+            const res = await fetch('data.csv?cache=' + Date.now());
+            const text = await res.text();
+            parseData(text);
+        } catch(e) { document.getElementById('statCount').innerText = "Manual Upload Required"; }
     }
 
-    // Manual Upload
     document.getElementById('fileIn').addEventListener('change', (e) => {
-        const file = e.target.files[0];
         const reader = new FileReader();
-        reader.onload = (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            processData(XLSX.read(data, { type: 'array' }));
-        };
-        reader.readAsArrayBuffer(file);
+        reader.onload = (f) => parseData(f.target.result);
+        reader.readAsText(e.target.files[0]);
     });
 
-    function processData(wb) {
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        db = XLSX.utils.sheet_to_json(sheet, { defval: "" }).map(row => ({
-            id: String(row['Item'] || row['Item ID'] || "").trim(),
-            desc: String(row['Description'] || "").trim(),
-            // Remove 'aed' and clean price
-            cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
-            um: String(row['U/M'] || "").trim(),
-            supplier: String(row['Preferred Supplier'] || "").trim(),
-            packing: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
-            cat: String(row['Cat 2'] || "").trim(),
-            state: String(row['State'] || "").trim(),
-            brand: String(row['Brand'] || "").trim(),
-            origin: String(row['Origin'] || "").trim(),
-            part: String(row['Manu. Part No.'] || row['Manu. Part'] || "").trim()
+    function parseData(csvText) {
+        const wb = XLSX.read(csvText, { type: 'string' });
+        const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        
+        inventory = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || ""),
+            desc: String(r['Description'] || ""),
+            // Memory: Always strip 'aed'
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(r['U/M'] || ""),
+            pack: String(r['Case Packing'] || r['Case Pack'] || ""),
+            sup: String(r['Preferred Supplier'] || ""),
+            brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
+            cat: String(r['Cat 2'] || ""),
+            state: String(r['State'] || ""),
+            part: String(r['Manu. Part No.'] || "")
         }));
-        render(db);
+        render(inventory);
     }
 
-    // NARROWING SEARCH LOGIC
+    // MODERN NARROWING SEARCH ENGINE
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
         const badge = document.getElementById('lvlBadge');
         
-        if (!val) {
+        if(!val) {
             badge.style.display = 'none';
-            render(db);
+            render(inventory);
             return;
         }
 
-        const words = val.split(/\s+/); // Split by spaces
-        
-        // Update Level Badge
-        if (words.length > 1) {
-            badge.innerText = `LVL ${words.length}`;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
+        const words = val.split(/\s+/);
+        badge.innerText = `LVL ${words.length}`;
+        badge.style.display = 'block';
 
-        // Logic: Every word must exist in the row (Narrowing)
-        const filtered = db.filter(row => {
-            const rowContent = `${row.id} ${row.desc} ${row.brand} ${row.origin} ${row.supplier} ${row.packing} ${row.cat} ${row.part}`.toLowerCase();
-            return words.every(word => rowContent.includes(word));
+        // Filter Logic: All words must match (Narrowing)
+        const filtered = inventory.filter(item => {
+            const haystack = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
+            return words.every(word => haystack.includes(word));
         });
-
+        
         render(filtered, words);
     });
 
-    function render(data, terms = []) {
-        const list = document.getElementById('list');
-        const displayData = data.slice(0, 200); // Performance limit
+    function render(data, highlights = []) {
+        const tbody = document.getElementById('list');
+        const view = data.slice(0, 150); // High-speed rendering
         
-        list.innerHTML = displayData.map(row => `
+        tbody.innerHTML = view.map(r => `
             <tr>
-                <td data-copy="${row.id}">${highlight(row.id, terms)}</td>
-                <td data-copy="${row.desc}"><strong>${highlight(row.desc, terms)}</strong></td>
-                <td data-copy="${row.cost}" style="color:var(--brand-primary); font-weight:800;">${row.cost}</td>
-                <td>${row.um}</td>
-                <td data-copy="${row.packing}" style="color:#6366f1; font-weight:600;">${highlight(row.packing, terms)}</td>
-                <td data-copy="${row.supplier}">${highlight(row.supplier, terms)}</td>
-                <td>${row.brand} / ${row.origin}</td>
-                <td>${row.cat}</td>
-                <td>${row.state}</td>
-                <td data-copy="${row.part}">${highlight(row.part, terms)}</td>
+                <td onclick="copy('${r.id}', this)">${highlight(r.id, highlights)}</td>
+                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, highlights)}</strong></td>
+                <td class="price-tag">${r.cost}</td>
+                <td>${r.um}</td>
+                <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, highlights)}</td>
+                <td>${highlight(r.sup, highlights)}</td>
+                <td>${r.brand}</td>
+                <td>${r.cat}</td>
+                <td>${r.state}</td>
+                <td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('count').innerText = `${data.length} Items Filtered`;
+        document.getElementById('statCount').innerText = `${data.length} Items Synchronized`;
     }
 
-    function highlight(text, words) {
-        if (!text || !words.length) return text;
-        let html = text;
-        words.forEach(w => {
-            if (w.length > 1) {
-                const regex = new RegExp(`(${w})`, 'gi');
-                html = html.replace(regex, '<mark>$1</mark>');
+    function highlight(text, terms) {
+        if(!text || !terms.length) return text;
+        let final = text;
+        terms.forEach(t => {
+            if(t.length > 1) {
+                const reg = new RegExp(`(${t})`, 'gi');
+                final = final.replace(reg, '<mark>$1</mark>');
             }
         });
-        return html;
+        return final;
     }
 
-    // Double click to copy
-    document.addEventListener('dblclick', (e) => {
-        const val = e.target.getAttribute('data-copy') || e.target.closest('[data-copy]')?.getAttribute('data-copy');
-        if (val) {
-            navigator.clipboard.writeText(val);
-            const cell = e.target.closest('td');
-            cell.classList.add('copy-flash');
-            setTimeout(() => cell.classList.remove('copy-flash'), 200);
-        }
-    });
+    function copy(txt, el) {
+        navigator.clipboard.writeText(txt);
+        el.classList.add('copy-anim');
+        setTimeout(() => el.classList.remove('copy-anim'), 200);
+    }
 
     function toggleTheme() {
-        const current = document.documentElement.getAttribute('data-theme');
-        document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
     }
 
-    // Ably Presence Update
+    // Presence Listeners
     channel.presence.subscribe('enter', updatePresence);
     channel.presence.subscribe('leave', updatePresence);
     function updatePresence() {
-        channel.presence.get((err, members) => {
-            const box = document.getElementById('presenceBox');
-            box.innerHTML = '<span style="font-size: 10px; font-weight: 800; color: #94a3b8;">ONLINE:</span>';
-            members.forEach(m => {
-                const dot = document.createElement('div');
-                dot.className = 'user-dot';
-                dot.innerText = m.data.charAt(0);
-                dot.style.background = '#10b981';
-                dot.title = m.data;
-                box.appendChild(dot);
-            });
+        channel.presence.get((err, m) => {
+            document.getElementById('presenceBox').innerHTML = m.map(p => 
+                `<div class="u-dot" title="${p.data}">${p.data[0]}</div>`
+            ).join('');
         });
     }
 </script>
