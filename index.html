@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Master Portal</title>
+    <title>Chef2Chef | Liquid Portal</title>
     
     <link rel="icon" type="image/png" href="logo.png">
 
@@ -14,89 +14,95 @@
     <style>
         :root {
             --brand: #10b981;
-            --dark: #0f172a;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --border: #e2e8f0;
+            --bg: #f0f2f5;
+            --glass: rgba(255, 255, 255, 0.7);
+            --text: #0f172a;
+            --border: rgba(255, 255, 255, 0.3);
         }
 
         [data-theme="dark"] {
             --bg: #020617;
-            --card: #0f172a;
+            --glass: rgba(15, 23, 42, 0.7);
             --text: #f1f5f9;
-            --border: #334155;
-            --dark: #000000;
+            --border: rgba(255, 255, 255, 0.1);
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: var(--text); 
-            margin: 0; transition: 0.2s;
+            margin: 0; transition: background 0.5s ease;
             min-width: 1200px;
-            display: flex; flex-direction: column; height: 100vh;
-            overflow: hidden;
+            height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
         }
 
-        /* Top Navigation */
+        /* Liquid Top Nav */
         .top-nav {
-            background: var(--dark); color: white; padding: 12px 30px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: var(--glass);
+            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); z-index: 100;
         }
         .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-img { height: 32px; width: auto; }
-        .logo-text { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
+        .logo-img { height: 32px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .logo-text { font-weight: 800; font-size: 22px; letter-spacing: -0.8px; }
         .logo-text span { color: var(--brand); }
 
-        .nav-right { display: flex; align-items: center; gap: 15px; }
-        .theme-toggle {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            color: white; padding: 6px 14px; border-radius: 12px; cursor: pointer; font-size: 20px;
+        /* Liquid Content Container */
+        .content-container {
+            flex: 1; overflow-y: auto; padding: 20px 40px 150px 40px;
+            scroll-behavior: smooth;
         }
 
-        /* Large Bottom Active Bar (Universal Device Support) */
-        .bottom-active-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: var(--card); border-top: 2px solid var(--border);
-            padding: 20px 50px; display: grid; grid-template-columns: 220px 1fr 280px;
-            gap: 25px; align-items: center; z-index: 1000;
-            box-shadow: 0 -15px 35px rgba(0,0,0,0.15);
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th {
+            position: sticky; top: 0; background: var(--bg); padding: 15px;
+            text-align: left; font-size: 11px; font-weight: 800; color: #94a3b8;
+            text-transform: uppercase; z-index: 10;
+        }
+        tr { transition: transform 0.2s; }
+        td { 
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 16px; border: 1px solid var(--border); 
+            font-size: 14px; cursor: pointer;
+        }
+        td:first-child { border-radius: 16px 0 0 16px; }
+        td:last-child { border-radius: 0 16px 16px 0; }
+        tr:hover td { transform: scale(1.01); background: rgba(16, 185, 129, 0.1); }
+
+        /* Floating Liquid Search Bar */
+        .liquid-search-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 1100px;
+            backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 12px 25px; border-radius: 30px;
+            display: grid; grid-template-columns: auto 1fr auto;
+            gap: 20px; align-items: center; z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
         }
 
-        .search-container { position: relative; width: 100%; }
         input#searchIn {
-            width: 100%; background: var(--bg); border: 2.5px solid var(--border);
-            color: var(--text); padding: 18px 30px; border-radius: 20px;
-            font-size: 18px; font-weight: 700; outline: none; transition: 0.2s;
-            box-sizing: border-box;
+            background: rgba(0,0,0,0.05); border: none;
+            color: var(--text); padding: 15px 25px; border-radius: 20px;
+            font-size: 18px; font-weight: 600; outline: none; width: 100%;
         }
-        input#searchIn:focus { border-color: var(--brand); background: var(--card); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.1); }
+        [data-theme="dark"] input#searchIn { background: rgba(255,255,255,0.05); }
 
         .lvl-badge {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            background: var(--brand); color: white; padding: 5px 14px;
-            border-radius: 10px; font-size: 13px; font-weight: 800; display: none;
+            background: var(--brand); color: white; padding: 6px 15px;
+            border-radius: 12px; font-size: 12px; font-weight: 800;
         }
 
-        /* Main Data View */
-        .content-container {
-            flex: 1; overflow-y: auto; padding: 0 30px 140px 30px; /* Large bottom padding for the bigger bar */
-            background: var(--card);
+        .price-cell { color: var(--brand); font-weight: 800; font-size: 17px; }
+        
+        .action-btn {
+            background: var(--brand); color: white; border: none; padding: 12px 25px;
+            border-radius: 18px; font-weight: 800; cursor: pointer; transition: 0.3s;
         }
-
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th {
-            position: sticky; top: 0; background: var(--card); padding: 18px 10px;
-            text-align: left; font-size: 10px; font-weight: 800; color: #94a3b8;
-            border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
-        }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; }
-        tr:hover td { background: rgba(16, 185, 129, 0.04); }
-
-        mark { background: #fef08a; color: #854d0e; border-radius: 4px; padding: 0 2px; }
-        .price-cell { color: var(--brand); font-weight: 800; font-size: 16px; }
-        .stat-pill { background: var(--bg); padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        .action-btn.exit { background: #ef4444; }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -106,61 +112,53 @@
             <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
             <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
         </div>
-        <div class="nav-right">
-            <div id="presenceBox" style="display: flex; gap: 8px;"></div>
-            <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
-        </div>
+        <button class="action-btn" onclick="toggleTheme()" style="background:none; color:var(--text); border:1px solid var(--border); font-size:20px;">🌓</button>
     </nav>
 
     <div class="content-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 110px;">Item ID</th>
-                    <th style="width: 380px;">Description</th>
-                    <th style="width: 100px;">Cost</th>
-                    <th style="width: 70px;">U/M</th>
-                    <th style="width: 140px;">Packing</th>
-                    <th style="width: 180px;">Supplier</th>
-                    <th style="width: 180px;">Brand/Origin</th>
-                    <th style="width: 150px;">Category</th>
-                    <th style="width: 90px;">State</th>
+                    <th>Item ID</th>
+                    <th style="width: 350px;">Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Category</th>
+                    <th>State</th>
                     <th>Part No.</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:180px; color:#94a3b8; font-weight:600;">System Ready. Use the large bottom bar to search 133,525 items.</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:150px; background:none; border:none;">Liquid Engine Initializing...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <div class="bottom-active-bar">
-        <div class="group">
-            <input type="file" id="fileIn" style="font-size: 11px; width: 200px; cursor: pointer;">
-        </div>
+    <div class="liquid-search-bar">
+        <input type="file" id="fileIn" style="width: 180px; font-size: 11px;">
         
-        <div class="search-container">
-            <input type="text" id="searchIn" placeholder="Type here to find items instantly...">
-            <div id="lvlBadge" class="lvl-badge">LVL 0</div>
+        <div style="position: relative; display: flex; align-items: center;">
+            <input type="text" id="searchIn" placeholder="Search with Liquid Interface...">
+            <div id="lvlBadge" class="lvl-badge" style="margin-left: -70px; display: none; position: relative; z-index: 5;">LVL 0</div>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 20px;">
-            <div id="statCount" class="stat-pill">Total: 0</div>
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:15px 30px; border-radius:15px; font-weight:800; cursor:pointer; font-size:14px;">EXIT</button>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span id="statCount" style="font-weight: 800; font-size: 12px; opacity: 0.6;">Items: 0</span>
+            <button onclick="location.reload()" class="action-btn exit">EXIT</button>
         </div>
     </div>
 
 <script>
     let db = [];
-    const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
-    const channel = ably.channels.get('chef2chef-presence');
-
     async function autoLoad() {
         try {
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { document.getElementById('statCount').innerText = "Manual Upload Needed"; }
+        } catch(e) { document.getElementById('statCount').innerText = "Load Failed"; }
     }
 
     function processData(csv) {
@@ -177,7 +175,7 @@
             sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
             cat: String(r['Cat 2'] || "").trim(),
-            state: String(r['State'] || "").trim(),
+            state: String(r['State'] || ""),
             part: String(r['Manu. Part No.'] || "")
         }));
         render(db);
@@ -193,26 +191,26 @@
         badge.style.display = 'block';
 
         const filtered = db.filter(r => {
-            const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.pack} ${r.cat} ${r.part}`.toLowerCase();
-            return words.every(w => rowText.includes(w));
+            const haystack = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.pack} ${r.cat}`.toLowerCase();
+            return words.every(w => haystack.includes(w));
         });
         render(filtered, words);
     });
 
     function render(data, terms = []) {
         const list = document.getElementById('list');
-        list.innerHTML = data.slice(0, 200).map(r => `
+        list.innerHTML = data.slice(0, 150).map(r => `
             <tr>
                 <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
                 <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-cell">${r.cost}</td>
                 <td>${r.um}</td>
-                <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, terms)}</td>
+                <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
                 <td>${highlight(r.sup, terms)}</td>
                 <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('statCount').innerText = `Total: ${data.length}`;
+        document.getElementById('statCount').innerText = `Sync: ${data.length}`;
     }
 
     function highlight(t, words) {
@@ -224,8 +222,8 @@
 
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
-        el.style.background = "#bbf7d0";
-        setTimeout(() => el.style.background = "", 200);
+        el.style.background = "rgba(187, 247, 208, 0.5)";
+        setTimeout(() => el.style.background = "", 300);
     }
 
     function toggleTheme() {
