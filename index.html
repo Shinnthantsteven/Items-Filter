@@ -40,7 +40,6 @@
         .top-nav {
             background: var(--dark); color: white; padding: 8px 30px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .logo-area { display: flex; align-items: center; gap: 10px; }
         .logo-img { height: 28px; width: auto; }
@@ -54,10 +53,10 @@
             cursor: pointer; font-size: 18px;
         }
 
-        /* Compact Search Dashboard */
+        /* Compact Dashboard */
         .dashboard {
             display: grid; grid-template-columns: 220px 1fr auto; gap: 15px;
-            padding: 12px 30px; background: var(--card); border-bottom: 1px solid var(--border);
+            padding: 10px 30px; background: var(--card); border-bottom: 1px solid var(--border);
             align-items: flex-end;
         }
 
@@ -68,7 +67,6 @@
             background: var(--bg); border: 1px solid var(--border); color: var(--text);
             padding: 10px 15px; border-radius: 10px; font-size: 14px; outline: none;
         }
-        input:focus { border-color: var(--brand); }
 
         .lvl-badge {
             position: absolute; right: 10px; bottom: 8px;
@@ -82,7 +80,7 @@
         th {
             position: sticky; top: 0; background: var(--card); padding: 12px 8px;
             text-align: left; font-size: 9px; font-weight: 800; color: #94a3b8;
-            border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
+            border-bottom: 2px solid var(--border); z-index: 10;
         }
         td { padding: 8px 8px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
@@ -116,10 +114,10 @@
         </div>
         <div class="group">
             <label>Narrowing Search Engine</label>
-            <input type="text" id="searchIn" placeholder="Search 133,525 items... (Space to drill down)">
+            <input type="text" id="searchIn" placeholder="Search 133k items...">
             <div id="lvlBadge" class="lvl-badge">LVL 0</div>
         </div>
-        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px;">EXIT</button>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer;">EXIT</button>
     </div>
 
     <div class="content">
@@ -139,7 +137,7 @@
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:100px; color:#94a3b8;">Loading huge database...</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:100px;">Loading database...</td></tr>
             </tbody>
         </table>
     </div>
@@ -211,7 +209,7 @@
                 <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('statCount').innerText = `Items Synchronized: ${data.length}`;
+        document.getElementById('statCount').innerText = `Total: ${data.length}`;
     }
 
     function highlight(t, words) {
