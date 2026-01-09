@@ -33,14 +33,16 @@
             margin: 0; transition: 0.3s; overflow: hidden;
         }
 
-        /* Modern Header */
+        /* Modern Top Navigation */
         .top-nav {
             background: var(--dark); color: white; padding: 12px 40px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
+        
+        /* Logo Positioned Here */
         .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-img { height: 32px; width: auto; }
+        .logo-img { height: 32px; width: auto; object-fit: contain; }
         .logo-text { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
         .logo-text span { color: var(--brand); }
 
@@ -116,7 +118,7 @@
 
     <div class="dashboard">
         <div class="group">
-            <label>Database Sync</label>
+            <label>Auto-Sync / Upload</label>
             <input type="file" id="fileIn" style="font-size: 12px;">
         </div>
         <div class="group">
@@ -151,7 +153,7 @@
 
     <div class="footer">
         <span id="statCount">Items: 0</span>
-        <span style="color:var(--brand)">● Real-time Linked</span>
+        <span style="color:var(--brand)">● Real-time Presence Linked</span>
     </div>
 
 <script>
@@ -171,23 +173,23 @@
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
         
-        inventory = raw.map(r => ({
-            id: String(r['Item'] || r['Item ID'] || ""),
-            desc: String(r['Description'] || ""),
-            // Personal Instruction: Remove 'aed' from prices
-            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed','').trim(),
-            um: String(r['U/M'] || ""),
-            pack: String(r['Case Packing'] || r['Case Pack'] || ""),
-            sup: String(r['Preferred Supplier'] || ""),
-            brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
-            cat: String(r['Cat 2'] || ""),
-            state: String(r['State'] || ""),
-            part: String(r['Manu. Part No.'] || "")
+        inventory = raw.map(row => ({
+            id: String(row['Item'] || row['Item ID'] || "").trim(),
+            desc: String(row['Description'] || "").trim(),
+            // Remove 'aed' from prices
+            cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed','').trim(),
+            um: String(row['U/M'] || "").trim(),
+            pack: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
+            sup: String(row['Preferred Supplier'] || "").trim(),
+            brand: String(row['Brand'] || "").trim() + " / " + String(row['Origin'] || "").trim(),
+            cat: String(row['Cat 2'] || "").trim(),
+            state: String(row['State'] || "").trim(),
+            part: String(row['Manu. Part No.'] || "").trim()
         }));
         render(inventory);
     }
 
-    // Narrowing Search Engine
+    // Narrowing Search Logic
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
         const badge = document.getElementById('lvlBadge');
@@ -198,7 +200,7 @@
         badge.style.display = 'block';
 
         const filtered = inventory.filter(item => {
-            const rowContent = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
+            const rowContent = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack}`.toLowerCase();
             return words.every(word => rowContent.includes(word));
         });
         render(filtered, words);
@@ -206,7 +208,7 @@
 
     function render(data, terms = []) {
         const list = document.getElementById('list');
-        list.innerHTML = data.slice(0, 200).map(r => `
+        list.innerHTML = data.slice(0, 300).map(r => `
             <tr>
                 <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
                 <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
@@ -217,7 +219,7 @@
                 <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('statCount').innerText = `${data.length} Items Loaded`;
+        document.getElementById('statCount').innerText = `${data.length} Items Synchronized`;
     }
 
     function highlight(text, words) {
@@ -227,6 +229,7 @@
         return html;
     }
 
+    // Double-click to copy any cell
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
         el.style.background = "#bbf7d0";
