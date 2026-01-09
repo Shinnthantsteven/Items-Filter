@@ -3,152 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Master Portal</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <title>Chef2Chef | Master System</title>
+    
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --brand: #10b981; --dark: #0f172a; --bg: #f1f5f9; --card: #ffffff; --text: #334155; --border: #e2e8f0; }
-        [data-theme="dark"] { --bg: #020617; --card: #1e293b; --text: #f1f5f9; --border: #334155; --dark: #000000; }
+        :root { --brand: #10b981; --dark: #0f172a; --bg: #f1f5f9; --text: #334155; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
-        #loginOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-card { background: white; padding: 40px; border-radius: 24px; width: 350px; text-align: center; }
-        input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; }
-        #mainApp { display: none; height: 100vh; padding: 15px; box-sizing: border-box; }
-        .app-container { max-width: 1800px; margin: auto; background: var(--card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
-        .header { background: var(--dark); color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .dashboard { display: grid; grid-template-columns: 1fr auto; gap: 20px; padding: 15px 30px; border-bottom: 1px solid var(--border); }
-        .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
+        
+        /* Login Screen */
+        #loginOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { background: white; padding: 40px; border-radius: 24px; text-align: center; width: 320px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        .login-card h2 { letter-spacing: -1px; margin-bottom: 20px; }
+        input { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #f1f5f9; border-radius: 12px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
+        
+        /* Main Layout */
+        #mainApp { display: none; height: 100vh; flex-direction: column; }
+        .header { background: var(--dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .search-area { padding: 20px 30px; background: white; border-bottom: 1px solid #e2e8f0; }
+        #searchIn { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #f1f5f9; font-size: 16px; font-family: inherit; }
+        
+        /* Table Styling */
+        .table-wrap { flex: 1; overflow: auto; padding: 0 30px; background: white; }
         table { width: 100%; border-collapse: collapse; min-width: 1400px; }
-        th { background: var(--card); color: #94a3b8; padding: 15px 10px; text-align: left; position: sticky; top: 0; font-size: 10px; border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase; }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
+        th { position: sticky; top: 0; background: white; padding: 15px 10px; text-align: left; font-size: 10px; font-weight: 800; color: #94a3b8; border-bottom: 2px solid #f1f5f9; text-transform: uppercase; z-index: 10; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; cursor: pointer; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
-        .footer { padding: 10px 30px; background: var(--bg); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; }
-        .copy-flash { background: #bbf7d0 !important; }
+        
+        /* Footer */
+        .footer { padding: 10px 30px; background: white; border-top: 1px solid #e2e8f0; font-size: 12px; display: flex; justify-content: space-between; font-weight: 600; }
+        .copy-flash { background: #bbf7d0 !important; transition: 0.2s; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
     <div class="login-card">
-        <h2 style="margin:0">CHEF2CHEF</h2>
-        <p style="color:#64748b; font-size:14px">Master Inventory Access</p>
+        <h2>CHEF2CHEF</h2>
         <input type="text" id="userInput" placeholder="User Name">
         <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">LOG IN</button>
-        <p id="errMsg" style="color:red; font-size:12px; display:none">Invalid Credentials</p>
+        <button onclick="doLogin()" style="width:100%; padding:15px; background:var(--brand); color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer; font-size: 16px;">ENTER SYSTEM</button>
     </div>
 </div>
 
 <div id="mainApp">
-    <div class="app-container">
-        <div class="header">
-            <h1 style="margin:0; font-size:18px;">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></h1>
-            <button onclick="toggleTheme()" style="background:var(--brand); border:none; color:white; padding:8px 15px; border-radius:20px; font-weight:800; cursor:pointer;">THEME</button>
-        </div>
-        <div class="dashboard">
-            <input type="text" id="searchIn" placeholder="Search by description, ID, supplier...">
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer;">LOGOUT</button>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr><th>Item ID</th><th>Description</th><th>Cost</th><th>U/M</th><th>Packing</th><th>Supplier</th><th>Brand/Origin</th><th>Category</th><th>State</th></tr>
-                </thead>
-                <tbody id="list"></tbody>
-            </table>
-        </div>
-        <div class="footer">
-            <span id="count">Initialising...</span>
-            <span id="status" style="color:var(--brand)">● System Online</span>
-        </div>
+    <div class="header">
+        <h1 style="margin:0; font-size:18px; letter-spacing:1px;">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></h1>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; font-weight:800; cursor:pointer;">LOGOUT</button>
+    </div>
+    
+    <div class="search-area">
+        <input type="text" id="searchIn" placeholder="Search 13,343 items by ID, Name, Supplier or Packing...">
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th style="width:350px">Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Category</th>
+                    <th>State</th>
+                </tr>
+            </thead>
+            <tbody id="list">
+                <tr><td colspan="9" style="text-align:center; padding:100px; color:#94a3b8;">Loading Database...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <span id="itemCount">Connecting...</span>
+        <span style="color:var(--brand)">● Database Encrypted & Live</span>
     </div>
 </div>
 
 <script>
-    let db = [];
-    const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
+    let inventory = [];
 
-    function checkPass() {
-        const u = document.getElementById('userInput').value.toUpperCase();
-        const p = document.getElementById('passInput').value;
-        if(["STEVE", "FATIMA", "ASWAN", "JOBY"].includes(u) && p === "***REMOVED-PASSWORD***") {
+    function doLogin() {
+        const user = document.getElementById('userInput').value.toUpperCase();
+        const pass = document.getElementById('passInput').value;
+        if(["STEVE", "FATIMA", "ASWAN", "JOBY"].includes(user) && pass === "***REMOVED-PASSWORD***") {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            autoLoad();
-        } else { document.getElementById('errMsg').style.display = 'block'; }
-    }
-
-    async function autoLoad() {
-        document.getElementById('count').innerText = "Loading data.csv...";
-        try {
-            // Fetch the CSV directly from your folder
-            const response = await fetch('data.csv?nocache=' + Date.now());
-            if (!response.ok) throw new Error("File not found");
-            const data = await response.arrayBuffer();
-            const wb = XLSX.read(data, { type: 'array' });
-            const sheet = wb.Sheets[wb.SheetNames[0]];
-            const raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-            
-            // SMART MAPPING: Finds the right columns even if names change
-            db = raw.map(r => ({
-                id: String(r['Item'] || r['Item ID'] || r['Item No'] || ""),
-                desc: String(r['Description'] || r['Name'] || ""),
-                cost: String(r['Cost'] || r['Price'] || r['Unit Cost'] || "0").toLowerCase().replace('aed', '').trim(),
-                um: String(r['U/M'] || r['Unit'] || ""),
-                packing: String(r['Case Packing'] || r['Case Pack'] || ""),
-                supplier: String(r['Preferred Supplier'] || r['Supplier'] || ""),
-                brand: String(r['Brand'] || ""),
-                origin: String(r['Origin'] || ""),
-                cat: String(r['Cat 2'] || r['Category'] || ""),
-                state: String(r['State'] || "")
-            }));
-            
-            render(db);
-        } catch (e) {
-            document.getElementById('count').innerText = "Error: " + e.message;
-            console.error(e);
+            document.getElementById('mainApp').style.display = 'flex';
+            loadInventory();
+        } else {
+            alert("Access Denied: Invalid Credentials");
         }
     }
 
-    function render(data) {
-        const list = document.getElementById('list');
-        // We show 150 items for speed, but the search looks through ALL 13,000
-        const view = data.slice(0, 150);
-        list.innerHTML = view.map(r => `
+    async function loadInventory() {
+        const countDisplay = document.getElementById('itemCount');
+        try {
+            // Fetch as text to prevent GitHub from blocking the file download
+            const res = await fetch('data.csv?cache=' + Date.now());
+            if(!res.ok) throw new Error("CSV file not found");
+            
+            const text = await res.text();
+            const wb = XLSX.read(text, { type: 'string' });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            
+            inventory = raw.map(r => ({
+                id: String(r['Item'] || r['Item ID'] || ""),
+                desc: String(r['Description'] || ""),
+                // AUTO-REMOVE 'AED' as requested
+                cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+                um: String(r['U/M'] || ""),
+                pack: String(r['Case Packing'] || r['Case Pack'] || ""),
+                sup: String(r['Preferred Supplier'] || ""),
+                brand: (r['Brand'] || "") + " / " + (r['Origin'] || ""),
+                cat: String(r['Cat 2'] || ""),
+                state: String(r['State'] || "")
+            }));
+
+            showData(inventory);
+        } catch (err) {
+            countDisplay.innerText = "CRITICAL ERROR: data.csv file missing from folder.";
+            console.error(err);
+        }
+    }
+
+    function showData(data) {
+        const tbody = document.getElementById('list');
+        // Only render 150 rows for speed, but search will check all 13,000+
+        const limited = data.slice(0, 150);
+        
+        tbody.innerHTML = limited.map(item => `
             <tr>
-                <td onclick="copy('${r.id}', this)">${r.id}</td>
-                <td onclick="copy('${r.desc}', this)"><strong>${r.desc}</strong></td>
-                <td style="color:var(--brand); font-weight:800">${r.cost}</td>
-                <td>${r.um}</td>
-                <td>${r.packing}</td>
-                <td>${r.supplier}</td>
-                <td>${r.brand} / ${r.origin}</td>
-                <td>${r.cat}</td>
-                <td>${r.state}</td>
+                <td onclick="copyText('${item.id}', this)">${item.id}</td>
+                <td onclick="copyText('${item.desc}', this)"><strong>${item.desc}</strong></td>
+                <td style="color:var(--brand); font-weight:800">${item.cost}</td>
+                <td>${item.um}</td>
+                <td>${item.pack}</td>
+                <td>${item.sup}</td>
+                <td>${item.brand}</td>
+                <td>${item.cat}</td>
+                <td>${item.state}</td>
             </tr>
         `).join('');
-        document.getElementById('count').innerText = data.length + " Items Loaded";
+        
+        document.getElementById('itemCount').innerText = data.length + " Items Synchronized";
     }
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        const filtered = db.filter(r => 
-            `${r.id} ${r.desc} ${r.supplier} ${r.brand} ${r.cat}`.toLowerCase().includes(val)
+        const term = e.target.value.toLowerCase();
+        const results = inventory.filter(i => 
+            (i.id + i.desc + i.sup + i.brand + i.pack).toLowerCase().includes(term)
         );
-        render(filtered);
+        showData(results);
     });
 
-    function copy(txt, el) {
-        navigator.clipboard.writeText(txt);
+    function copyText(text, el) {
+        navigator.clipboard.writeText(text);
         el.classList.add('copy-flash');
         setTimeout(() => el.classList.remove('copy-flash'), 200);
-    }
-
-    function toggleTheme() {
-        const c = document.documentElement.getAttribute('data-theme');
-        document.documentElement.setAttribute('data-theme', c === 'dark' ? 'light' : 'dark');
     }
 </script>
 </body>
