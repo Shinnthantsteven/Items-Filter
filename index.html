@@ -3,175 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Master Inventory v3</title>
+    <title>Chef2Chef | Master Portal</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --brand: #10b981;
-            --brand-hover: #059669;
-            --dark: #0f172a;
-            --bg: #f8fafc;
+            --dark-header: #0f172a;
+            --bg: #f1f5f9;
             --card: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
+            --text-main: #334155;
             --border: #e2e8f0;
-            --glass: rgba(255, 255, 255, 0.8);
         }
 
         [data-theme="dark"] {
             --bg: #020617;
             --card: #1e293b;
             --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
             --border: #334155;
-            --dark: #000000;
-            --glass: rgba(30, 41, 59, 0.8);
+            --dark-header: #000000;
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            transition: all 0.3s ease;
-            overflow: hidden;
+            background: var(--bg); color: var(--text-main); 
+            margin: 0; transition: 0.3s ease; overflow: hidden;
         }
 
-        /* Login Overlay */
-        #loginOverlay {
-            position: fixed; inset: 0; background: var(--dark);
-            display: flex; align-items: center; justify-content: center; z-index: 10000;
-        }
-        .login-card {
-            background: white; padding: 50px; border-radius: 32px; width: 380px; text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
-        .login-card h2 { font-weight: 800; font-size: 28px; letter-spacing: -1px; margin-bottom: 8px; color: #0f172a; }
-        .login-card p { color: #64748b; margin-bottom: 30px; font-size: 14px; }
-        .login-card input {
-            width: 100%; padding: 16px; margin-bottom: 12px; border: 2px solid #f1f5f9;
-            border-radius: 14px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s;
-        }
-        .login-card input:focus { border-color: var(--brand); }
-        .login-card button {
-            width: 100%; padding: 16px; background: var(--brand); color: white; border: none;
-            border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 10px;
-        }
-
-        /* Main Interface */
-        #mainApp { display: none; height: 100vh; flex-direction: column; }
-        
+        /* Modern Navigation */
         .top-nav {
-            background: var(--dark); color: white; padding: 12px 40px;
+            background: var(--dark-header); color: white; padding: 12px 40px;
             display: flex; justify-content: space-between; align-items: center;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
-        .logo { font-weight: 800; font-size: 20px; letter-spacing: 1px; }
+        .logo { font-weight: 800; font-size: 22px; letter-spacing: -1px; }
         .logo span { color: var(--brand); }
 
-        .presence-container { display: flex; align-items: center; gap: 8px; }
-        .u-dot {
-            width: 34px; height: 34px; border-radius: 50%; background: var(--brand);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 800; border: 2px solid white;
+        .nav-controls { display: flex; align-items: center; gap: 15px; }
+        .theme-btn {
+            background: var(--brand); border: none; color: white; padding: 8px 16px;
+            border-radius: 20px; font-weight: 800; cursor: pointer; font-size: 12px;
         }
 
-        /* Dashboard */
+        /* Dashboard & Search Area */
         .dashboard {
-            padding: 20px 40px; display: grid; grid-template-columns: 240px 1fr auto;
-            gap: 24px; background: var(--card); border-bottom: 1px solid var(--border);
-            align-items: end;
+            display: grid; grid-template-columns: 240px 1fr auto; gap: 24px;
+            padding: 20px 40px; background: var(--card); border-bottom: 1px solid var(--border);
+            align-items: flex-end;
         }
 
-        .input-group { display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .input-group label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        
-        #searchIn {
+        .group { display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .group label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+
+        input {
             background: var(--bg); border: 2px solid var(--border); color: var(--text-main);
-            padding: 14px 70px 14px 16px; border-radius: 12px; font-size: 15px; outline: none;
+            padding: 14px 16px; border-radius: 12px; font-family: inherit; font-size: 15px; outline: none;
         }
-        
-        /* The LVL Badge */
+        input:focus { border-color: var(--brand); }
+
         .lvl-badge {
-            position: absolute; right: 12px; bottom: 10px;
-            background: var(--brand); color: white; padding: 4px 10px;
-            border-radius: 8px; font-size: 11px; font-weight: 800;
-            display: none; animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: absolute; right: 12px; bottom: 12px;
+            background: var(--brand); color: white; padding: 4px 8px;
+            border-radius: 6px; font-size: 10px; font-weight: 800; display: none;
         }
-        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         /* Table */
-        .content-area { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1600px; }
+        .content { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1500px; }
         th {
-            position: sticky; top: 0; background: var(--card); padding: 20px 12px;
-            text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted);
+            position: sticky; top: 0; background: var(--card); padding: 18px 10px;
+            text-align: left; font-size: 10px; font-weight: 800; color: #94a3b8;
             border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
         }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; }
-        tr:hover td { background: rgba(16, 185, 129, 0.04); }
+        td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
+        tr:hover td { background: rgba(16, 185, 129, 0.05); }
 
-        mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 4px; }
-        .price-tag { color: var(--brand); font-weight: 800; font-size: 15px; }
-
-        .footer {
-            padding: 12px 40px; background: var(--bg); border-top: 1px solid var(--border);
-            display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;
+        mark { background: #fef08a; color: #854d0e; border-radius: 3px; padding: 0 2px; }
+        .price-tag { color: var(--brand); font-weight: 800; }
+        
+        .footer { 
+            padding: 10px 40px; background: var(--bg); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;
         }
-
-        button.theme-toggle {
-            background: var(--brand); color: white; border: none; padding: 8px 18px;
-            border-radius: 20px; font-weight: 800; cursor: pointer; transition: 0.2s;
-        }
-        button.theme-toggle:hover { background: var(--brand-hover); }
-
-        .copy-anim { background: #bbf7d0 !important; transition: 0.1s; }
+        .copy-flash { background: #bbf7d0 !important; transition: 0.1s; }
     </style>
 </head>
-<body>
+<body style="display: flex; flex-direction: column; height: 100vh;">
 
-<div id="loginOverlay">
-    <div class="login-card">
-        <h2>CHEF2CHEF</h2>
-        <p>Advanced Inventory System 2026</p>
-        <input type="text" id="userInput" placeholder="User Name" autofocus>
-        <input type="password" id="passInput" placeholder="Password">
-        <button onclick="login()">SECURE LOGIN</button>
-    </div>
-</div>
-
-<div id="mainApp">
     <nav class="top-nav">
         <div class="logo">CHEF2CHEF <span>MASTER</span></div>
-        <div class="presence-container">
-            <div id="presenceBox" style="display: flex; gap: 6px;"></div>
-            <button class="theme-toggle" onclick="toggleTheme()">DARK MODE</button>
+        <div class="nav-controls">
+            <div id="presenceBox" style="display: flex; gap: 5px;"></div>
+            <button class="theme-btn" onclick="toggleTheme()">TOGGLE THEME</button>
         </div>
     </nav>
 
     <div class="dashboard">
-        <div class="input-group">
-            <label>Auto-Sync / Upload</label>
+        <div class="group">
+            <label>Auto-Sync GitHub Data</label>
             <input type="file" id="fileIn" style="font-size: 12px;">
         </div>
-        <div class="input-group">
-            <label>Narrowing Search Engine</label>
-            <input type="text" id="searchIn" placeholder="Start typing... (Space to filter deeper)">
+        <div class="group">
+            <label>Special Search Engine (Space to Drill Down)</label>
+            <input type="text" id="searchIn" placeholder="Search 133,525 items...">
             <div id="lvlBadge" class="lvl-badge">LVL 0</div>
         </div>
-        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:800; cursor:pointer;">LOGOUT</button>
     </div>
 
-    <div class="content-area">
-        <table id="masterTable">
+    <div class="content">
+        <table>
             <thead>
                 <tr>
                     <th>Item ID</th>
-                    <th style="width: 400px;">Description</th>
+                    <th style="width: 350px;">Description</th>
                     <th>Cost</th>
                     <th>U/M</th>
                     <th>Packing</th>
@@ -179,60 +127,44 @@
                     <th>Brand/Origin</th>
                     <th>Category</th>
                     <th>State</th>
-                    <th>Manu. Part</th>
+                    <th>Part No.</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:150px; color:#94a3b8; font-weight:600;">Authenticating Database...</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:100px; color:#94a3b8;">Loading huge database...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="footer">
         <span id="statCount">Items: 0</span>
-        <span style="color: var(--brand)">● Real-time Presence Linked</span>
+        <span style="color:var(--brand)">● System Live & Optimized</span>
     </div>
-</div>
 
 <script>
-    let inventory = [];
-    // REAL-TIME API
+    let db = [];
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
-    function login() {
-        const u = document.getElementById('userInput').value.toUpperCase();
-        const p = document.getElementById('passInput').value;
-        if(["STEVE", "FATIMA", "ASWAN", "JOBY"].includes(u) && p === "***REMOVED-PASSWORD***") {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'flex';
-            channel.presence.enter(u);
-            autoLoad();
-        } else { alert("Invalid Access"); }
-    }
-
+    // Auto-load from GitHub on Start
     async function autoLoad() {
         try {
-            const res = await fetch('data.csv?cache=' + Date.now());
-            const text = await res.text();
-            parseData(text);
-        } catch(e) { document.getElementById('statCount').innerText = "Manual Upload Required"; }
+            const response = await fetch('data.csv?v=' + Date.now());
+            const text = await response.text();
+            processData(text);
+        } catch (e) {
+            document.getElementById('statCount').innerText = "GitHub Load Failed. Use Upload Button.";
+        }
     }
 
-    document.getElementById('fileIn').addEventListener('change', (e) => {
-        const reader = new FileReader();
-        reader.onload = (f) => parseData(f.target.result);
-        reader.readAsText(e.target.files[0]);
-    });
-
-    function parseData(csvText) {
-        const wb = XLSX.read(csvText, { type: 'string' });
+    function processData(csvData) {
+        const wb = XLSX.read(csvData, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
         
-        inventory = raw.map(r => ({
+        db = raw.map(r => ({
             id: String(r['Item'] || r['Item ID'] || ""),
             desc: String(r['Description'] || ""),
-            // Memory: Always strip 'aed'
+            // Personal Instruction: Always remove 'aed' from prices
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             um: String(r['U/M'] || ""),
             pack: String(r['Case Packing'] || r['Case Pack'] || ""),
@@ -242,87 +174,63 @@
             state: String(r['State'] || ""),
             part: String(r['Manu. Part No.'] || "")
         }));
-        render(inventory);
+        render(db);
     }
 
-    // MODERN NARROWING SEARCH ENGINE
+    // Narrowing Search Logic
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
         const badge = document.getElementById('lvlBadge');
+        if(!val) { badge.style.display='none'; render(db); return; }
         
-        if(!val) {
-            badge.style.display = 'none';
-            render(inventory);
-            return;
-        }
-
         const words = val.split(/\s+/);
         badge.innerText = `LVL ${words.length}`;
         badge.style.display = 'block';
 
-        // Filter Logic: All words must match (Narrowing)
-        const filtered = inventory.filter(item => {
-            const haystack = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
-            return words.every(word => haystack.includes(word));
+        const filtered = db.filter(r => {
+            const haystack = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.pack} ${r.cat}`.toLowerCase();
+            return words.every(w => haystack.includes(w));
         });
-        
         render(filtered, words);
     });
 
-    function render(data, highlights = []) {
-        const tbody = document.getElementById('list');
-        const view = data.slice(0, 150); // High-speed rendering
-        
-        tbody.innerHTML = view.map(r => `
+    function render(data, terms = []) {
+        const list = document.getElementById('list');
+        // Only show top 200 for speed, search still checks all 133k
+        list.innerHTML = data.slice(0, 200).map(r => `
             <tr>
-                <td onclick="copy('${r.id}', this)">${highlight(r.id, highlights)}</td>
-                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, highlights)}</strong></td>
+                <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
+                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-tag">${r.cost}</td>
                 <td>${r.um}</td>
-                <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, highlights)}</td>
-                <td>${highlight(r.sup, highlights)}</td>
-                <td>${r.brand}</td>
-                <td>${r.cat}</td>
-                <td>${r.state}</td>
-                <td>${r.part}</td>
+                <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, terms)}</td>
+                <td>${highlight(r.sup, terms)}</td>
+                <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('statCount').innerText = `${data.length} Items Synchronized`;
+        document.getElementById('statCount').innerText = `${data.length} Items Loaded`;
     }
 
-    function highlight(text, terms) {
-        if(!text || !terms.length) return text;
-        let final = text;
-        terms.forEach(t => {
-            if(t.length > 1) {
-                const reg = new RegExp(`(${t})`, 'gi');
-                final = final.replace(reg, '<mark>$1</mark>');
-            }
-        });
-        return final;
+    function highlight(t, words) {
+        if(!t || !words.length) return t;
+        let html = t;
+        words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark>$1</mark>'); });
+        return html;
     }
 
+    // Click to Copy Logic
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
-        el.classList.add('copy-anim');
-        setTimeout(() => el.classList.remove('copy-anim'), 200);
+        el.classList.add('copy-flash');
+        setTimeout(() => el.classList.remove('copy-flash'), 200);
     }
 
     function toggleTheme() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        const current = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
     }
 
-    // Presence Listeners
-    channel.presence.subscribe('enter', updatePresence);
-    channel.presence.subscribe('leave', updatePresence);
-    function updatePresence() {
-        channel.presence.get((err, m) => {
-            document.getElementById('presenceBox').innerHTML = m.map(p => 
-                `<div class="u-dot" title="${p.data}">${p.data[0]}</div>`
-            ).join('');
-        });
-    }
+    autoLoad(); // Initialize
 </script>
 </body>
 </html>
