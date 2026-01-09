@@ -54,7 +54,9 @@
         td { 
             padding: 16px 10px; border-bottom: 1px solid rgba(0,0,0,0.04);
             font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer; /* Makes it look clickable */
         }
+        td:active { background: rgba(16, 185, 129, 0.1); }
 
         /* PHOTO 2: BRAND/ORIGIN PILL FORMAT ONLY */
         .brand-pill {
@@ -85,9 +87,18 @@
 
         .price-text { color: var(--brand); font-weight: 800; }
         mark { background: #fef08a; border-radius: 4px; color: #000; }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 8px 20px; border-radius: 30px;
+            font-size: 12px; font-weight: 700; display: none; z-index: 9999;
+        }
     </style>
 </head>
 <body>
+
+    <div id="toast">COPIED TO CLIPBOARD</div>
 
     <nav class="top-nav">
         <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
@@ -110,7 +121,7 @@
                     <th style="width: 100px;">Part No.</th>
                 </tr>
             </thead>
-            <tbody id="list"></tbody>
+            <tbody id="list" ondblclick="handleCopy(event)"></tbody>
         </table>
     </div>
 
@@ -183,6 +194,18 @@
             </tr>
         `).join('');
         document.getElementById('statCount').innerText = data.length;
+    }
+
+    // COPY FEATURE
+    function handleCopy(e) {
+        const cell = e.target.closest('td');
+        if (!cell) return;
+        const text = cell.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 1500);
+        });
     }
 
     function highlight(t, words) {
