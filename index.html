@@ -8,7 +8,6 @@
     <link rel="icon" type="image/png" href="logo.png">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -16,15 +15,12 @@
             --brand: #10b981;
             --bg-color: #ffffff;
             --text: #0f172a;
-            /* Liquid Drop: Almost zero color, just pure blur */
-            --liquid-drop: rgba(255, 255, 255, 0.1); 
-            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.7);
         }
 
         [data-theme="dark"] {
             --bg-color: #020617;
             --text: #f1f5f9;
-            --liquid-drop: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
@@ -35,59 +31,71 @@
             display: flex; flex-direction: column;
         }
 
-        /* Top Nav - Transparent */
+        /* Top Nav */
         .top-nav {
-            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 40px; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
         }
         .logo-text { font-weight: 800; font-size: 22px; letter-spacing: -1px; }
         .logo-text span { color: var(--brand); }
 
-        /* Background Content - Highly Visible */
+        /* Background Content - Highly Visible 1-Line Table */
         .content-container {
             flex: 1; overflow-y: auto; padding: 20px 40px 250px 40px;
         }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: left; padding: 15px; font-size: 12px; 
+            color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 2px solid rgba(0,0,0,0.03);
+        }
         td { 
-            padding: 20px 15px; border-bottom: 1px solid rgba(0,0,0,0.05);
-            font-size: 15px; transition: 0.3s;
+            padding: 16px 15px; border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 14px; white-space: nowrap;
         }
-        tr:hover td { background: rgba(16, 185, 129, 0.05); }
+        tr:hover td { background: rgba(16, 185, 129, 0.04); }
 
-        /* THE IPHONE LIQUID DROP SEARCH BAR */
+        /* THE IPHONE LIQUID DROP BAR (GHOST STYLE) */
         .liquid-drop-bar {
-            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1000px;
-            /* Pure Liquid Effect: No background color, just massive blur */
-            backdrop-filter: blur(80px) saturate(180%);
-            -webkit-backdrop-filter: blur(80px) saturate(180%);
-            background: var(--liquid-drop);
-            border: 1px solid var(--glass-border);
-            padding: 12px 30px; border-radius: 40px;
-            display: grid; grid-template-columns: 150px 1fr auto;
-            gap: 20px; align-items: center; z-index: 1000;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 1100px;
+            
+            /* Pure Ghost Effect: No background color, just massive blur */
+            background: transparent;
+            backdrop-filter: blur(40px) saturate(180%) contrast(90%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%) contrast(90%);
+            
+            border: 1.5px solid var(--glass-border);
+            padding: 10px 35px; border-radius: 50px;
+            display: grid; grid-template-columns: 180px 1fr auto;
+            gap: 25px; align-items: center; z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
 
-        /* The actual input - transparent so you see the background items through it */
+        /* Fully transparent input so background data flows through */
         input#searchIn {
             background: transparent; border: none;
-            color: var(--text); padding: 15px;
-            font-size: 22px; font-weight: 700; outline: none; width: 100%;
+            color: var(--text); padding: 15px 0;
+            font-size: 24px; font-weight: 700; outline: none; width: 100%;
         }
 
         .lvl-pill {
-            background: var(--brand); color: white; padding: 5px 15px;
-            border-radius: 15px; font-size: 13px; font-weight: 800; margin-left: 10px;
+            background: var(--brand); color: white; padding: 6px 16px;
+            border-radius: 20px; font-size: 13px; font-weight: 800;
         }
 
-        .price-text { color: var(--brand); font-weight: 800; font-size: 18px; }
+        .price-text { color: var(--brand); font-weight: 800; font-size: 17px; }
         
         .exit-btn {
             background: #ef4444; color: white; border: none; padding: 12px 30px;
-            border-radius: 20px; font-weight: 800; cursor: pointer;
+            border-radius: 25px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
+            transition: 0.2s;
         }
+        .exit-btn:hover { transform: scale(1.05); }
+
+        mark { background: #fef08a; border-radius: 3px; padding: 0 2px; }
     </style>
 </head>
 <body>
@@ -110,20 +118,19 @@
                     <th>Brand/Origin</th>
                     <th>Category</th>
                     <th>State</th>
-                    <th>Part No.</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:200px; opacity:0.3;">Scroll data to see liquid effect...</td></tr>
+                <tr><td colspan="9" style="text-align:center; padding:200px; opacity:0.3;">Background data will be 100% visible behind search bar...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="liquid-drop-bar">
-        <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.5;">
+        <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.5; cursor: pointer;">
         
         <div style="display: flex; align-items: center;">
-            <input type="text" id="searchIn" placeholder="Search Items...">
+            <input type="text" id="searchIn" placeholder="Search items...">
             <div id="lvlBadge" class="lvl-pill" style="display: none;">LVL 0</div>
         </div>
 
@@ -140,7 +147,7 @@
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { console.log("Awaiting manual upload."); }
+        } catch(e) { console.log("Manual upload needed."); }
     }
 
     function processData(csv) {
@@ -157,8 +164,7 @@
             sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
             cat: String(r['Cat 2'] || "").trim(),
-            state: String(r['State'] || ""),
-            part: String(r['Manu. Part No.'] || "")
+            state: String(r['State'] || "")
         }));
         render(db);
     }
@@ -183,13 +189,15 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 100).map(r => `
             <tr>
-                <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
-                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
+                <td style="color:#94a3b8;">${highlight(r.id, terms)}</td>
+                <td><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-text">${r.cost}</td>
                 <td>${r.um}</td>
                 <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
                 <td>${highlight(r.sup, terms)}</td>
-                <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
+                <td>${r.brand}</td>
+                <td>${r.cat}</td>
+                <td>${r.state}</td>
             </tr>
         `).join('');
         document.getElementById('statCount').innerText = `${data.length} Items`;
@@ -200,12 +208,6 @@
         let html = t;
         words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark>$1</mark>'); });
         return html;
-    }
-
-    function copy(txt, el) {
-        navigator.clipboard.writeText(txt);
-        el.style.color = "var(--brand)";
-        setTimeout(() => el.style.color = "", 300);
     }
 
     function toggleTheme() {
