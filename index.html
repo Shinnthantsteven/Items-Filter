@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Master Portal</title>
+    <title>Chef2Chef | Master Portal v4</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
@@ -33,14 +33,13 @@
             margin: 0; transition: 0.3s; overflow: hidden;
         }
 
-        /* Modern Top Navigation */
+        /* Top Navigation - Logo Fixed Here */
         .top-nav {
             background: var(--dark); color: white; padding: 12px 40px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
         
-        /* Logo Positioned Here */
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-img { height: 32px; width: auto; object-fit: contain; }
         .logo-text { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
@@ -60,7 +59,7 @@
             font-size: 12px; font-weight: 800; border: 2px solid white; color: white;
         }
 
-        /* Search Dashboard */
+        /* Dashboard & Search Engine */
         .dashboard {
             display: grid; grid-template-columns: 240px 1fr auto; gap: 24px;
             padding: 20px 40px; background: var(--card); border-bottom: 1px solid var(--border);
@@ -82,7 +81,7 @@
             border-radius: 8px; font-size: 10px; font-weight: 800; display: none;
         }
 
-        /* Content Area */
+        /* Content Table */
         .content { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); }
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1600px; }
         th {
@@ -118,12 +117,12 @@
 
     <div class="dashboard">
         <div class="group">
-            <label>Auto-Sync / Upload</label>
+            <label>Auto-Sync / Backup</label>
             <input type="file" id="fileIn" style="font-size: 12px;">
         </div>
         <div class="group">
-            <label>Narrowing Search Engine</label>
-            <input type="text" id="searchIn" placeholder="Search 133k items... (Space to drill down)">
+            <label>Special Search Engine</label>
+            <input type="text" id="searchIn" placeholder="Start typing... (Use space to filter deeper)">
             <div id="lvlBadge" class="lvl-badge">LVL 0</div>
         </div>
         <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
@@ -146,7 +145,7 @@
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:150px; color:#94a3b8; font-weight:600;">Connecting to Database...</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:150px; color:#94a3b8; font-weight:600;">Connecting to GitHub Database...</td></tr>
             </tbody>
         </table>
     </div>
@@ -161,12 +160,15 @@
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
+    // GitHub Auto-Load
     async function autoLoad() {
         try {
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { document.getElementById('statCount').innerText = "GitHub Load Failed. Please Upload File."; }
+        } catch(e) { 
+            document.getElementById('statCount').innerText = "GitHub File Not Found. Please Upload."; 
+        }
     }
 
     function processData(csv) {
@@ -200,7 +202,7 @@
         badge.style.display = 'block';
 
         const filtered = inventory.filter(item => {
-            const rowContent = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack}`.toLowerCase();
+            const rowContent = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
             return words.every(word => rowContent.includes(word));
         });
         render(filtered, words);
@@ -210,8 +212,8 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 300).map(r => `
             <tr>
-                <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
-                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
+                <td dblclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
+                <td dblclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-cell">${r.cost}</td>
                 <td>${r.um}</td>
                 <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, terms)}</td>
@@ -229,7 +231,7 @@
         return html;
     }
 
-    // Double-click to copy any cell
+    // Double-click to Copy
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
         el.style.background = "#bbf7d0";
@@ -247,6 +249,7 @@
         reader.readAsText(e.target.files[0]);
     });
 
+    // Presence Logic
     channel.presence.subscribe('enter', updatePres);
     channel.presence.subscribe('leave', updatePres);
     function updatePres() {
