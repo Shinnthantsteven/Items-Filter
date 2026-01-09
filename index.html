@@ -3,158 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Liquid Portal</title>
+    <title>Chef2Chef | Ultra Liquid</title>
     
     <link rel="icon" type="image/png" href="logo.png">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --brand: #10b981;
-            --bg-color: #f1f5f9;
-            --glass: rgba(255, 255, 255, 0.4);
+            --bg-color: #ffffff;
             --text: #0f172a;
-            --border: rgba(255, 255, 255, 0.5);
-            --shadow: rgba(0, 0, 0, 0.08);
         }
 
         [data-theme="dark"] {
             --bg-color: #020617;
-            --glass: rgba(15, 23, 42, 0.4);
             --text: #f1f5f9;
-            --border: rgba(255, 255, 255, 0.1);
-            --shadow: rgba(0, 0, 0, 0.4);
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg-color); color: var(--text); 
-            margin: 0; transition: background 0.5s ease;
-            min-width: 1200px; height: 100vh; overflow: hidden;
+            margin: 0; min-width: 1200px; height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
         }
 
-        /* Top Navigation - Ultra Thin Liquid */
         .top-nav {
-            backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%);
-            background: var(--glass);
             padding: 10px 40px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); z-index: 100;
+            border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
         }
-        .logo-text { font-weight: 800; font-size: 20px; letter-spacing: -1px; }
+        .logo-text { font-weight: 800; font-size: 20px; }
         .logo-text span { color: var(--brand); }
 
-        /* Content Area */
+        /* Content - Items will be visible behind the bar */
         .content-container {
-            flex: 1; overflow-y: auto; padding: 10px 40px 180px 40px;
-            perspective: 1000px; /* Essential for liquid motion */
+            flex: 1; overflow-y: auto; padding: 20px 40px 200px 40px;
         }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        th {
-            position: sticky; top: 0; background: var(--bg-color); padding: 15px;
-            text-align: left; font-size: 10px; font-weight: 800; color: #94a3b8;
-            text-transform: uppercase; z-index: 10;
-        }
-        
-        /* Liquid Row Effect */
-        tr td { 
-            background: var(--glass); 
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            padding: 18px 15px; border: 1px solid var(--border);
-            font-size: 14px; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            box-shadow: 0 4px 6px var(--shadow);
-        }
-        tr td:first-child { border-radius: 20px 0 0 20px; }
-        tr td:last-child { border-radius: 0 20px 20px 0; }
-        
-        tr:hover td { 
-            transform: translateY(-3px) scale(1.005); 
-            background: rgba(16, 185, 129, 0.15);
-            border-color: var(--brand);
-            box-shadow: 0 10px 20px var(--shadow);
+        table { width: 100%; border-collapse: collapse; }
+        td { 
+            padding: 22px 15px; border-bottom: 1px solid rgba(0,0,0,0.03);
+            font-size: 15px; font-weight: 500;
         }
 
-        /* Floating Liquid Controller */
-        .liquid-controller {
-            position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1000px;
-            backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%);
-            background: var(--glass);
-            border: 1px solid var(--border);
-            padding: 15px 30px; border-radius: 40px;
-            display: grid; grid-template-columns: 180px 1fr auto;
-            gap: 25px; align-items: center; z-index: 1000;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            animation: float 4s ease-in-out infinite;
+        /* IPHONE LIQUID DROP DESIGN */
+        .liquid-drop-container {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 1100px;
+            z-index: 1000; display: flex; align-items: center; gap: 15px;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateX(-50%) translateY(0px); }
-            50% { transform: translateX(-50%) translateY(-5px); }
+        .liquid-lens {
+            flex: 1;
+            /* Pure Colorless Effect */
+            background: rgba(255, 255, 255, 0.01); 
+            backdrop-filter: blur(50px) saturate(180%) contrast(90%);
+            -webkit-backdrop-filter: blur(50px) saturate(180%) contrast(90%);
+            
+            /* The "Water Drop" Border */
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.1);
+            
+            border-radius: 40px; padding: 10px 30px;
+            display: grid; grid-template-columns: 180px 1fr auto; gap: 20px; align-items: center;
         }
 
         input#searchIn {
-            background: rgba(0,0,0,0.04); border: 2px solid transparent;
-            color: var(--text); padding: 16px 25px; border-radius: 25px;
-            font-size: 18px; font-weight: 700; outline: none; width: 100%;
-            transition: 0.3s;
+            background: transparent; border: none;
+            color: var(--text); padding: 12px 0;
+            font-size: 22px; font-weight: 700; outline: none; width: 100%;
+            /* Makes placeholder look like it's part of the glass */
+            opacity: 0.9;
         }
-        input#searchIn:focus { border-color: var(--brand); background: var(--bg-color); }
 
         .lvl-pill {
-            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-            background: var(--brand); color: white; padding: 5px 15px;
-            border-radius: 15px; font-size: 12px; font-weight: 800;
+            background: var(--brand); color: white; padding: 6px 16px;
+            border-radius: 20px; font-size: 13px; font-weight: 800;
         }
 
-        .price-text { color: var(--brand); font-weight: 800; font-size: 16px; }
+        .price-text { color: var(--brand); font-weight: 800; font-size: 18px; }
+
+        .exit-btn {
+            background: #ef4444; color: white; border: none; width: 80px; height: 80px;
+            border-radius: 50%; font-weight: 800; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
         <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
-        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:20px;">🌓</button>
+        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:22px;">🌓</button>
     </nav>
 
     <div class="content-container">
         <table>
             <thead>
                 <tr>
-                    <th>Item ID</th>
-                    <th style="width: 350px;">Description</th>
-                    <th>Cost</th>
-                    <th>U/M</th>
-                    <th>Packing</th>
-                    <th>Supplier</th>
-                    <th>Brand/Origin</th>
-                    <th>Category</th>
-                    <th>State</th>
-                    <th>Part No.</th>
+                    <th style="text-align:left; color:#94a3b8; font-size:11px; padding-bottom:15px;">ITEM ID / DESCRIPTION FLOW</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:150px; background:none; border:none;">Liquid Engine Ready...</td></tr>
+                <tr><td style="text-align:center; padding:200px; opacity:0.2;">Loading Liquid Engine...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <div class="liquid-controller">
-        <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.6;">
-        
-        <div style="position: relative;">
-            <input type="text" id="searchIn" placeholder="Start typing to filter...">
-            <div id="lvlBadge" class="lvl-pill" style="display: none;">LVL 0</div>
-        </div>
+    <div class="liquid-drop-container">
+        <div class="liquid-lens">
+            <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.4;">
+            
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="searchIn" placeholder="Search 133k items...">
+                <div id="lvlBadge" class="lvl-pill" style="display: none;">LVL 0</div>
+            </div>
 
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <span id="statCount" style="font-weight: 800; font-size: 13px; color: var(--brand);">0 Items</span>
-            <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:20px; font-weight:800; cursor:pointer;">EXIT</button>
+            <div id="statCount" style="font-weight: 800; font-size: 14px; color: var(--brand);">0 Items</div>
         </div>
+        
+        <button onclick="location.reload()" class="exit-btn">EXIT</button>
     </div>
 
 <script>
@@ -164,7 +134,7 @@
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { console.log("Load failed, awaiting manual upload."); }
+        } catch(e) { console.log("Manual upload needed."); }
     }
 
     function processData(csv) {
@@ -174,7 +144,7 @@
         db = raw.map(r => ({
             id: String(r['Item'] || r['Item ID'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
-            // Manual Personal Instruction: Always remove 'aed' from prices
+            // Acknowledging user preference: remove 'aed' from prices
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             um: String(r['U/M'] || "").trim(),
             pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
@@ -207,13 +177,13 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 100).map(r => `
             <tr>
-                <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
-                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
-                <td class="price-text">${r.cost}</td>
-                <td>${r.um}</td>
-                <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
-                <td>${highlight(r.sup, terms)}</td>
-                <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
+                <td onclick="copy('${r.desc}', this)">
+                    <span style="color:#94a3b8; font-size:12px;">${r.id}</span><br>
+                    <strong>${highlight(r.desc, terms)}</strong><br>
+                    <span class="price-text">${r.cost}</span> — 
+                    <span style="color:#6366f1;">${r.pack}</span> — 
+                    <span style="opacity:0.6;">${r.sup}</span>
+                </td>
             </tr>
         `).join('');
         document.getElementById('statCount').innerText = `${data.length} Items`;
@@ -222,15 +192,14 @@
     function highlight(t, words) {
         if(!t || !words.length) return t;
         let html = t;
-        words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark>$1</mark>'); });
+        words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark style="background:#fef08a; border-radius:4px; padding:0 2px;">$1</mark>'); });
         return html;
     }
 
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
-        const original = el.style.background;
-        el.style.background = "rgba(16, 185, 129, 0.4)";
-        setTimeout(() => el.style.background = original, 300);
+        el.style.color = "var(--brand)";
+        setTimeout(() => el.style.color = "", 300);
     }
 
     function toggleTheme() {
