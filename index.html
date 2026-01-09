@@ -146,13 +146,14 @@
     async function autoLoadMasterFile() {
         document.getElementById('count').innerText = "Syncing 13,000+ Items...";
         try {
+            // Using a timestamp to bypass GitHub Cache
             const response = await fetch('data.csv?v=' + Date.now());
             if (!response.ok) throw new Error();
             const data = await response.arrayBuffer();
             const wb = XLSX.read(data, { type: 'array' });
             processData(wb);
         } catch (e) {
-            document.getElementById('count').innerText = "Ready. Please upload file manually.";
+            document.getElementById('count').innerText = "Error loading data.csv. Upload manually.";
         }
     }
 
@@ -161,6 +162,7 @@
         db = XLSX.utils.sheet_to_json(sheet, { defval: "" }).map(row => ({
             id: String(row['Item'] || "").trim(),
             desc: String(row['Description'] || "").trim(),
+            // Remove 'aed' and clean price
             cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             um: String(row['U/M'] || "").trim(),
             supplier: String(row['Preferred Supplier'] || "").trim(),
@@ -174,7 +176,6 @@
         render(db);
     }
 
-    // SEARCH LOGIC
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const terms = e.target.value.toLowerCase().split(/\s+/).filter(w => w.length > 0);
         const filtered = db.filter(row => {
@@ -186,7 +187,7 @@
 
     function render(data, terms = []) {
         const list = document.getElementById('list');
-        // TURBO FIX: Only draw 150 rows at a time so it doesn't crash
+        // VIRTUAL RENDERING: We draw 150 items so the browser stays fast
         const displayData = data.slice(0, 150);
         
         list.innerHTML = displayData.map(row => `
@@ -201,7 +202,7 @@
                 <td>${row.cat}</td><td>${row.state}</td><td>${row.part}</td>
             </tr>
         `).join('');
-        document.getElementById('count').innerText = `${data.length} Items Loaded`;
+        document.getElementById('count').innerText = `${data.length} Items Found`;
     }
 
     function highlight(text, words) {
@@ -214,6 +215,7 @@
         return html;
     }
 
+    // Double click to copy
     document.addEventListener('dblclick', (e) => {
         const val = e.target.getAttribute('data-copy') || e.target.closest('[data-copy]')?.getAttribute('data-copy');
         if (val) {
@@ -229,7 +231,6 @@
         document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
     }
 
-    // Presence Sync
     channel.presence.subscribe('enter', updatePresence);
     channel.presence.subscribe('leave', updatePresence);
     function updatePresence() {
