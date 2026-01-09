@@ -2,92 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1400, initial-scale=0.1">
+    <meta name="viewport" content="width=1200, initial-scale=0.1">
     <title>Chef2Chef | Master Portal</title>
     
+    <link rel="icon" type="image/png" href="logo.png">
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --brand: #10b981;
             --dark: #0f172a;
-            --bg: #f8fafc;
+            --bg: #f1f5f9;
             --card: #ffffff;
-            --text: #1e293b;
+            --text: #334155;
             --border: #e2e8f0;
         }
 
         [data-theme="dark"] {
             --bg: #020617;
-            --card: #1e293b;
+            --card: #111827;
             --text: #f1f5f9;
-            --border: #334155;
+            --border: #374151;
             --dark: #000000;
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: var(--text); 
-            margin: 0; transition: 0.3s; overflow: hidden;
-            min-width: 1400px; /* Forces phone to stay in one-page wide mode */
+            margin: 0; transition: 0.2s; overflow: hidden;
+            min-width: 1200px;
         }
 
+        /* Compact Navigation */
         .top-nav {
-            background: var(--dark); color: white; padding: 12px 40px;
+            background: var(--dark); color: white; padding: 8px 30px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
-        .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-img { height: 35px; width: auto; object-fit: contain; }
-        .logo-text { font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-img { height: 28px; width: auto; }
+        .logo-text { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
         .logo-text span { color: var(--brand); }
 
-        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
         .theme-toggle {
-            background: none; border: 1px solid rgba(255,255,255,0.2); 
-            color: white; padding: 8px 15px; border-radius: 12px;
-            cursor: pointer; font-size: 20px; transition: 0.2s;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            color: white; padding: 5px 12px; border-radius: 10px;
+            cursor: pointer; font-size: 18px;
         }
 
+        /* Compact Search Dashboard */
         .dashboard {
-            display: grid; grid-template-columns: 280px 1fr auto; gap: 24px;
-            padding: 20px 40px; background: var(--card); border-bottom: 1px solid var(--border);
+            display: grid; grid-template-columns: 220px 1fr auto; gap: 15px;
+            padding: 12px 30px; background: var(--card); border-bottom: 1px solid var(--border);
             align-items: flex-end;
         }
 
-        .group { display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .group label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        .group { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .group label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
 
-        input#searchIn {
-            background: var(--bg); border: 2px solid var(--border); color: var(--text);
-            padding: 16px 60px 16px 20px; border-radius: 14px; font-size: 16px; outline: none;
+        input {
+            background: var(--bg); border: 1px solid var(--border); color: var(--text);
+            padding: 10px 15px; border-radius: 10px; font-size: 14px; outline: none;
         }
+        input:focus { border-color: var(--brand); }
 
         .lvl-badge {
-            position: absolute; right: 15px; bottom: 12px;
-            background: var(--brand); color: white; padding: 4px 10px;
-            border-radius: 8px; font-size: 11px; font-weight: 800; display: none;
+            position: absolute; right: 10px; bottom: 8px;
+            background: var(--brand); color: white; padding: 2px 8px;
+            border-radius: 6px; font-size: 9px; font-weight: 800; display: none;
         }
 
-        .content { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); height: calc(100vh - 220px); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+        /* Ultra-Compact Table */
+        .content { flex: 1; overflow: auto; padding: 0 30px; background: var(--card); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th {
-            position: sticky; top: 0; background: var(--card); padding: 18px 10px;
-            text-align: left; font-size: 11px; font-weight: 800; color: #94a3b8;
+            position: sticky; top: 0; background: var(--card); padding: 12px 8px;
+            text-align: left; font-size: 9px; font-weight: 800; color: #94a3b8;
             border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
         }
-        td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        td { padding: 8px 8px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
 
-        mark { background: #fef08a; color: #854d0e; border-radius: 4px; padding: 0 2px; }
+        mark { background: #fef08a; color: #854d0e; border-radius: 3px; padding: 0 2px; }
         .price-cell { color: var(--brand); font-weight: 800; }
-
-        .footer {
-            padding: 12px 40px; background: var(--bg); border-top: 1px solid var(--border);
-            display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;
+        
+        .footer { 
+            padding: 8px 30px; background: var(--bg); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;
         }
     </style>
 </head>
@@ -99,53 +104,53 @@
             <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
         </div>
         <div class="nav-right">
-            <div id="presenceBox" style="display: flex; gap: 8px;"></div>
+            <div id="presenceBox" style="display: flex; gap: 5px;"></div>
             <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
         </div>
     </nav>
 
     <div class="dashboard">
         <div class="group">
-            <label>Auto-Sync / Upload</label>
-            <input type="file" id="fileIn">
+            <label>Upload Database</label>
+            <input type="file" id="fileIn" style="font-size: 11px;">
         </div>
         <div class="group">
             <label>Narrowing Search Engine</label>
-            <input type="text" id="searchIn" placeholder="Start typing... (Use space to narrow down)">
+            <input type="text" id="searchIn" placeholder="Search 133,525 items... (Space to drill down)">
             <div id="lvlBadge" class="lvl-badge">LVL 0</div>
         </div>
-        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:15px 30px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px;">EXIT</button>
     </div>
 
     <div class="content">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 120px;">Item ID</th>
-                    <th style="width: 350px;">Description</th>
-                    <th style="width: 100px;">Cost</th>
-                    <th style="width: 80px;">U/M</th>
-                    <th style="width: 150px;">Packing</th>
-                    <th style="width: 180px;">Supplier</th>
-                    <th style="width: 180px;">Brand/Origin</th>
-                    <th style="width: 150px;">Category</th>
-                    <th style="width: 100px;">State</th>
-                    <th style="width: 150px;">Manu. Part</th>
+                    <th style="width: 100px;">Item ID</th>
+                    <th style="width: 300px;">Description</th>
+                    <th style="width: 80px;">Cost</th>
+                    <th style="width: 60px;">U/M</th>
+                    <th style="width: 120px;">Packing</th>
+                    <th style="width: 150px;">Supplier</th>
+                    <th style="width: 150px;">Brand/Origin</th>
+                    <th style="width: 120px;">Category</th>
+                    <th style="width: 80px;">State</th>
+                    <th>Part No.</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:100px;">Synchronizing 133,525 items...</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:100px; color:#94a3b8;">Loading huge database...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="footer">
-        <span id="statCount">Items Loaded: 0</span>
-        <span style="color:var(--brand)">● Real-time Linked</span>
+        <span id="statCount">Items: 0</span>
+        <span style="color:var(--brand)">● System Live</span>
     </div>
 
 <script>
-    let inventory = [];
+    let db = [];
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
@@ -154,40 +159,41 @@
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { document.getElementById('statCount').innerText = "Manual Upload Required"; }
+        } catch(e) { document.getElementById('statCount').innerText = "GitHub Load Failed. Use Upload."; }
     }
 
     function processData(csv) {
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
         
-        inventory = raw.map(r => ({
-            id: String(r['Item'] || r['Item ID'] || "").trim(),
-            desc: String(r['Description'] || "").trim(),
-            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed','').trim(),
-            um: String(r['U/M'] || "").trim(),
-            pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
-            sup: String(r['Preferred Supplier'] || "").trim(),
-            brand: String(r['Brand'] || "").trim() + " / " + String(r['Origin'] || "").trim(),
-            cat: String(r['Cat 2'] || "").trim(),
-            state: String(r['State'] || "").trim(),
-            part: String(r['Manu. Part No.'] || "").trim()
+        db = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || ""),
+            desc: String(r['Description'] || ""),
+            // Personal Instruction: Always remove 'aed' from prices
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(r['U/M'] || ""),
+            pack: String(r['Case Packing'] || r['Case Pack'] || ""),
+            sup: String(r['Preferred Supplier'] || ""),
+            brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
+            cat: String(r['Cat 2'] || ""),
+            state: String(r['State'] || ""),
+            part: String(r['Manu. Part No.'] || "")
         }));
-        render(inventory);
+        render(db);
     }
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
         const badge = document.getElementById('lvlBadge');
-        if(!val) { badge.style.display='none'; render(inventory); return; }
+        if(!val) { badge.style.display='none'; render(db); return; }
         
         const words = val.split(/\s+/);
         badge.innerText = `LVL ${words.length}`;
         badge.style.display = 'block';
 
-        const filtered = inventory.filter(item => {
-            const rowStr = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
-            return words.every(word => rowStr.includes(word));
+        const filtered = db.filter(r => {
+            const hay = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.pack} ${r.cat}`.toLowerCase();
+            return words.every(w => hay.includes(w));
         });
         render(filtered, words);
     });
@@ -195,7 +201,7 @@
     function render(data, terms = []) {
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 250).map(r => `
-            <tr dblclick="copyRow('${r.desc}')">
+            <tr>
                 <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
                 <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-cell">${r.cost}</td>
@@ -225,12 +231,6 @@
         const cur = document.documentElement.getAttribute('data-theme');
         document.documentElement.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
     }
-
-    document.getElementById('fileIn').addEventListener('change', (e) => {
-        const reader = new FileReader();
-        reader.onload = (f) => processData(f.target.result);
-        reader.readAsText(e.target.files[0]);
-    });
 
     autoLoad();
 </script>
