@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef2Chef | Master Portal v4</title>
+    <meta name="viewport" content="width=1400, initial-scale=0.1">
+    <title>Chef2Chef | Master Portal</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
@@ -31,9 +31,9 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: var(--text); 
             margin: 0; transition: 0.3s; overflow: hidden;
+            min-width: 1400px; /* Forces phone to stay in one-page wide mode */
         }
 
-        /* Top Navigation - Logo Fixed Here */
         .top-nav {
             background: var(--dark); color: white; padding: 12px 40px;
             display: flex; justify-content: space-between; align-items: center;
@@ -41,64 +41,53 @@
         }
         
         .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-img { height: 32px; width: auto; object-fit: contain; }
-        .logo-text { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
+        .logo-img { height: 35px; width: auto; object-fit: contain; }
+        .logo-text { font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
         .logo-text span { color: var(--brand); }
 
         .nav-right { display: flex; align-items: center; gap: 20px; }
         .theme-toggle {
             background: none; border: 1px solid rgba(255,255,255,0.2); 
-            color: white; padding: 8px 12px; border-radius: 12px;
-            cursor: pointer; font-size: 18px; transition: 0.2s;
-        }
-        .theme-toggle:hover { background: rgba(255,255,255,0.1); }
-
-        .u-dot {
-            width: 32px; height: 32px; border-radius: 50%; background: var(--brand);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 800; border: 2px solid white; color: white;
+            color: white; padding: 8px 15px; border-radius: 12px;
+            cursor: pointer; font-size: 20px; transition: 0.2s;
         }
 
-        /* Dashboard & Search Engine */
         .dashboard {
-            display: grid; grid-template-columns: 240px 1fr auto; gap: 24px;
+            display: grid; grid-template-columns: 280px 1fr auto; gap: 24px;
             padding: 20px 40px; background: var(--card); border-bottom: 1px solid var(--border);
             align-items: flex-end;
         }
 
         .group { display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .group label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .group label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
 
         input#searchIn {
             background: var(--bg); border: 2px solid var(--border); color: var(--text);
-            padding: 14px 60px 14px 16px; border-radius: 14px; font-size: 15px; outline: none; transition: 0.2s;
+            padding: 16px 60px 16px 20px; border-radius: 14px; font-size: 16px; outline: none;
         }
-        input#searchIn:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
 
         .lvl-badge {
-            position: absolute; right: 12px; bottom: 10px;
+            position: absolute; right: 15px; bottom: 12px;
             background: var(--brand); color: white; padding: 4px 10px;
-            border-radius: 8px; font-size: 10px; font-weight: 800; display: none;
+            border-radius: 8px; font-size: 11px; font-weight: 800; display: none;
         }
 
-        /* Content Table */
-        .content { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1600px; }
+        .content { flex: 1; overflow: auto; padding: 0 40px; background: var(--card); height: calc(100vh - 220px); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
         th {
             position: sticky; top: 0; background: var(--card); padding: 18px 10px;
-            text-align: left; font-size: 10px; font-weight: 800; color: #94a3b8;
+            text-align: left; font-size: 11px; font-weight: 800; color: #94a3b8;
             border-bottom: 2px solid var(--border); z-index: 10; text-transform: uppercase;
         }
-        td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; }
+        td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         tr:hover td { background: rgba(16, 185, 129, 0.05); }
 
         mark { background: #fef08a; color: #854d0e; border-radius: 4px; padding: 0 2px; }
-        .price-cell { color: var(--brand); font-weight: 800; font-size: 15px; }
+        .price-cell { color: var(--brand); font-weight: 800; }
 
-        /* Footer */
         .footer {
             padding: 12px 40px; background: var(--bg); border-top: 1px solid var(--border);
-            display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;
+            display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;
         }
     </style>
 </head>
@@ -110,49 +99,49 @@
             <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
         </div>
         <div class="nav-right">
-            <div id="presenceBox" style="display: flex; gap: 6px;"></div>
+            <div id="presenceBox" style="display: flex; gap: 8px;"></div>
             <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
         </div>
     </nav>
 
     <div class="dashboard">
         <div class="group">
-            <label>Auto-Sync / Backup</label>
-            <input type="file" id="fileIn" style="font-size: 12px;">
+            <label>Auto-Sync / Upload</label>
+            <input type="file" id="fileIn">
         </div>
         <div class="group">
-            <label>Special Search Engine</label>
-            <input type="text" id="searchIn" placeholder="Start typing... (Use space to filter deeper)">
+            <label>Narrowing Search Engine</label>
+            <input type="text" id="searchIn" placeholder="Start typing... (Use space to narrow down)">
             <div id="lvlBadge" class="lvl-badge">LVL 0</div>
         </div>
-        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
+        <button onclick="location.reload()" style="background:#ef4444; color:white; border:none; padding:15px 30px; border-radius:12px; font-weight:800; cursor:pointer;">EXIT</button>
     </div>
 
     <div class="content">
         <table>
             <thead>
                 <tr>
-                    <th>Item ID</th>
-                    <th style="width: 400px;">Description</th>
-                    <th>Cost</th>
-                    <th>U/M</th>
-                    <th>Packing</th>
-                    <th>Supplier</th>
-                    <th>Brand/Origin</th>
-                    <th>Category</th>
-                    <th>State</th>
-                    <th>Manu. Part</th>
+                    <th style="width: 120px;">Item ID</th>
+                    <th style="width: 350px;">Description</th>
+                    <th style="width: 100px;">Cost</th>
+                    <th style="width: 80px;">U/M</th>
+                    <th style="width: 150px;">Packing</th>
+                    <th style="width: 180px;">Supplier</th>
+                    <th style="width: 180px;">Brand/Origin</th>
+                    <th style="width: 150px;">Category</th>
+                    <th style="width: 100px;">State</th>
+                    <th style="width: 150px;">Manu. Part</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="10" style="text-align:center; padding:150px; color:#94a3b8; font-weight:600;">Connecting to GitHub Database...</td></tr>
+                <tr><td colspan="10" style="text-align:center; padding:100px;">Synchronizing 133,525 items...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="footer">
-        <span id="statCount">Items: 0</span>
-        <span style="color:var(--brand)">● Real-time Presence Linked</span>
+        <span id="statCount">Items Loaded: 0</span>
+        <span style="color:var(--brand)">● Real-time Linked</span>
     </div>
 
 <script>
@@ -160,38 +149,33 @@
     const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
     const channel = ably.channels.get('chef2chef-presence');
 
-    // GitHub Auto-Load
     async function autoLoad() {
         try {
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { 
-            document.getElementById('statCount').innerText = "GitHub File Not Found. Please Upload."; 
-        }
+        } catch(e) { document.getElementById('statCount').innerText = "Manual Upload Required"; }
     }
 
     function processData(csv) {
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
         
-        inventory = raw.map(row => ({
-            id: String(row['Item'] || row['Item ID'] || "").trim(),
-            desc: String(row['Description'] || "").trim(),
-            // Remove 'aed' from prices
-            cost: String(row['Cost'] || row['Price'] || "0").toLowerCase().replace('aed','').trim(),
-            um: String(row['U/M'] || "").trim(),
-            pack: String(row['Case Packing'] || row['Case Pack'] || "").trim(),
-            sup: String(row['Preferred Supplier'] || "").trim(),
-            brand: String(row['Brand'] || "").trim() + " / " + String(row['Origin'] || "").trim(),
-            cat: String(row['Cat 2'] || "").trim(),
-            state: String(row['State'] || "").trim(),
-            part: String(row['Manu. Part No.'] || "").trim()
+        inventory = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || "").trim(),
+            desc: String(r['Description'] || "").trim(),
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed','').trim(),
+            um: String(r['U/M'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
+            sup: String(r['Preferred Supplier'] || "").trim(),
+            brand: String(r['Brand'] || "").trim() + " / " + String(r['Origin'] || "").trim(),
+            cat: String(r['Cat 2'] || "").trim(),
+            state: String(r['State'] || "").trim(),
+            part: String(r['Manu. Part No.'] || "").trim()
         }));
         render(inventory);
     }
 
-    // Narrowing Search Logic
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
         const badge = document.getElementById('lvlBadge');
@@ -202,18 +186,18 @@
         badge.style.display = 'block';
 
         const filtered = inventory.filter(item => {
-            const rowContent = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
-            return words.every(word => rowContent.includes(word));
+            const rowStr = `${item.id} ${item.desc} ${item.sup} ${item.brand} ${item.pack} ${item.cat}`.toLowerCase();
+            return words.every(word => rowStr.includes(word));
         });
         render(filtered, words);
     });
 
     function render(data, terms = []) {
         const list = document.getElementById('list');
-        list.innerHTML = data.slice(0, 300).map(r => `
-            <tr>
-                <td dblclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
-                <td dblclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
+        list.innerHTML = data.slice(0, 250).map(r => `
+            <tr dblclick="copyRow('${r.desc}')">
+                <td onclick="copy('${r.id}', this)">${highlight(r.id, terms)}</td>
+                <td onclick="copy('${r.desc}', this)"><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-cell">${r.cost}</td>
                 <td>${r.um}</td>
                 <td style="color:#6366f1; font-weight:600;">${highlight(r.pack, terms)}</td>
@@ -221,17 +205,16 @@
                 <td>${r.brand}</td><td>${r.cat}</td><td>${r.state}</td><td>${r.part}</td>
             </tr>
         `).join('');
-        document.getElementById('statCount').innerText = `${data.length} Items Synchronized`;
+        document.getElementById('statCount').innerText = `Items Synchronized: ${data.length}`;
     }
 
-    function highlight(text, words) {
-        if(!text || !words.length) return text;
-        let html = text;
+    function highlight(t, words) {
+        if(!t || !words.length) return t;
+        let html = t;
         words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark>$1</mark>'); });
         return html;
     }
 
-    // Double-click to Copy
     function copy(txt, el) {
         navigator.clipboard.writeText(txt);
         el.style.background = "#bbf7d0";
@@ -248,17 +231,6 @@
         reader.onload = (f) => processData(f.target.result);
         reader.readAsText(e.target.files[0]);
     });
-
-    // Presence Logic
-    channel.presence.subscribe('enter', updatePres);
-    channel.presence.subscribe('leave', updatePres);
-    function updatePres() {
-        channel.presence.get((err, m) => {
-            document.getElementById('presenceBox').innerHTML = m.map(p => 
-                `<div class="u-dot" title="${p.data}">${p.data[0]}</div>`
-            ).join('');
-        });
-    }
 
     autoLoad();
 </script>
