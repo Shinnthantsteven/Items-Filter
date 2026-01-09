@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Master Engine</title>
+    <title>Chef2Chef | Pro Active Engine</title>
     
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -12,9 +12,9 @@
     <style>
         :root {
             --brand: #10b981;
-            --bg-color: #ffffff;
+            --bg-color: #fcfcfd;
             --text: #0f172a;
-            --header-bg: #0f172a; /* Dark Refill Header from Photo 1 */
+            --header-bg: #0f172a; /* Dark Header from Photo */
             --glass-edge: rgba(255, 255, 255, 0.8);
         }
 
@@ -22,7 +22,7 @@
             --bg-color: #020617;
             --text: #f1f5f9;
             --header-bg: #010409;
-            --glass-edge: rgba(255, 255, 255, 0.1);
+            --glass-edge: rgba(255, 255, 255, 0.15);
         }
 
         body { 
@@ -32,15 +32,14 @@
             display: flex; flex-direction: column;
         }
 
-        /* PHOTO 1: DARK REFILLED HEADER */
+        /* PHOTO 1: CLEAN DARK REFILLED HEADER */
         .top-nav {
-            padding: 15px 40px; background: var(--header-bg); 
-            display: flex; justify-content: center; align-items: center; position: relative;
+            padding: 12px 40px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--header-bg); border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
         }
-        .logo-text { font-weight: 800; font-size: 24px; color: #ffffff; letter-spacing: -0.5px; }
+        .logo-text { font-weight: 800; font-size: 22px; letter-spacing: -1px; color: #ffffff; }
         .logo-text span { color: var(--brand); }
-        .theme-btn { position: absolute; left: 40px; background:none; border:none; cursor:pointer; font-size:20px; }
-        .sys-status { position: absolute; right: 40px; color: #94a3b8; font-size: 11px; font-weight: 800; }
+        .sys-status { color: #94a3b8; font-size: 11px; font-weight: 800; }
 
         .content-container {
             flex: 1; overflow-y: auto; padding: 0 40px 250px 40px;
@@ -57,17 +56,17 @@
             font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* PHOTO 2: CLEAN PILL FORMAT FOR DESCRIPTION & ORIGIN */
-        .desc-pill {
-            background: #eff6ff; color: #1e40af; padding: 5px 12px; 
-            border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;
+        /* PHOTO 2: BRAND/ORIGIN PILL FORMAT ONLY */
+        .brand-pill {
+            background: #eff6ff; color: #1e40af; padding: 4px 10px; 
+            border-radius: 6px; font-weight: 700; font-size: 12px; display: inline-block;
         }
         .origin-pill {
-            background: #f0fdf4; color: #166534; padding: 5px 12px; 
-            border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block; margin-left: 8px;
+            background: #f0fdf4; color: #166534; padding: 4px 10px; 
+            border-radius: 6px; font-weight: 700; font-size: 12px; display: inline-block; margin-left: 5px;
         }
 
-        /* 10/10 GHOST SEARCH BAR */
+        /* GHOST SEARCH BAR */
         .liquid-portal-container {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 1200px; z-index: 1000;
@@ -79,23 +78,20 @@
             border: 1.5px solid var(--glass-edge); box-shadow: 0 30px 70px rgba(0,0,0,0.15);
         }
         input#searchIn {
-            background: transparent; border: none; color: var(--text);
-            font-size: 26px; font-weight: 700; outline: none; width: 100%;
+            background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; width: 100%;
         }
-        .lvl-badge { background: var(--brand); color: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-align: center; line-height: 1.2; }
-        .sync-count { font-weight: 800; font-size: 13px; opacity: 0.8; padding: 0 15px; }
+        .lvl-badge { background: var(--brand); color: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-align: center; }
         .exit-btn { background: #ef4444; color: white; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 800; cursor: pointer; }
 
         .price-text { color: var(--brand); font-weight: 800; }
-        .supplier-text { color: #8b5cf6; font-weight: 600; }
         mark { background: #fef08a; border-radius: 4px; color: #000; }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <button class="theme-btn" onclick="toggleTheme()">🌓</button>
         <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
+        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:20px;">🌓</button>
         <div class="sys-status">SYSTEM ACTIVE</div>
     </nav>
 
@@ -103,12 +99,15 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width: 80px;">Item ID</th>
+                    <th style="width: 250px;">Description</th>
+                    <th style="width: 70px;">Cost</th>
+                    <th style="width: 60px;">U/M</th>
+                    <th style="width: 100px;">Packing</th>
                     <th style="width: 150px;">Supplier</th>
-                    <th style="width: 450px;">Description & Origin</th>
-                    <th style="width: 80px;">Cost</th>
-                    <th style="width: 80px;">Packing</th>
-                    <th style="width: 120px;">Category</th>
-                    <th style="width: 120px;">Part No.</th>
+                    <th style="width: 180px;">Brand / Origin</th>
+                    <th style="width: 100px;">State</th>
+                    <th style="width: 100px;">Part No.</th>
                 </tr>
             </thead>
             <tbody id="list"></tbody>
@@ -120,7 +119,7 @@
             <input type="file" id="fileIn" style="font-size: 9px; opacity: 0.6; cursor: pointer; width: 130px;">
             <input type="text" id="searchIn" placeholder="Search items...">
             <div id="lvlBadge" class="lvl-badge" style="display: none;">LVL<br>0</div>
-            <div class="sync-count">Sync: <span id="statCount">0</span></div>
+            <div class="sync-count" style="font-weight:800; font-size:13px; opacity:0.8;">Sync: <span id="statCount">0</span></div>
             <button onclick="location.reload()" class="exit-btn">EXIT</button>
         </div>
     </div>
@@ -139,13 +138,16 @@
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
         db = raw.map(r => ({
-            sup: String(r['Preferred Supplier'] || "").trim(),
+            id: String(r['Item'] || r['Item ID'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(r['U/M'] || "").trim(),
             pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
-            cat: String(r['Cat 2'] || "").trim(),
-            part: String(r['Manu. Part No.'] || r['Part No.'] || "").trim(),
-            brand: String(r['Brand'] || r['Origin'] || "UAE").trim()
+            sup: String(r['Preferred Supplier'] || "").trim(),
+            brand: String(r['Brand'] || "").trim(),
+            origin: String(r['Origin'] || "UAE").trim(),
+            state: String(r['State'] || "").trim(),
+            part: String(r['Manu. Part No.'] || r['Part No.'] || "").trim()
         }));
         render(db);
     }
@@ -156,7 +158,7 @@
         document.getElementById('lvlBadge').innerHTML = `LVL<br>${words.length}`;
         document.getElementById('lvlBadge').style.display = val ? 'block' : 'none';
         const filtered = db.filter(r => {
-            const rowText = `${r.desc} ${r.sup} ${r.part} ${r.brand}`.toLowerCase();
+            const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.part}`.toLowerCase();
             return words.every(w => rowText.includes(w));
         });
         render(filtered, words);
@@ -166,14 +168,17 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 100).map(r => `
             <tr>
-                <td class="supplier-text">${highlight(r.sup, terms)}</td>
-                <td>
-                    <span class="desc-pill">${highlight(r.desc, terms)}</span>
-                    <span class="origin-pill">${highlight(r.brand, terms)}</span>
-                </td>
+                <td style="color:#94a3b8;">${r.id}</td>
+                <td style="font-weight:700;">${highlight(r.desc, terms)}</td>
                 <td class="price-text">${r.cost}</td>
-                <td style="color:#6366f1; font-weight:700;">${r.pack}</td>
-                <td>${highlight(r.cat, terms)}</td>
+                <td>${r.um}</td>
+                <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
+                <td style="color:#8b5cf6;">${highlight(r.sup, terms)}</td>
+                <td>
+                    <span class="brand-pill">${highlight(r.brand, terms)}</span>
+                    <span class="origin-pill">${r.origin}</span>
+                </td>
+                <td>${r.state}</td>
                 <td style="font-weight:600; color:#64748b;">${highlight(r.part, terms)}</td>
             </tr>
         `).join('');
