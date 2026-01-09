@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Ultra Liquid</title>
+    <title>Chef2Chef | Liquid Portal</title>
     
     <link rel="icon" type="image/png" href="logo.png">
 
@@ -13,13 +13,15 @@
     <style>
         :root {
             --brand: #10b981;
-            --bg-color: #ffffff;
+            --bg-color: #f8fafc;
             --text: #0f172a;
+            --glass-edge: rgba(255, 255, 255, 0.8);
         }
 
         [data-theme="dark"] {
             --bg-color: #020617;
             --text: #f1f5f9;
+            --glass-edge: rgba(255, 255, 255, 0.1);
         }
 
         body { 
@@ -29,67 +31,75 @@
             display: flex; flex-direction: column;
         }
 
+        /* Top Nav */
         .top-nav {
             padding: 10px 40px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
+            background: var(--bg-color); border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
         }
         .logo-text { font-weight: 800; font-size: 20px; }
         .logo-text span { color: var(--brand); }
 
-        /* Content - Items will be visible behind the bar */
+        /* Standard 1-Line Table View */
         .content-container {
-            flex: 1; overflow-y: auto; padding: 20px 40px 200px 40px;
+            flex: 1; overflow-y: auto; padding: 0 40px 250px 40px;
         }
 
         table { width: 100%; border-collapse: collapse; }
-        td { 
-            padding: 22px 15px; border-bottom: 1px solid rgba(0,0,0,0.03);
-            font-size: 15px; font-weight: 500;
+        th { 
+            position: sticky; top: 0; background: var(--bg-color); 
+            padding: 20px 10px; text-align: left; font-size: 11px; color: #94a3b8; 
+            text-transform: uppercase; z-index: 50;
         }
+        td { 
+            padding: 16px 10px; border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        tr:hover td { background: rgba(16, 185, 129, 0.03); }
 
-        /* IPHONE LIQUID DROP DESIGN */
-        .liquid-drop-container {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 1100px;
-            z-index: 1000; display: flex; align-items: center; gap: 15px;
+        /* TRUE LIQUID GHOST BAR */
+        .liquid-ghost-container {
+            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 1100px;
+            z-index: 1000; display: flex; align-items: center; gap: 20px;
         }
 
         .liquid-lens {
             flex: 1;
-            /* Pure Colorless Effect */
-            background: rgba(255, 255, 255, 0.01); 
-            backdrop-filter: blur(50px) saturate(180%) contrast(90%);
-            -webkit-backdrop-filter: blur(50px) saturate(180%) contrast(90%);
+            /* Completely Transparent Background - Background is 100% visible */
+            background: transparent; 
             
-            /* The "Water Drop" Border */
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 15px 45px rgba(0,0,0,0.1);
+            /* High-End iOS Blur Effect */
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
             
-            border-radius: 40px; padding: 10px 30px;
-            display: grid; grid-template-columns: 180px 1fr auto; gap: 20px; align-items: center;
+            /* Water Drop Border Effect */
+            border: 1.5px solid var(--glass-edge);
+            border-radius: 45px; padding: 8px 35px;
+            display: grid; grid-template-columns: 160px 1fr auto; gap: 25px; align-items: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
 
         input#searchIn {
             background: transparent; border: none;
-            color: var(--text); padding: 12px 0;
-            font-size: 22px; font-weight: 700; outline: none; width: 100%;
-            /* Makes placeholder look like it's part of the glass */
-            opacity: 0.9;
+            color: var(--text); padding: 15px 0;
+            font-size: 24px; font-weight: 700; outline: none; width: 100%;
         }
 
-        .lvl-pill {
-            background: var(--brand); color: white; padding: 6px 16px;
-            border-radius: 20px; font-size: 13px; font-weight: 800;
+        .stat-pill {
+            color: var(--brand); font-weight: 800; font-size: 14px;
+            background: rgba(16, 185, 129, 0.1); padding: 6px 15px; border-radius: 20px;
         }
-
-        .price-text { color: var(--brand); font-weight: 800; font-size: 18px; }
 
         .exit-btn {
-            background: #ef4444; color: white; border: none; width: 80px; height: 80px;
+            background: #ef4444; color: white; border: none; width: 85px; height: 85px;
             border-radius: 50%; font-weight: 800; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);
             display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
+        .exit-btn:hover { transform: scale(1.1) rotate(5deg); }
+
+        .price-text { color: var(--brand); font-weight: 800; }
     </style>
 </head>
 <body>
@@ -103,25 +113,29 @@
         <table>
             <thead>
                 <tr>
-                    <th style="text-align:left; color:#94a3b8; font-size:11px; padding-bottom:15px;">ITEM ID / DESCRIPTION FLOW</th>
+                    <th>Item ID</th>
+                    <th style="width: 400px;">Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Category</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td style="text-align:center; padding:200px; opacity:0.2;">Loading Liquid Engine...</td></tr>
+                <tr><td colspan="8" style="text-align:center; padding:150px; opacity:0.3;">System Ready. Background is now 100% visible.</td></tr>
             </tbody>
         </table>
     </div>
 
-    <div class="liquid-drop-container">
+    <div class="liquid-ghost-container">
         <div class="liquid-lens">
-            <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.4;">
+            <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.4; cursor: pointer;">
             
-            <div style="display: flex; align-items: center;">
-                <input type="text" id="searchIn" placeholder="Search 133k items...">
-                <div id="lvlBadge" class="lvl-pill" style="display: none;">LVL 0</div>
-            </div>
+            <input type="text" id="searchIn" placeholder="Search 133k items...">
 
-            <div id="statCount" style="font-weight: 800; font-size: 14px; color: var(--brand);">0 Items</div>
+            <div id="statCount" class="stat-pill">0 Items</div>
         </div>
         
         <button onclick="location.reload()" class="exit-btn">EXIT</button>
@@ -134,7 +148,7 @@
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { console.log("Manual upload needed."); }
+        } catch(e) { console.log("Manual load active."); }
     }
 
     function processData(csv) {
@@ -144,28 +158,20 @@
         db = raw.map(r => ({
             id: String(r['Item'] || r['Item ID'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
-            // Acknowledging user preference: remove 'aed' from prices
+            // ALWAYS remove 'aed' from prices
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             um: String(r['U/M'] || "").trim(),
             pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
             sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
-            cat: String(r['Cat 2'] || "").trim(),
-            state: String(r['State'] || ""),
-            part: String(r['Manu. Part No.'] || "")
+            cat: String(r['Cat 2'] || "").trim()
         }));
         render(db);
     }
 
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
-        const badge = document.getElementById('lvlBadge');
-        if(!val) { badge.style.display='none'; render(db); return; }
-        
         const words = val.split(/\s+/);
-        badge.innerText = `LVL ${words.length}`;
-        badge.style.display = 'block';
-
         const filtered = db.filter(r => {
             const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.cat}`.toLowerCase();
             return words.every(w => rowText.includes(w));
@@ -177,29 +183,24 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 100).map(r => `
             <tr>
-                <td onclick="copy('${r.desc}', this)">
-                    <span style="color:#94a3b8; font-size:12px;">${r.id}</span><br>
-                    <strong>${highlight(r.desc, terms)}</strong><br>
-                    <span class="price-text">${r.cost}</span> — 
-                    <span style="color:#6366f1;">${r.pack}</span> — 
-                    <span style="opacity:0.6;">${r.sup}</span>
-                </td>
+                <td style="color:#94a3b8;">${r.id}</td>
+                <td><strong>${highlight(r.desc, terms)}</strong></td>
+                <td class="price-text">${r.cost}</td>
+                <td>${r.um}</td>
+                <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
+                <td>${highlight(r.sup, terms)}</td>
+                <td>${r.brand}</td>
+                <td>${r.cat}</td>
             </tr>
         `).join('');
         document.getElementById('statCount').innerText = `${data.length} Items`;
     }
 
     function highlight(t, words) {
-        if(!t || !words.length) return t;
+        if(!t || !words.length || words[0] === "") return t;
         let html = t;
-        words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark style="background:#fef08a; border-radius:4px; padding:0 2px;">$1</mark>'); });
+        words.forEach(w => { if(w.length > 1) html = html.replace(new RegExp(`(${w})`, 'gi'), '<mark style="background:#fef08a; border-radius:4px;">$1</mark>'); });
         return html;
-    }
-
-    function copy(txt, el) {
-        navigator.clipboard.writeText(txt);
-        el.style.color = "var(--brand)";
-        setTimeout(() => el.style.color = "", 300);
     }
 
     function toggleTheme() {
