@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Liquid Portal</title>
+    <title>Chef2Chef | Ghost Portal</title>
     
     <link rel="icon" type="image/png" href="logo.png">
 
@@ -13,15 +13,13 @@
     <style>
         :root {
             --brand: #10b981;
-            --bg-color: #f8fafc;
+            --bg-color: #ffffff;
             --text: #0f172a;
-            --glass-edge: rgba(255, 255, 255, 0.8);
         }
 
         [data-theme="dark"] {
             --bg-color: #020617;
             --text: #f1f5f9;
-            --glass-edge: rgba(255, 255, 255, 0.1);
         }
 
         body { 
@@ -31,73 +29,70 @@
             display: flex; flex-direction: column;
         }
 
-        /* Top Nav */
+        /* Top Nav - Standard Style */
         .top-nav {
-            padding: 10px 40px; display: flex; justify-content: space-between; align-items: center;
-            background: var(--bg-color); border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100;
+            padding: 12px 40px; display: flex; justify-content: space-between; align-items: center;
+            background: #0f172a; color: white; z-index: 100;
         }
         .logo-text { font-weight: 800; font-size: 20px; }
         .logo-text span { color: var(--brand); }
 
-        /* Standard 1-Line Table View */
+        /* Professional 1-Line Table */
         .content-container {
-            flex: 1; overflow-y: auto; padding: 0 40px 250px 40px;
+            flex: 1; overflow-y: auto; padding: 0 40px 200px 40px;
         }
 
         table { width: 100%; border-collapse: collapse; }
         th { 
             position: sticky; top: 0; background: var(--bg-color); 
             padding: 20px 10px; text-align: left; font-size: 11px; color: #94a3b8; 
-            text-transform: uppercase; z-index: 50;
+            text-transform: uppercase; z-index: 50; border-bottom: 1px solid #e2e8f0;
         }
         td { 
-            padding: 16px 10px; border-bottom: 1px solid rgba(0,0,0,0.04);
-            font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding: 14px 10px; border-bottom: 1px solid #f1f5f9;
+            font-size: 14px; white-space: nowrap;
         }
         tr:hover td { background: rgba(16, 185, 129, 0.03); }
 
-        /* TRUE LIQUID GHOST BAR */
-        .liquid-ghost-container {
-            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+        /* THE GHOST LIQUID BAR */
+        .ghost-controller {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px;
-            z-index: 1000; display: flex; align-items: center; gap: 20px;
+            z-index: 1000; display: flex; align-items: center; gap: 15px;
         }
 
-        .liquid-lens {
+        .lens {
             flex: 1;
-            /* Completely Transparent Background - Background is 100% visible */
+            /* COMPLETELY CLEAR - NO BACKGROUND COLOR */
             background: transparent; 
+            /* High-End Apple Blur */
+            backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%);
             
-            /* High-End iOS Blur Effect */
-            backdrop-filter: blur(40px) saturate(150%);
-            -webkit-backdrop-filter: blur(40px) saturate(150%);
-            
-            /* Water Drop Border Effect */
-            border: 1.5px solid var(--glass-edge);
-            border-radius: 45px; padding: 8px 35px;
-            display: grid; grid-template-columns: 160px 1fr auto; gap: 25px; align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            /* Thin Glass Edge */
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50px; padding: 10px 35px;
+            display: grid; grid-template-columns: 140px 1fr auto; gap: 20px; align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
         }
 
         input#searchIn {
             background: transparent; border: none;
-            color: var(--text); padding: 15px 0;
+            color: var(--text); padding: 10px 0;
             font-size: 24px; font-weight: 700; outline: none; width: 100%;
         }
 
-        .stat-pill {
+        .count-pill {
             color: var(--brand); font-weight: 800; font-size: 14px;
-            background: rgba(16, 185, 129, 0.1); padding: 6px 15px; border-radius: 20px;
+            background: rgba(16, 185, 129, 0.1); padding: 8px 18px; border-radius: 20px;
         }
 
         .exit-btn {
-            background: #ef4444; color: white; border: none; width: 85px; height: 85px;
+            background: #ef4444; color: white; border: none; width: 80px; height: 80px;
             border-radius: 50%; font-weight: 800; cursor: pointer;
-            box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
             display: flex; align-items: center; justify-content: center;
-            transition: 0.3s;
         }
-        .exit-btn:hover { transform: scale(1.1) rotate(5deg); }
 
         .price-text { color: var(--brand); font-weight: 800; }
     </style>
@@ -106,7 +101,7 @@
 
     <nav class="top-nav">
         <div class="logo-text">CHEF2CHEF <span>MASTER</span></div>
-        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:22px;">🌓</button>
+        <button onclick="toggleTheme()" style="background:var(--brand); color:white; border:none; padding:5px 15px; border-radius:15px; font-weight:800; cursor:pointer;">DARK MODE</button>
     </nav>
 
     <div class="content-container">
@@ -114,28 +109,29 @@
             <thead>
                 <tr>
                     <th>Item ID</th>
-                    <th style="width: 400px;">Description</th>
+                    <th style="width: 450px;">Description</th>
                     <th>Cost</th>
                     <th>U/M</th>
                     <th>Packing</th>
                     <th>Supplier</th>
                     <th>Brand/Origin</th>
                     <th>Category</th>
+                    <th>State</th>
                 </tr>
             </thead>
             <tbody id="list">
-                <tr><td colspan="8" style="text-align:center; padding:150px; opacity:0.3;">System Ready. Background is now 100% visible.</td></tr>
+                <tr><td colspan="9" style="text-align:center; padding:150px; opacity:0.3;">Background is 100% visible. Scroll data to see liquid lens.</td></tr>
             </tbody>
         </table>
     </div>
 
-    <div class="liquid-ghost-container">
-        <div class="liquid-lens">
-            <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.4; cursor: pointer;">
+    <div class="ghost-controller">
+        <div class="lens">
+            <input type="file" id="fileIn" style="font-size: 10px; opacity: 0.5;">
             
             <input type="text" id="searchIn" placeholder="Search 133k items...">
 
-            <div id="statCount" class="stat-pill">0 Items</div>
+            <div id="statCount" class="count-pill">0 Items</div>
         </div>
         
         <button onclick="location.reload()" class="exit-btn">EXIT</button>
@@ -148,7 +144,7 @@
             const res = await fetch('data.csv?v=' + Date.now());
             const text = await res.text();
             processData(text);
-        } catch(e) { console.log("Manual load active."); }
+        } catch(e) { console.log("Waiting for file..."); }
     }
 
     function processData(csv) {
@@ -164,7 +160,8 @@
             pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
             sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "") + " / " + String(r['Origin'] || ""),
-            cat: String(r['Cat 2'] || "").trim()
+            cat: String(r['Cat 2'] || "").trim(),
+            state: String(r['State'] || "")
         }));
         render(db);
     }
@@ -187,10 +184,11 @@
                 <td><strong>${highlight(r.desc, terms)}</strong></td>
                 <td class="price-text">${r.cost}</td>
                 <td>${r.um}</td>
-                <td style="color:#6366f1; font-weight:700;">${highlight(r.pack, terms)}</td>
-                <td>${highlight(r.sup, terms)}</td>
+                <td style="color:#6366f1; font-weight:700;">${r.pack}</td>
+                <td>${r.sup}</td>
                 <td>${r.brand}</td>
                 <td>${r.cat}</td>
+                <td>${r.state}</td>
             </tr>
         `).join('');
         document.getElementById('statCount').innerText = `${data.length} Items`;
