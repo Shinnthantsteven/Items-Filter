@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chef2Chef | Master Portal</title>
     
-    <link rel="icon" type="image/png" href="logo.png?v=6">
+    <link rel="icon" type="image/png" href="logo.png?v=7">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
@@ -44,10 +45,18 @@
         .app-container { max-width: 1800px; margin: auto; background: var(--bg-card); border-radius: 16px; display: flex; flex-direction: column; height: 95vh; overflow: hidden; border: 1px solid var(--border); }
         
         .header { background: var(--brand-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* User Presence Styles */
+        .presence-box { display: flex; align-items: center; gap: 8px; }
+        .user-dot { 
+            width: 32px; height: 32px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 12px; font-weight: 800; color: white;
+            border: 2px solid var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         .dashboard { display: grid; grid-template-columns: 280px 1fr auto; gap: 20px; padding: 20px 30px; border-bottom: 1px solid var(--border); align-items: flex-end; }
-        
         input[type="text"], input[type="file"] { background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; font-family: inherit; }
-        
         .theme-btn { background: var(--brand-primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; margin-right: 10px; font-family: inherit; }
 
         .table-wrap { flex: 1; overflow: auto; padding: 0 30px; }
@@ -58,7 +67,6 @@
         
         mark { background: #fef08a; color: #854d0e; border-radius: 2px; padding: 0 2px; }
         .footer { padding: 10px 30px; background: var(--bg-page); border-top: 1px solid var(--border); font-size: 11px; display: flex; justify-content: space-between; }
-        
         .copy-flash { background: #bbf7d0 !important; }
     </style>
 </head>
@@ -79,9 +87,11 @@
     <div class="app-container">
         <div class="header">
             <div><h1 style="margin:0; font-size:20px;">CHEF2CHEF <span style="color:var(--brand-primary)">MASTER</span></h1></div>
-            <div style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="presence-box" id="presenceBox">
+                    <span style="font-size: 10px; font-weight: 800; color: #94a3b8; margin-right: 5px;">TEAM ONLINE:</span>
+                    </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌓 THEME</button>
-                <div id="userBadge" style="font-size: 11px; font-weight: 800; border: 1px solid var(--brand-primary); padding: 5px 12px; border-radius: 20px; color: var(--brand-primary)">USER: -</div>
             </div>
         </div>
 
@@ -107,7 +117,7 @@
         </div>
         <div class="footer">
             <span id="count">System Ready</span>
-            <span>Double-click any cell to copy data</span>
+            <span id="connectionStatus" style="color: var(--brand-primary)">● Real-time Linked</span>
         </div>
     </div>
 </div>
@@ -115,6 +125,10 @@
 <script>
     const TEAM_PASSWORD = "***REMOVED-PASSWORD***"; 
     const ALLOWED_USERS = ["STEVE", "FATIMA", "ASWAN", "JOBY"];
+    
+    // Ably Real-time Setup
+    const ably = new Ably.Realtime('vwD-pg.oM15-Q:uY3BSShx_2Xkbbx2gPNWXcBHmzzBj6iUdUUMrcz6Z0A');
+    const channel = ably.channels.get('chef2chef-presence');
 
     function checkPass() {
         const user = document.getElementById('userInput').value.trim().toUpperCase();
@@ -122,10 +136,36 @@
         if(ALLOWED_USERS.includes(user) && pass === TEAM_PASSWORD) {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('userBadge').innerText = `USER: ${user}`;
+            
+            // Enter Presence
+            channel.presence.enter(user);
         } else {
             document.getElementById('errMsg').style.display = 'block';
         }
+    }
+
+    // Handle Real-time Presence Updates
+    channel.presence.subscribe('enter', updatePresence);
+    channel.presence.subscribe('leave', updatePresence);
+    channel.presence.subscribe('present', updatePresence);
+
+    function updatePresence() {
+        channel.presence.get((err, members) => {
+            const box = document.getElementById('presenceBox');
+            // Remove old dots but keep the label
+            box.innerHTML = '<span style="font-size: 10px; font-weight: 800; color: #94a3b8; margin-right: 5px;">TEAM ONLINE:</span>';
+            
+            members.forEach(m => {
+                const dot = document.createElement('div');
+                dot.className = 'user-dot';
+                dot.innerText = m.data.charAt(0);
+                // Assign unique color based on name
+                const colors = ['#10b981', '#6366f1', '#f59e0b', '#ef4444'];
+                dot.style.background = colors[ALLOWED_USERS.indexOf(m.data) % colors.length];
+                dot.title = m.data;
+                box.appendChild(dot);
+            });
+        });
     }
 
     function toggleTheme() {
@@ -206,4 +246,3 @@
 </script>
 </body>
 </html>
-
