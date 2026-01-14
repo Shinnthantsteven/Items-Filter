@@ -18,6 +18,7 @@
             --danger: #ef4444;
             --portal-bg: rgba(15, 23, 42, 0.95);
             --input-bg: rgba(0,0,0,0.5);
+            --hl: #fbbf24; /* Yellow Highlight Color */
         }
 
         [data-theme="light"] {
@@ -29,12 +30,13 @@
             --input-bg: rgba(255,255,255,0.8);
         }
 
-        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.4s; }
+        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.3s; }
 
-        /* THEME TOGGLE */
+        /* HIGHLIGHT STYLE */
+        mark { background: var(--hl); color: #000; border-radius: 2px; padding: 0 2px; }
+
         .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
 
-        /* LOGIN SCREEN DESIGN */
         #loginScreen {
             position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -43,20 +45,18 @@
         .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
         
         .login-card { background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; border: 1px solid var(--glass-edge); text-align: center; width: 440px; backdrop-filter: blur(20px); }
-        .login-card h1 { margin: 0; font-weight: 800; word-spacing: 6px; letter-spacing: 0.5px; font-size: 28px; }
-        .login-card p { opacity: 0.5; font-size: 11px; margin-top: 12px; margin-bottom: 35px; letter-spacing: 2px; }
+        .login-card h1 { margin: 0; font-weight: 800; font-size: 28px; }
 
         .login-card input { 
             width: 100%; padding: 20px; border-radius: 20px; border: 1px solid var(--glass-edge);
-            background: var(--input-bg); color: var(--text); font-weight: 600; font-size: 20px; outline: none; text-align: center;
+            background: var(--input-bg); color: var(--text); font-weight: 600; font-size: 20px; outline: none; text-align: center; margin-top: 20px;
         }
-        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(16,185,129,0.3); }
+        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
 
-        /* HEADER WITH GITHUB LOGO */
         .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
-        .logo-container { display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; cursor: pointer; }
-        .logo-img { height: 40px; width: 40px; object-fit: contain; border-radius: 8px; }
-        .logo-text { font-weight: 800; font-size: 24px; }
+        .logo-container { display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; }
+        .logo-img { height: 45px; width: 45px; object-fit: contain; }
+        .logo-text { font-weight: 800; font-size: 26px; }
 
         .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -64,14 +64,14 @@
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
         /* COLUMN WIDTHS */
-        th:nth-child(1) { width: 90px; }   /* ID */
-        th:nth-child(2) { width: 48%; }    /* DESCRIPTION */
-        th:nth-child(3) { width: 75px; }   /* COST */
-        th:nth-child(4) { width: 75px; }   /* U/M */
-        th:nth-child(5) { width: 110px; }  /* PACKING */
-        th:nth-child(6) { width: 160px; }  /* SUPPLIER */
-        th:nth-child(7) { width: 180px; }  /* BRAND/ORIGIN */
-        th:nth-child(8) { width: 80px; }   /* PART NO. */
+        th:nth-child(1) { width: 90px; }
+        th:nth-child(2) { width: 48%; }
+        th:nth-child(3) { width: 75px; }
+        th:nth-child(4) { width: 75px; }
+        th:nth-child(5) { width: 110px; }
+        th:nth-child(6) { width: 160px; }
+        th:nth-child(7) { width: 180px; }
+        th:nth-child(8) { width: 80px; }
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
@@ -79,7 +79,6 @@
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
         .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
         
-        /* PORTAL BAR */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
@@ -99,10 +98,9 @@
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
             <h1>CHEF2CHEF ITEM CODE</h1>
-            <p>ROOT: STEVE | ACCESS REQUIRED</p>
             <input type="password" id="passIn" placeholder="••••••••">
-            <button class="unlock-btn" onclick="checkAuth()">UNLOCK SYSTEM</button>
-            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700; height:12px;"></p>
+            <button class="unlock-btn" onclick="checkAuth()">UNLOCK</button>
+            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
         </div>
     </div>
 
@@ -110,10 +108,10 @@
 
     <nav class="top-nav">
         <a href="https://chef2chef.ae" target="_blank" class="logo-container">
-            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="logo-img" alt="Logo">
+            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="logo-img">
             <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
         </a>
-        <div class="nav-right" style="display:flex; align-items:center; gap:20px;">
+        <div style="display:flex; align-items:center; gap:20px;">
             <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
             <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
         </div>
@@ -140,34 +138,30 @@
     <div class="portal-bar">
         <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
         <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
-        <input type="text" id="searchIn" placeholder="Search Master Records...">
+        <input type="text" id="searchIn" placeholder="Search across all fields...">
         <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
     </div>
 
 <script>
     let db = [];
-    const passInput = document.getElementById('passIn');
-
-    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAuth(); });
+    let currentSearch = "";
 
     function toggleTheme() {
         const doc = document.documentElement;
-        const current = doc.getAttribute('data-theme');
-        const next = current === 'light' ? 'dark' : 'light';
+        const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         doc.setAttribute('data-theme', next);
         document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
     }
 
     function checkAuth() {
-        if(passInput.value === '***REMOVED-PASSWORD***') {
+        if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
             document.getElementById('knife').classList.add('knife-slice');
             setTimeout(() => {
                 document.getElementById('loginScreen').style.display = 'none';
                 autoLoad();
             }, 400);
         } else {
-            document.getElementById('err').innerText = "ACCESS DENIED";
-            passInput.value = "";
+            document.getElementById('err').innerText = "DENIED";
         }
     }
 
@@ -202,12 +196,21 @@
         render(db);
     }
 
-    // UPDATED GLOBAL DEEP-SCAN SEARCH
+    function highlight(text) {
+        if (!currentSearch) return text;
+        const words = currentSearch.split(/\s+/).filter(w => w.length > 0);
+        let highlighted = text;
+        words.forEach(word => {
+            const reg = new RegExp(`(${word})`, 'gi');
+            highlighted = highlighted.replace(reg, '<mark>$1</mark>');
+        });
+        return highlighted;
+    }
+
     document.getElementById('searchIn').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase().trim();
-        const terms = val.split(/\s+/);
+        currentSearch = e.target.value.toLowerCase().trim();
+        const terms = currentSearch.split(/\s+/);
         const filtered = db.filter(r => {
-            // Searches through EVERYTHING simultaneously
             const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
             return terms.every(term => rowText.includes(term));
         });
@@ -218,17 +221,17 @@
         const list = document.getElementById('list');
         list.innerHTML = data.slice(0, 150).map(r => `
             <tr>
-                <td style="color:#64748b; font-size:12px;">${r.id}</td>
-                <td><div class="desc-cell">${r.desc}</div></td>
+                <td style="color:#64748b; font-size:12px;">${highlight(r.id)}</td>
+                <td><div class="desc-cell">${highlight(r.desc)}</div></td>
                 <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
-                <td style="font-weight:700;">${r.um}</td>
-                <td style="color:#818cf8; font-weight:700;">${r.pack}</td>
-                <td style="color:#a78bfa; font-size:13px;">${r.sup}</td>
+                <td style="font-weight:700;">${highlight(r.um)}</td>
+                <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
+                <td style="color:#a78bfa; font-size:13px;">${highlight(r.sup)}</td>
                 <td>
-                    <span class="brand-pill">${r.brand}</span>
-                    <span class="origin-pill">${r.origin}</span>
+                    <span class="brand-pill">${highlight(r.brand)}</span>
+                    <span class="origin-pill">${highlight(r.origin)}</span>
                 </td>
-                <td style="font-weight:700; color:#64748b; font-size:12px;">${r.part}</td>
+                <td style="font-weight:700; color:#64748b; font-size:12px;">${highlight(r.part)}</td>
             </tr>
         `).join('');
     }
