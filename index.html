@@ -31,11 +31,9 @@
 
         body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.4s; }
 
-        /* --- THEME TOGGLE ICON --- */
         .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .theme-btn:hover { transform: scale(1.1) rotate(15deg); }
 
-        /* --- LOGIN SCREEN --- */
         #loginScreen {
             position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -46,23 +44,8 @@
         
         .login-card { background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; border: 1px solid var(--glass-edge); text-align: center; width: 440px; backdrop-filter: blur(20px); }
         
-        /* Updated Header Spacing */
-        .login-card h1 { 
-            margin: 0; 
-            font-weight: 800; 
-            word-spacing: 6px; 
-            letter-spacing: 0.5px; 
-            font-size: 28px; 
-            color: var(--text); 
-        }
-        .login-card p { 
-            opacity: 0.5; 
-            font-size: 11px; 
-            margin-top: 12px; 
-            margin-bottom: 35px; 
-            letter-spacing: 2px; 
-            color: var(--text);
-        }
+        .login-card h1 { margin: 0; font-weight: 800; word-spacing: 6px; letter-spacing: 0.5px; font-size: 28px; color: var(--text); }
+        .login-card p { opacity: 0.5; font-size: 11px; margin-top: 12px; margin-bottom: 35px; letter-spacing: 2px; color: var(--text); }
 
         .pass-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
         .login-card input { 
@@ -72,9 +55,10 @@
         
         .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(16,185,129,0.3); }
 
-        /* --- DASHBOARD --- */
         .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
-        .logo-link { text-decoration: none; color: inherit; font-weight: 800; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        
+        /* LOGO LINK FIXED */
+        .logo-link { text-decoration: none; color: inherit; font-weight: 800; font-size: 24px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .logo-link:hover { opacity: 0.8; }
 
         .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
@@ -82,15 +66,15 @@
         
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); transition: background 0.3s; }
 
-        /* COLUMN WIDTHS & SPACING */
-        th:nth-child(1) { width: 110px; } 
-        th:nth-child(2) { width: 40%; } 
-        th:nth-child(3) { width: 100px; } 
-        th:nth-child(4) { width: 90px; } 
-        th:nth-child(5) { width: 130px; }
-        th:nth-child(6) { width: 190px; }
-        th:nth-child(7) { width: 220px; }
-        th:nth-child(8) { width: 120px; }
+        /* COLUMN WIDTHS OPTIMIZED FOR DESCRIPTION */
+        th:nth-child(1) { width: 90px; }   /* ID */
+        th:nth-child(2) { width: 45%; }    /* DESCRIPTION (Expanded) */
+        th:nth-child(3) { width: 85px; }   /* COST */
+        th:nth-child(4) { width: 85px; }   /* U/M */
+        th:nth-child(5) { width: 110px; }  /* PACKING */
+        th:nth-child(6) { width: 170px; }  /* SUPPLIER */
+        th:nth-child(7) { width: 210px; }  /* BRAND/ORIGIN */
+        th:nth-child(8) { width: 95px; }   /* PART NO. (Minimized) */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); }
@@ -98,7 +82,6 @@
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
         .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
         
-        /* PORTAL BAR THEME FIX */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
