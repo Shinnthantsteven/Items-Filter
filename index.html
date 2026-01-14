@@ -1,357 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=1200, initial-scale=0.1">
-<title>Chef2Chef | Master Code</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=0.1">
+    <title>Chef2Chef | Master Code Engine</title>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --brand: #10b981;
+            --bg-color: #020617;
+            --text: #f1f5f9;
+            --header-bg: #010409;
+            --glass-edge: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            /* UPDATED: Lower opacity for 100% background penetration */
+            --portal-bg: rgba(15, 23, 42, 0.45); 
+            --input-bg: rgba(0,0,0,0.3);
+            --hl: #fbbf24;
+        }
 
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --text: #0f172a;
+            --header-bg: #ffffff;
+            --glass-edge: rgba(0, 0, 0, 0.1);
+            --portal-bg: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255,255,255,0.4);
+        }
 
-<style>
-:root {
-    --brand: #10b981;
-    --bg-color: #020617;
-    --text: #f1f5f9;
-    --header-bg: #010409;
-    --glass-edge: rgba(255,255,255,0.15);
-    --danger: #ef4444;
-    --portal-bg: rgba(15,23,42,0.75);
-    --input-bg: rgba(0,0,0,0.45);
-    --hl: #fbbf24;
-}
+        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.3s; }
 
-[data-theme="light"] {
-    --bg-color: #f8fafc;
-    --text: #0f172a;
-    --header-bg: #ffffff;
-    --glass-edge: rgba(0,0,0,0.12);
-    --portal-bg: rgba(255,255,255,0.75);
-    --input-bg: rgba(255,255,255,0.8);
-}
+        mark { background: var(--hl); color: #000; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
 
-html,body{
-    margin:0;
-    height:100vh;
-    font-family:'Plus Jakarta Sans',sans-serif;
-    background:var(--bg-color);
-    color:var(--text);
-    overflow:hidden;
-}
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
 
-mark{
-    background:var(--hl);
-    color:#000;
-    border-radius:3px;
-    padding:0 3px;
-}
+        /* LOGIN SCREEN */
+        #loginScreen {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
+        .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
+        
+        .login-card { background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; border: 1px solid var(--glass-edge); text-align: center; width: 440px; backdrop-filter: blur(20px); }
+        .login-card h1 { margin: 0; font-weight: 800; font-size: 28px; }
 
-/* ================= LOGIN (APPLE LIQUID) ================= */
-#loginScreen{
-    position:fixed;
-    inset:0;
-    background:
-      radial-gradient(1200px 600px at top, rgba(16,185,129,.15), transparent),
-      var(--bg-color);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:2000;
-}
+        .login-card input { 
+            width: 100%; padding: 20px; border-radius: 20px; border: 1px solid var(--glass-edge);
+            background: var(--input-bg); color: var(--text); font-weight: 600; font-size: 20px; outline: none; text-align: center; margin-top: 20px;
+        }
+        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
 
-.login-card{
-    width:420px;
-    padding:50px;
-    border-radius:36px;
-    background:rgba(255,255,255,0.08);
-    backdrop-filter: blur(28px) saturate(160%);
-    border:1px solid var(--glass-edge);
-    text-align:center;
-    box-shadow:0 30px 80px rgba(0,0,0,.4);
-}
+        /* HEADER */
+        .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
+        .logo-container { display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; }
+        .logo-img { height: 45px; width: 45px; object-fit: contain; }
+        .logo-text { font-weight: 800; font-size: 26px; }
 
-.knife-box{
-    font-size:80px;
-    margin-bottom:20px;
-    filter:drop-shadow(0 0 25px var(--brand));
-    transition:.5s;
-}
-.knife-slice{transform:scale(15) translateX(120px);opacity:0;}
+        /* TABLE */
+        .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-.login-card h1{
-    font-size:28px;
-    font-weight:800;
-    margin-bottom:25px;
-}
+        th:nth-child(1) { width: 90px; }
+        th:nth-child(2) { width: 45%; }
+        th:nth-child(3) { width: 80px; }
+        th:nth-child(4) { width: 80px; }
+        th:nth-child(5) { width: 110px; }
+        th:nth-child(6) { width: 160px; }
+        th:nth-child(7) { width: 180px; }
+        th:nth-child(8) { width: 80px; }
 
-.login-card input{
-    width:100%;
-    padding:18px;
-    border-radius:18px;
-    border:1px solid var(--glass-edge);
-    background:rgba(0,0,0,.35);
-    color:var(--text);
-    font-size:20px;
-    text-align:center;
-    outline:none;
-}
+        td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
+        
+        .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
+        .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
+        
+        /* UPDATED: GLASS PENETRATION SEARCH BAR */
+        .portal-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
+            background: var(--portal-bg); 
+            backdrop-filter: blur(15px); /* Moderate blur so text is visible but readable */
+            -webkit-backdrop-filter: blur(15px);
+            border: 1.5px solid var(--glass-edge); display: flex; align-items: center; gap: 20px; z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
+        #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
-.unlock-btn{
-    width:100%;
-    margin-top:20px;
-    padding:18px;
-    border-radius:18px;
-    border:none;
-    background:linear-gradient(135deg,#10b981,#34d399);
-    color:#fff;
-    font-weight:800;
-    cursor:pointer;
-}
-
-/* ================= TOP NAV ================= */
-.top-nav{
-    padding:15px 40px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    background:var(--header-bg);
-    border-bottom:1px solid var(--glass-edge);
-}
-
-.logo-container{
-    display:flex;
-    align-items:center;
-    gap:15px;
-    text-decoration:none;
-    color:inherit;
-}
-.logo-img{height:45px;width:45px;}
-.logo-text{font-size:26px;font-weight:800;}
-
-.theme-btn{
-    background:none;
-    border:none;
-    font-size:26px;
-    cursor:pointer;
-}
-
-/* ================= TABLE ================= */
-.content-container{
-    height:calc(100vh - 80px);
-    overflow-y:auto;
-    padding:0 40px 180px;
-}
-
-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-th{
-    position:sticky;
-    top:0;
-    background:var(--bg-color);
-    padding:25px 15px;
-    font-size:11px;
-    text-transform:uppercase;
-    border-bottom:2px solid var(--brand);
-}
-
-td{
-    padding:22px 15px;
-    border-bottom:1px solid var(--glass-edge);
-    font-size:14px;
-    cursor:pointer;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-.desc-cell{white-space:normal;font-weight:800;}
-
-.brand-pill{
-    background:rgba(59,130,246,.15);
-    color:#3b82f6;
-    padding:6px 12px;
-    border-radius:8px;
-    font-weight:700;
-    font-size:12px;
-}
-.origin-pill{
-    background:rgba(16,185,129,.15);
-    color:var(--brand);
-    padding:6px 12px;
-    border-radius:8px;
-    font-weight:700;
-    font-size:12px;
-    margin-left:5px;
-}
-
-/* ================= SEARCH BAR (APPLE LIQUID) ================= */
-.portal-bar{
-    position:fixed;
-    bottom:30px;
-    left:50%;
-    transform:translateX(-50%);
-    width:85%;
-    max-width:1100px;
-    padding:18px 40px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.12);
-    backdrop-filter: blur(30px) saturate(180%);
-    border:1px solid var(--glass-edge);
-    display:flex;
-    gap:20px;
-    align-items:center;
-    z-index:1000;
-    box-shadow:0 25px 70px rgba(0,0,0,.35);
-}
-
-#searchIn{
-    flex:1;
-    background:transparent;
-    border:none;
-    color:var(--text);
-    font-size:24px;
-    font-weight:700;
-    outline:none;
-}
-#searchIn::placeholder{opacity:.35;}
-
-#toast{
-    position:fixed;
-    bottom:120px;
-    left:50%;
-    transform:translateX(-50%);
-    background:var(--brand);
-    color:#fff;
-    padding:10px 30px;
-    border-radius:50px;
-    font-weight:800;
-    display:none;
-}
-</style>
+        #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
+    </style>
 </head>
-
 <body onload="document.getElementById('passIn').focus()">
 
-<div id="loginScreen">
-    <div>
+    <div id="loginScreen">
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
-            <h1>CHEF2CHEF ITEM CODE</h1>
-            <input id="passIn" type="password" placeholder="••••••••">
-            <button class="unlock-btn" onclick="checkAuth()">UNLOCK</button>
-            <p id="err" style="color:var(--danger);font-size:11px;font-weight:700;margin-top:15px;"></p>
+            <h1>CHEF2CHEF MASTER</h1>
+            <input type="password" id="passIn" placeholder="Enter Access Code">
+            <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
+            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
         </div>
     </div>
-</div>
 
-<div id="toast">COPIED</div>
+    <div id="toast">COPIED</div>
 
-<nav class="top-nav">
-    <a href="https://chef2chef.ae" target="_blank" class="logo-container">
-        <img src="logo.png" class="logo-img">
-        <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
-    </a>
-    <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
-</nav>
+    <nav class="top-nav">
+        <a href="https://chef2chef.ae" target="_blank" class="logo-container">
+            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="logo-img">
+            <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
+            <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
+        </div>
+    </nav>
 
-<div class="content-container">
-<table>
-<thead>
-<tr>
-<th>ID</th><th>Description</th><th>Cost</th><th>U/M</th>
-<th>Packing</th><th>Supplier</th><th>Brand/Origin</th><th>Part No.</th>
-</tr>
-</thead>
-<tbody id="list" onclick="handleQuickCopy(event)"></tbody>
-</table>
-</div>
+    <div class="content-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Part No.</th>
+                </tr>
+            </thead>
+            <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
+        </table>
+    </div>
 
-<div class="portal-bar">
-    <input type="file" id="fileIn" hidden onchange="manualUpload(event)">
-    <button onclick="fileIn.click()">📁</button>
-    <input id="searchIn" placeholder="Search across all fields…">
-    <button onclick="location.reload()" style="background:var(--danger);color:#fff;border:none;padding:12px 30px;border-radius:50px;font-weight:800;">EXIT</button>
-</div>
+    <div class="portal-bar">
+        <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
+        <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
+        <input type="text" id="searchIn" placeholder="Search Master Records...">
+        <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
+    </div>
 
 <script>
-let db=[],currentSearch="";
+    let db = [];
+    let currentSearch = "";
 
-function toggleTheme(){
-    const d=document.documentElement;
-    const n=d.getAttribute("data-theme")==="light"?"dark":"light";
-    d.setAttribute("data-theme",n);
-    navToggle.textContent=n==="light"?"☀️":"🌙";
-}
+    function toggleTheme() {
+        const doc = document.documentElement;
+        const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        doc.setAttribute('data-theme', next);
+        document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
+    }
 
-function checkAuth(){
-    if(passIn.value==="***REMOVED-PASSWORD***"){
-        knife.classList.add("knife-slice");
-        setTimeout(()=>{
-            loginScreen.style.display="none";
-            autoLoad();
-        },400);
-    }else err.textContent="DENIED";
-}
+    function checkAuth() {
+        if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
+            document.getElementById('knife').classList.add('knife-slice');
+            setTimeout(() => {
+                document.getElementById('loginScreen').style.display = 'none';
+                autoLoad();
+            }, 400);
+        } else {
+            document.getElementById('err').innerText = "INVALID ACCESS CODE";
+        }
+    }
 
-async function autoLoad(){
-    const r=await fetch("data.csv?v="+Date.now());
-    processData(await r.text());
-}
+    async function autoLoad() {
+        try {
+            const res = await fetch('data.csv?v=' + Date.now());
+            const text = await res.text();
+            processData(text);
+        } catch(e) {}
+    }
 
-function manualUpload(e){
-    const r=new FileReader();
-    r.onload=x=>processData(x.target.result);
-    r.readAsText(e.target.files[0]);
-}
+    function manualUpload(e) {
+        const reader = new FileReader();
+        reader.onload = (event) => processData(event.target.result);
+        reader.readAsText(e.target.files[0]);
+    }
 
-function processData(csv){
-    const wb=XLSX.read(csv,{type:"string"});
-    const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-    db=raw.map(r=>({
-        id:String(r.Item||r["Item ID"]||""),
-        desc:String(r.Description||""),
-        cost:String(r.Cost||r.Price||""),
-        um:String(r["U/M"]||""),
-        pack:String(r["Case Packing"]||r["Case Pack"]||r.Packing||""),
-        sup:String(r["Preferred Supplier"]||""),
-        brand:String(r.Brand||""),
-        origin:String(r.Origin||"UAE"),
-        part:String(r["Manu. Part No."]||r["Part No."]||"")
-    }));
-    render(db);
-}
+    function processData(csv) {
+        const wb = XLSX.read(csv, { type: 'string' });
+        const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        db = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || "").trim(),
+            desc: String(r['Description'] || "").trim(),
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(r['U/M'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
+            sup: String(r['Preferred Supplier'] || "").trim(),
+            brand: String(r['Brand'] || "").trim(),
+            origin: String(r['Origin'] || "UAE").trim(),
+            part: String(r['Manu. Part No.'] || r['Part No.'] || "").trim()
+        }));
+        render(db);
+    }
 
-function highlight(t){
-    if(!currentSearch)return t;
-    return t.replace(new RegExp(`(${currentSearch})`,"gi"),"<mark>$1</mark>");
-}
+    function highlight(text) {
+        if (!currentSearch) return text;
+        const words = currentSearch.split(/\s+/).filter(w => w.length > 0);
+        let highlighted = text;
+        words.forEach(word => {
+            const reg = new RegExp(`(${word})`, 'gi');
+            highlighted = highlighted.replace(reg, '<mark>$1</mark>');
+        });
+        return highlighted;
+    }
 
-searchIn.oninput=e=>{
-    currentSearch=e.target.value.toLowerCase();
-    render(db.filter(r=>(`${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`).toLowerCase().includes(currentSearch)));
-};
+    document.getElementById('searchIn').addEventListener('input', (e) => {
+        currentSearch = e.target.value.toLowerCase().trim();
+        const terms = currentSearch.split(/\s+/);
+        const filtered = db.filter(r => {
+            const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
+            return terms.every(term => rowText.includes(term));
+        });
+        render(filtered);
+    });
 
-function render(data){
-    list.innerHTML=data.slice(0,150).map(r=>`
-    <tr>
-        <td>${highlight(r.id)}</td>
-        <td class="desc-cell">${highlight(r.desc)}</td>
-        <td style="color:var(--brand);font-weight:800;">${r.cost}</td>
-        <td>${highlight(r.um)}</td>
-        <td>${highlight(r.pack)}</td>
-        <td>${highlight(r.sup)}</td>
-        <td><span class="brand-pill">${highlight(r.brand)}</span>
-            <span class="origin-pill">${highlight(r.origin)}</span></td>
-        <td>${highlight(r.part)}</td>
-    </tr>`).join("");
-}
+    function render(data) {
+        const list = document.getElementById('list');
+        list.innerHTML = data.slice(0, 150).map(r => `
+            <tr>
+                <td style="color:#64748b; font-size:12px;">${highlight(r.id)}</td>
+                <td><div class="desc-cell">${highlight(r.desc)}</div></td>
+                <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
+                <td style="font-weight:700;">${highlight(r.um)}</td>
+                <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
+                <td style="color:#a78bfa; font-size:13px;">${highlight(r.sup)}</td>
+                <td>
+                    <span class="brand-pill">${highlight(r.brand)}</span>
+                    <span class="origin-pill">${highlight(r.origin)}</span>
+                </td>
+                <td style="font-weight:700; color:#64748b; font-size:12px;">${highlight(r.part)}</td>
+            </tr>
+        `).join('');
+    }
 
-function handleQuickCopy(e){
-    const td=e.target.closest("td");
-    if(!td)return;
-    navigator.clipboard.writeText(td.innerText);
-    toast.style.display="block";
-    setTimeout(()=>toast.style.display="none",600);
-}
+    function handleQuickCopy(e) {
+        const cell = e.target.closest('td');
+        if (!cell) return;
+        navigator.clipboard.writeText(cell.innerText).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 600);
+        });
+    }
 </script>
 </body>
 </html>
