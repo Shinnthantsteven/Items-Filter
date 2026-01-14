@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
     <title>Chef2Chef | Master Code Engine</title>
-
+    
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+    
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-
+    
     <style>
         :root {
             --brand: #10b981;
@@ -17,230 +18,300 @@
             --header-bg: #010409;
             --glass-edge: rgba(255, 255, 255, 0.1);
             --danger: #ef4444;
-            --portal-bg: rgba(15, 23, 42, 0.6);
+            --portal-bg: rgba(15, 23, 42, 0.6); 
             --input-bg: rgba(0,0,0,0.3);
             --hl: #fbbf24;
         }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-color);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --text: #0f172a;
+            --header-bg: #ffffff;
+            --glass-edge: rgba(0, 0, 0, 0.1);
+            --portal-bg: rgba(255, 255, 255, 0.6);
+            --input-bg: rgba(255,255,255,0.4);
         }
 
-        mark {
-            background: var(--hl);
-            color: #000;
-            border-radius: 4px;
-            padding: 0 4px;
+        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.3s; }
+
+        mark { background: var(--hl); color: #000; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
+
+        /* LOGIN SCREEN */
+        #loginScreen {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
+        .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
+        
+        .login-card { 
+            background: rgba(128,128,128,0.05); 
+            padding: 50px; 
+            border-radius: 40px; 
+            border: 1px solid var(--glass-edge); 
+            text-align: center; 
+            width: 440px; 
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .login-card h1 { margin: 0; font-weight: 800; font-size: 28px; width: 100%; }
+
+        .login-card input { 
+            width: 100%; 
+            box-sizing: border-box;
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 1px solid var(--glass-edge);
+            background: var(--input-bg); 
+            color: var(--text); 
+            font-weight: 600; 
+            font-size: 20px; 
+            outline: none; 
+            text-align: center; 
+            margin-top: 20px;
+        }
+        .unlock-btn { 
+            width: 100%; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: none; 
+            background: var(--brand); 
+            color: white; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 20px; 
         }
 
         /* HEADER */
-        .top-nav {
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--glass-edge);
-        }
-
-        .logo-text {
-            font-weight: 800;
-            font-size: 26px;
-        }
+        .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
+        .logo-container { display: flex; align-items: center; text-decoration: none; color: inherit; }
+        .logo-text { font-weight: 800; font-size: 26px; }
 
         /* TABLE */
-        .content-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 40px 180px 40px;
-            height: calc(100vh - 80px);
-        }
+        .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
+        th:nth-child(1) { width: 90px; }
+        th:nth-child(2) { width: 45%; }
+        th:nth-child(3) { width: 80px; }
+        th:nth-child(4) { width: 80px; }
+        th:nth-child(5) { width: 110px; }
+        th:nth-child(6) { width: 160px; }
+        th:nth-child(7) { width: 180px; }
+        th:nth-child(8) { width: 80px; }
 
-        th {
-            position: sticky;
-            top: 0;
-            background: #ffffff;
-            color: #000000;
-            padding: 25px 15px;
-            font-size: 11px;
-            text-transform: uppercase;
-            border-bottom: 2px solid var(--brand);
-        }
-
-        td {
-            padding: 22px 15px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-            cursor: pointer;
-            vertical-align: middle;
-            background: #ffffff;
-            color: #000000;
-        }
-
-        .desc-cell {
-            font-weight: 800;
-            line-height: 1.6;
-            background: #ffffff;
-            color: #000000;
-        }
-
-        .brand-pill {
-            background: #e5e7eb;
-            color: #000000;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 12px;
-            display: inline-block;
-        }
-
-        .origin-pill {
-            background: #dcfce7;
-            color: #000000;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 12px;
-            margin-left: 5px;
-            display: inline-block;
-        }
-
-        /* SEARCH */
+        td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
+        
+        .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
+        .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
+        
+        /* SEARCH BAR WRAPPER */
         .footer-controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            width: 85%;
-            max-width: 1100px;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 15px; z-index: 1000;
+            width: 85%; max-width: 1100px;
         }
 
         .portal-bar {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 15px 25px;
-            border-radius: 100px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            flex: 1; display: flex; align-items: center; gap: 10px;
+            padding: 15px 25px; border-radius: 100px;
+            background: var(--portal-bg); 
+            border: 1.5px solid var(--glass-edge);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
         }
 
-        #searchIn {
-            background: #ffffff;
-            border: none;
-            color: #000000;
-            font-size: 24px;
-            font-weight: 700;
-            outline: none;
-            flex: 1;
-        }
+        #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
+        #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
-        #searchIn::placeholder {
-            color: #6b7280;
+        #resetBtn { 
+            background: var(--danger); border: none; color: white; 
+            padding: 18px 35px; border-radius: 50px; font-weight: 800; 
+            cursor: pointer; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2);
+            transition: transform 0.2s;
         }
+        #resetBtn:active { transform: scale(0.95); }
 
-        #resetBtn {
-            background: var(--danger);
-            border: none;
-            color: white;
-            padding: 18px 35px;
-            border-radius: 50px;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        #syncStatus {
-            font-weight: 700;
-            font-size: 14px;
-            color: #000000;
-        }
+        #syncStatus { font-weight: 700; color: var(--text); font-size: 14px; white-space: nowrap; opacity: 0.8; }
+        
+        #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
     </style>
 </head>
+<body onload="document.getElementById('passIn').focus()">
 
-<body>
-
-<nav class="top-nav">
-    <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
-</nav>
-
-<div class="content-container">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Description</th>
-                <th>Cost</th>
-                <th>U/M</th>
-                <th>Packing</th>
-                <th>Supplier</th>
-                <th>Brand / Origin</th>
-                <th>Part No.</th>
-            </tr>
-        </thead>
-        <tbody id="list"></tbody>
-    </table>
-</div>
-
-<div class="footer-controls">
-    <div class="portal-bar">
-        <input type="text" id="searchIn" placeholder="Search Master Records...">
-        <span id="syncStatus">Sync: 0</span>
+    <div id="loginScreen">
+        <div id="knife" class="knife-box">🔪</div>
+        <div class="login-card">
+            <h1>CHEF2CHEF MASTER</h1>
+            <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
+            <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
+            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
+        </div>
     </div>
-    <button id="resetBtn" onclick="resetSearch()">RESET</button>
-</div>
+
+    <div id="toast">COPIED</div>
+
+    <nav class="top-nav">
+        <a href="https://chef2chef.ae" target="_blank" class="logo-container">
+            <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
+            <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
+        </div>
+    </nav>
+
+    <div class="content-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
+                    <th>Supplier</th>
+                    <th>Brand/Origin</th>
+                    <th>Part No.</th>
+                </tr>
+            </thead>
+            <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
+        </table>
+    </div>
+
+    <div class="footer-controls">
+        <div class="portal-bar">
+            <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
+            <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
+            <input type="text" id="searchIn" placeholder="Search Master Records...">
+            <span id="syncStatus">Sync: 0</span>
+        </div>
+        <button id="resetBtn" onclick="resetSearch()">RESET</button>
+    </div>
 
 <script>
     let db = [];
     let currentSearch = "";
 
-    document.getElementById('searchIn').addEventListener('input', e => {
+    function toggleTheme() {
+        const doc = document.documentElement;
+        const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        doc.setAttribute('data-theme', next);
+        document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
+    }
+
+    function checkAuth() {
+        if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
+            document.getElementById('knife').classList.add('knife-slice');
+            setTimeout(() => {
+                document.getElementById('loginScreen').style.display = 'none';
+                autoLoad();
+            }, 400);
+        } else {
+            document.getElementById('err').innerText = "INVALID ACCESS CODE";
+        }
+    }
+
+    async function autoLoad() {
+        try {
+            const res = await fetch('data.csv?v=' + Date.now());
+            const text = await res.text();
+            processData(text);
+        } catch(e) {}
+    }
+
+    function manualUpload(e) {
+        const reader = new FileReader();
+        reader.onload = (event) => processData(event.target.result);
+        reader.readAsText(e.target.files[0]);
+    }
+
+    function processData(csv) {
+        const wb = XLSX.read(csv, { type: 'string' });
+        const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        db = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || "").trim(),
+            desc: String(r['Description'] || "").trim(),
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            um: String(r['U/M'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
+            sup: String(r['Preferred Supplier'] || "").trim(),
+            brand: String(r['Brand'] || "").trim(),
+            origin: String(r['Origin'] || "UAE").trim(),
+            part: String(r['Manu. Part No.'] || r['Part No'] || "").trim()
+        }));
+        render(db);
+        updateSync(db.length);
+    }
+
+    function highlight(text) {
+        if (!currentSearch) return text;
+        const words = currentSearch.split(/\s+/).filter(w => w.length > 0);
+        let highlighted = text;
+        words.forEach(word => {
+            const reg = new RegExp(`(${word})`, 'gi');
+            highlighted = highlighted.replace(reg, '<mark>$1</mark>');
+        });
+        return highlighted;
+    }
+
+    document.getElementById('searchIn').addEventListener('input', (e) => {
         currentSearch = e.target.value.toLowerCase().trim();
-        const filtered = db.filter(r =>
-            Object.values(r).join(' ').toLowerCase().includes(currentSearch)
-        );
+        const terms = currentSearch.split(/\s+/);
+        const filtered = db.filter(r => {
+            const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
+            return terms.every(term => rowText.includes(term));
+        });
         render(filtered);
-        document.getElementById('syncStatus').innerText = `Sync: ${filtered.length}`;
+        updateSync(filtered.length);
     });
 
     function render(data) {
-        document.getElementById('list').innerHTML = data.map(r => `
+        const list = document.getElementById('list');
+        list.innerHTML = data.slice(0, 150).map(r => `
             <tr>
-                <td>${r.id || ''}</td>
-                <td><div class="desc-cell">${r.desc || ''}</div></td>
-                <td>${r.cost || ''}</td>
-                <td>${r.um || ''}</td>
-                <td>${r.pack || ''}</td>
-                <td>${r.sup || ''}</td>
+                <td style="color:#64748b; font-size:12px;">${highlight(r.id)}</td>
+                <td><div class="desc-cell">${highlight(r.desc)}</div></td>
+                <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
+                <td style="font-weight:700;">${highlight(r.um)}</td>
+                <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
+                <td style="color:#a78bfa; font-size:13px;">${highlight(r.sup)}</td>
                 <td>
-                    <span class="brand-pill">${r.brand || ''}</span>
-                    <span class="origin-pill">${r.origin || ''}</span>
+                    <span class="brand-pill">${highlight(r.brand)}</span>
+                    <span class="origin-pill">${highlight(r.origin)}</span>
                 </td>
-                <td>${r.part || ''}</td>
+                <td style="font-weight:700; color:#64748b; font-size:12px;">${highlight(r.part)}</td>
             </tr>
         `).join('');
     }
 
+    function handleQuickCopy(e) {
+        const cell = e.target.closest('td');
+        if (!cell) return;
+        navigator.clipboard.writeText(cell.innerText).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 600);
+        });
+    }
+
     function resetSearch() {
-        searchIn.value = '';
+        document.getElementById('searchIn').value = '';
+        currentSearch = '';
         render(db);
-        syncStatus.innerText = `Sync: ${db.length}`;
+        updateSync(db.length);
+        document.getElementById('searchIn').focus();
+    }
+
+    function updateSync(count) {
+        document.getElementById('syncStatus').innerText = `Sync: ${count}`;
     }
 </script>
-
 </body>
 </html>
