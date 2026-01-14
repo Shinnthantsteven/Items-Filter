@@ -121,15 +121,12 @@
         .portal-bar {
             flex: 1; display: flex; align-items: center; gap: 10px;
             padding: 15px 25px; border-radius: 100px;
-            background: rgba(255,255,255,0.05); /* optic glass effect */
-            border: 1.5px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 15px rgba(255,255,255,0.05);
-            backdrop-filter: blur(15px);
-            transition: 0.3s;
+            background: #010409; /* fully solid dark background for clear text */
+            border: 1.5px solid var(--glass-edge);
         }
 
         #searchIn {
-            background: rgba(255,255,255,0.03); /* subtle glass background */
+            background: #010409; /* fully solid background */
             border: none;
             color: #f1f5f9; /* readable text */
             font-size: 24px;
@@ -138,17 +135,11 @@
             flex: 1;
             padding: 10px 15px;
             border-radius: 50px;
-            backdrop-filter: blur(5px);
-            transition: 0.3s, box-shadow 0.2s;
         }
         #searchIn::placeholder {
             color: rgba(241, 245, 249, 0.6);
             opacity: 1;
             font-weight: 600;
-        }
-        #searchIn:focus {
-            background: rgba(255,255,255,0.08);
-            box-shadow: 0 0 20px rgba(16,185,129,0.4);
         }
 
         #resetBtn { 
