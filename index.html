@@ -66,15 +66,15 @@
         
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); transition: background 0.3s; }
 
-        /* COLUMN WIDTHS OPTIMIZED FOR DESCRIPTION */
-        th:nth-child(1) { width: 90px; }   /* ID */
-        th:nth-child(2) { width: 45%; }    /* DESCRIPTION (Expanded) */
-        th:nth-child(3) { width: 85px; }   /* COST */
-        th:nth-child(4) { width: 85px; }   /* U/M */
-        th:nth-child(5) { width: 110px; }  /* PACKING */
-        th:nth-child(6) { width: 170px; }  /* SUPPLIER */
-        th:nth-child(7) { width: 210px; }  /* BRAND/ORIGIN */
-        th:nth-child(8) { width: 95px; }   /* PART NO. (Minimized) */
+        /* COLUMN WIDTHS REBALANCED */
+        th:nth-child(1) { width: 85px; }   /* ID */
+        th:nth-child(2) { width: 48%; }    /* DESCRIPTION (Maximize Space) */
+        th:nth-child(3) { width: 75px; }   /* COST */
+        th:nth-child(4) { width: 75px; }   /* U/M */
+        th:nth-child(5) { width: 100px; }  /* PACKING */
+        th:nth-child(6) { width: 150px; }  /* SUPPLIER */
+        th:nth-child(7) { width: 190px; }  /* BRAND/ORIGIN */
+        th:nth-child(8) { width: 80px; }   /* PART NO. (Minimized) */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); }
