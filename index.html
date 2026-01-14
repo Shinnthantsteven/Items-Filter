@@ -114,16 +114,34 @@
         /* SEARCH BAR */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
+            width: 75%; max-width: 900px; padding: 15px 20px; border-radius: 100px;
             background: var(--portal-bg); 
             border: 1.5px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            backdrop-filter: none; 
         }
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.4; }
+        #syncStatus { color:#94a3b8; font-weight:700; font-size:14px; }
 
+        /* TOAST */
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
+
+        /* SEPARATE EXIT BUTTON */
+        #exitBtn { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 50px; 
+            background:var(--danger); 
+            border:none; 
+            color:white; 
+            padding:12px 30px; 
+            border-radius:50px; 
+            font-weight:800; 
+            cursor:pointer;
+            z-index:1001;
+        }
     </style>
 </head>
 <body onload="document.getElementById('passIn').focus()">
@@ -168,16 +186,16 @@
         </table>
     </div>
 
-    <!-- PORTAL BAR WITH SYNC -->
+    <!-- PORTAL BAR -->
     <div class="portal-bar">
         <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
         <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
         <input type="text" id="searchIn" placeholder="Search Master Records...">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
-            <span id="syncStatus" style="color:#94a3b8; font-weight:700; font-size:14px;">Sync: 0</span>
-        </div>
+        <span id="syncStatus">Sync: 0</span>
     </div>
+
+    <!-- SEPARATE EXIT BUTTON -->
+    <button id="exitBtn" onclick="location.reload()">EXIT</button>
 
 <script>
     let db = [];
@@ -231,7 +249,7 @@
             part: String(r['Manu. Part No.'] || r['Part No'] || "").trim()
         }));
         render(db);
-        document.getElementById('syncStatus').innerText = 'Sync: ' + db.length;
+        updateSync(db.length);
     }
 
     function highlight(text) {
@@ -253,9 +271,7 @@
             return terms.every(term => rowText.includes(term));
         });
         render(filtered);
-
-        // UPDATE SYNC STATUS
-        document.getElementById('syncStatus').innerText = 'Sync: ' + filtered.length;
+        updateSync(filtered.length);
     });
 
     function render(data) {
@@ -286,6 +302,11 @@
             setTimeout(() => { toast.style.display = 'none'; }, 600);
         });
     }
+
+    function updateSync(count) {
+        document.getElementById('syncStatus').innerText = `Sync: ${count}`;
+    }
 </script>
 </body>
 </html>
+
