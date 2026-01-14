@@ -111,20 +111,34 @@
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
         .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
         
-        /* SEARCH BAR */
-        .portal-bar {
+        /* SEARCH BAR WRAPPER */
+        .footer-controls {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1100px; padding: 15px 20px; border-radius: 100px;
+            display: flex; align-items: center; gap: 15px; z-index: 1000;
+            width: 85%; max-width: 1100px;
+        }
+
+        .portal-bar {
+            flex: 1; display: flex; align-items: center; gap: 10px;
+            padding: 15px 25px; border-radius: 100px;
             background: var(--portal-bg); 
             border: 1.5px solid var(--glass-edge);
-            display: flex; align-items: center; gap: 10px; z-index: 1000;
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
         }
+
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
-        #resetBtn { background: var(--danger); border: none; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 800; cursor: pointer; margin-left: 10px; }
-        #syncStatus { margin-left: auto; font-weight: 700; color: var(--text); font-size: 14px; }
+        #resetBtn { 
+            background: var(--danger); border: none; color: white; 
+            padding: 18px 35px; border-radius: 50px; font-weight: 800; 
+            cursor: pointer; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2);
+            transition: transform 0.2s;
+        }
+        #resetBtn:active { transform: scale(0.95); }
+
+        #syncStatus { font-weight: 700; color: var(--text); font-size: 14px; white-space: nowrap; opacity: 0.8; }
         
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
     </style>
@@ -134,7 +148,7 @@
     <div id="loginScreen">
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
-            <h1>C2C ITEM LIST</h1>
+            <h1>CHEF2CHEF MASTER</h1>
             <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
             <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
             <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
@@ -171,12 +185,14 @@
         </table>
     </div>
 
-    <div class="portal-bar">
-        <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
-        <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
-        <input type="text" id="searchIn" placeholder="Search Master Records...">
+    <div class="footer-controls">
+        <div class="portal-bar">
+            <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
+            <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
+            <input type="text" id="searchIn" placeholder="Search Master Records...">
+            <span id="syncStatus">Sync: 0</span>
+        </div>
         <button id="resetBtn" onclick="resetSearch()">RESET</button>
-        <span id="syncStatus">Sync: 0</span>
     </div>
 
 <script>
@@ -290,6 +306,7 @@
         currentSearch = '';
         render(db);
         updateSync(db.length);
+        document.getElementById('searchIn').focus();
     }
 
     function updateSync(count) {
