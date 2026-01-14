@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.1">
-    <title>Chef2Chef | Item Code Engine</title>
+    <title>Chef2Chef | Master Code</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -31,47 +31,47 @@
 
         body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.4s; }
 
-        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .theme-btn:hover { transform: scale(1.1) rotate(15deg); }
+        /* THEME TOGGLE */
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
 
+        /* LOGIN SCREEN DESIGN */
         #loginScreen {
             position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.8s cubic-bezier(0.87, 0, 0.13, 1);
         }
-        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); }
+        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
         .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
         
         .login-card { background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; border: 1px solid var(--glass-edge); text-align: center; width: 440px; backdrop-filter: blur(20px); }
-        
-        .login-card h1 { margin: 0; font-weight: 800; word-spacing: 6px; letter-spacing: 0.5px; font-size: 28px; color: var(--text); }
-        .login-card p { opacity: 0.5; font-size: 11px; margin-top: 12px; margin-bottom: 35px; letter-spacing: 2px; color: var(--text); }
+        .login-card h1 { margin: 0; font-weight: 800; word-spacing: 6px; letter-spacing: 0.5px; font-size: 28px; }
+        .login-card p { opacity: 0.5; font-size: 11px; margin-top: 12px; margin-bottom: 35px; letter-spacing: 2px; }
 
-        .pass-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
         .login-card input { 
             width: 100%; padding: 20px; border-radius: 20px; border: 1px solid var(--glass-edge);
             background: var(--input-bg); color: var(--text); font-weight: 600; font-size: 20px; outline: none; text-align: center;
         }
-        
         .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(16,185,129,0.3); }
 
+        /* HEADER WITH GITHUB LOGO */
         .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
-        .logo-link { text-decoration: none; color: inherit; font-weight: 800; font-size: 24px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-container { display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; cursor: pointer; }
+        .logo-img { height: 40px; width: 40px; object-fit: contain; border-radius: 8px; }
+        .logo-text { font-weight: 800; font-size: 24px; }
 
         .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         
-        th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); transition: background 0.3s; }
+        th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
         /* COLUMN WIDTHS */
-        th:nth-child(1) { width: 85px; }   /* ID */
+        th:nth-child(1) { width: 90px; }   /* ID */
         th:nth-child(2) { width: 48%; }    /* DESCRIPTION */
-        th:nth-child(3) { width: 70px; }   /* COST */
-        th:nth-child(4) { width: 70px; }   /* U/M */
-        th:nth-child(5) { width: 100px; }  /* PACKING */
-        th:nth-child(6) { width: 150px; }  /* SUPPLIER */
+        th:nth-child(3) { width: 75px; }   /* COST */
+        th:nth-child(4) { width: 75px; }   /* U/M */
+        th:nth-child(5) { width: 110px; }  /* PACKING */
+        th:nth-child(6) { width: 160px; }  /* SUPPLIER */
         th:nth-child(7) { width: 180px; }  /* BRAND/ORIGIN */
-        th:nth-child(8) { width: 75px; }   /* PART NO. */
+        th:nth-child(8) { width: 80px; }   /* PART NO. */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
@@ -79,6 +79,7 @@
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
         .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
         
+        /* PORTAL BAR */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
@@ -95,15 +96,11 @@
 <body onload="document.getElementById('passIn').focus()">
 
     <div id="loginScreen">
-        <button class="theme-btn" style="position:absolute; top:40px; right:40px;" onclick="toggleTheme()" id="loginToggle">🌙</button>
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
             <h1>CHEF2CHEF ITEM CODE</h1>
             <p>ROOT: STEVE | ACCESS REQUIRED</p>
-            <div class="pass-wrapper">
-                <input type="password" id="passIn" placeholder="••••••••">
-                <span style="position:absolute; right:20px; cursor:pointer; opacity:0.4;" onclick="togglePass()">👁️</span>
-            </div>
+            <input type="password" id="passIn" placeholder="••••••••">
             <button class="unlock-btn" onclick="checkAuth()">UNLOCK SYSTEM</button>
             <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700; height:12px;"></p>
         </div>
@@ -112,10 +109,11 @@
     <div id="toast">COPIED</div>
 
     <nav class="top-nav">
-        <a href="https://chef2chef.ae" target="_blank" class="logo-link">
-            <div>CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
+        <a href="https://chef2chef.ae" target="_blank" class="logo-container">
+            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="logo-img" alt="Logo">
+            <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
         </a>
-        <div class="nav-right">
+        <div class="nav-right" style="display:flex; align-items:center; gap:20px;">
             <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
             <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
         </div>
@@ -140,7 +138,7 @@
     </div>
 
     <div class="portal-bar">
-        <input type="file" id="fileIn" style="display:none">
+        <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
         <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
         <input type="text" id="searchIn" placeholder="Search Master Records...">
         <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
@@ -152,18 +150,12 @@
 
     passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAuth(); });
 
-    function togglePass() {
-        passInput.type = passInput.type === 'password' ? 'text' : 'password';
-    }
-
     function toggleTheme() {
         const doc = document.documentElement;
         const current = doc.getAttribute('data-theme');
         const next = current === 'light' ? 'dark' : 'light';
         doc.setAttribute('data-theme', next);
-        const icon = next === 'light' ? '☀️' : '🌙';
-        document.getElementById('navToggle').innerText = icon;
-        document.getElementById('loginToggle').innerText = icon;
+        document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
     }
 
     function checkAuth() {
@@ -171,7 +163,6 @@
             document.getElementById('knife').classList.add('knife-slice');
             setTimeout(() => {
                 document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('searchIn').focus();
                 autoLoad();
             }, 400);
         } else {
@@ -188,6 +179,12 @@
         } catch(e) {}
     }
 
+    function manualUpload(e) {
+        const reader = new FileReader();
+        reader.onload = (event) => processData(event.target.result);
+        reader.readAsText(e.target.files[0]);
+    }
+
     function processData(csv) {
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
@@ -196,7 +193,7 @@
             desc: String(r['Description'] || "").trim(),
             cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
             um: String(r['U/M'] || "").trim(),
-            pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
             sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "").trim(),
             origin: String(r['Origin'] || "UAE").trim(),
@@ -205,21 +202,21 @@
         render(db);
     }
 
-    // UPDATED GLOBAL SEARCH ENGINE
+    // UPDATED GLOBAL DEEP-SCAN SEARCH
     document.getElementById('searchIn').addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
+        const terms = val.split(/\s+/);
         const filtered = db.filter(r => {
-            // This string combines all fields into one searchable block
-            const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
-            // Splits search terms so you can search for "Kenya Pepper" regardless of order
-            return val.split(/\s+/).every(w => rowText.includes(w));
+            // Searches through EVERYTHING simultaneously
+            const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
+            return terms.every(term => rowText.includes(term));
         });
         render(filtered);
     });
 
     function render(data) {
         const list = document.getElementById('list');
-        list.innerHTML = data.slice(0, 100).map(r => `
+        list.innerHTML = data.slice(0, 150).map(r => `
             <tr>
                 <td style="color:#64748b; font-size:12px;">${r.id}</td>
                 <td><div class="desc-cell">${r.desc}</div></td>
