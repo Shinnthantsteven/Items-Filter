@@ -123,7 +123,7 @@
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
-        #resetBtn { background: var(--danger); border: none; color: white; padding: 8px 20px; border-radius: 50px; font-weight: 800; cursor: pointer; }
+        #resetBtn { background: var(--danger); border: none; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 800; cursor: pointer; margin-left: 10px; }
         #syncStatus { margin-left: auto; font-weight: 700; color: var(--text); font-size: 14px; }
         
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
@@ -134,7 +134,7 @@
     <div id="loginScreen">
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
-            <h1>CHEF2CHEF MASTER</h1>
+            <h1>CHEF2CHEF  Item  List</h1>
             <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
             <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
             <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
