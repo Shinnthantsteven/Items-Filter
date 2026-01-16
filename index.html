@@ -97,15 +97,23 @@
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
         th:nth-child(1) { width: 90px; }
-        th:nth-child(2) { width: 45%; }
-        th:nth-child(3) { width: 80px; }
+        th:nth-child(2) { width: 40%; } /* Adjusted for better balance */
+        th:nth-child(3) { width: 90px; }
         th:nth-child(4) { width: 80px; }
-        th:nth-child(5) { width: 110px; }
+        th:nth-child(5) { width: 140px; } /* Increased width for Packing */
         th:nth-child(6) { width: 160px; }
         th:nth-child(7) { width: 180px; }
         th:nth-child(8) { width: 80px; }
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Specific Fix for Packing (5th Column) */
+        td:nth-child(5) { 
+            white-space: normal !important; 
+            line-height: 1.3; 
+            word-break: break-word; 
+        }
+
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
         
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
@@ -219,7 +227,8 @@
         db = raw.map(r => ({
             id: String(r['Item'] || r['Item ID'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
-            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace('aed', '').trim(),
+            // Remove 'aed' from prices globally
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace(/aed/g, '').trim(),
             um: String(r['U/M'] || "").trim(),
             pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
             sup: String(r['Preferred Supplier'] || "").trim(),
@@ -282,4 +291,3 @@
 </script>
 </body>
 </html>
-
