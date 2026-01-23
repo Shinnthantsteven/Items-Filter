@@ -21,6 +21,7 @@
             --portal-bg: rgba(15, 23, 42, 0.6); 
             --input-bg: rgba(0,0,0,0.3);
             --hl: #fbbf24;
+            --sidebar-w: 280px;
         }
 
         [data-theme="light"] {
@@ -36,11 +37,25 @@
 
         mark { background: var(--hl); color: #000; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
 
-        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 24px; padding: 10px; border-radius: 50%; }
+
+        /* SIDEBAR MENU */
+        #sidebar {
+            position: fixed; left: calc(-1 * var(--sidebar-w)); top: 0; bottom: 0; width: var(--sidebar-w);
+            background: var(--header-bg); border-right: 1px solid var(--glass-edge); z-index: 3000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 40px 20px;
+        }
+        #sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.5); }
+        .menu-item { 
+            padding: 18px 25px; border-radius: 15px; cursor: pointer; margin-bottom: 10px; 
+            font-weight: 700; transition: 0.2s; color: #94a3b8; display: flex; align-items: center; gap: 15px;
+        }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .menu-item.active { background: var(--brand); color: white; }
 
         /* LOGIN SCREEN */
         #loginScreen {
-            position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 5000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
@@ -54,40 +69,25 @@
             text-align: center; 
             width: 440px; 
             backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
         }
         .login-card h1 { margin: 0; font-weight: 800; font-size: 28px; width: 100%; }
 
         .login-card input { 
-            width: 100%; 
-            box-sizing: border-box;
-            padding: 20px; 
-            border-radius: 20px; 
-            border: 1px solid var(--glass-edge);
-            background: var(--input-bg); 
-            color: var(--text); 
-            font-weight: 600; 
-            font-size: 20px; 
-            outline: none; 
-            text-align: center; 
-            margin-top: 20px;
+            width: 100%; box-sizing: border-box; padding: 20px; border-radius: 20px; 
+            border: 1px solid var(--glass-edge); background: var(--input-bg); color: var(--text); 
+            font-weight: 600; font-size: 20px; outline: none; text-align: center; margin-top: 20px;
         }
         .unlock-btn { 
-            width: 100%; 
-            padding: 20px; 
-            border-radius: 20px; 
-            border: none; 
-            background: var(--brand); 
-            color: white; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: 20px; 
+            width: 100%; padding: 20px; border-radius: 20px; border: none; 
+            background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; 
         }
 
         /* HEADER */
         .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 28px; cursor: pointer; opacity: 0.7; transition: 0.3s; }
+        .menu-trigger:hover { opacity: 1; transform: scale(1.1); }
         .logo-container { display: flex; align-items: center; text-decoration: none; color: inherit; }
         .logo-text { font-weight: 800; font-size: 26px; }
 
@@ -97,23 +97,16 @@
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
         th:nth-child(1) { width: 90px; }
-        th:nth-child(2) { width: 40%; } /* Adjusted for better balance */
+        th:nth-child(2) { width: 40%; }
         th:nth-child(3) { width: 90px; }
         th:nth-child(4) { width: 80px; }
-        th:nth-child(5) { width: 140px; } /* Increased width for Packing */
+        th:nth-child(5) { width: 140px; }
         th:nth-child(6) { width: 160px; }
         th:nth-child(7) { width: 180px; }
         th:nth-child(8) { width: 80px; }
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        /* Specific Fix for Packing (5th Column) */
-        td:nth-child(5) { 
-            white-space: normal !important; 
-            line-height: 1.3; 
-            word-break: break-word; 
-        }
-
+        td:nth-child(5) { white-space: normal !important; line-height: 1.3; word-break: break-word; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
         
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
@@ -123,16 +116,16 @@
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
-            background: var(--portal-bg); 
-            border: 1.5px solid var(--glass-edge);
+            background: var(--portal-bg); border: 1.5px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            backdrop-filter: none; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); backdrop-filter: blur(10px); 
         }
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
+        
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2500; display: none; }
     </style>
 </head>
 <body onload="document.getElementById('passIn').focus()">
@@ -140,21 +133,32 @@
     <div id="loginScreen">
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
-            <h1>C2C ITEM LIST</h1>
+            <h1>C2C ENGINE ACCESS</h1>
             <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
             <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
             <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
         </div>
     </div>
 
+    <div id="sidebar">
+        <h2 style="padding: 0 25px; margin-bottom: 30px; font-size: 14px; color: #64748b;">DATA SOURCES</h2>
+        <div class="menu-item active" onclick="switchSource('master')">📦 Master Records</div>
+        <div class="menu-item" onclick="switchSource('riu')">🏨 RIU Items</div>
+        <hr style="border:0; border-top:1px solid var(--glass-edge); margin: 20px 0;">
+        <div class="menu-item" onclick="toggleTheme()" style="color:var(--brand)">Theme Toggle</div>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
     <div id="toast">COPIED</div>
 
     <nav class="top-nav">
-        <a href="https://chef2chef.ae" target="_blank" class="logo-container">
-            <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
-        </a>
+        <div class="nav-left">
+            <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+            <a href="https://chef2chef.ae" target="_blank" class="logo-container">
+                <div class="logo-text">CHEF2CHEF <span id="viewTitle" style="color:var(--brand)">MASTER</span></div>
+            </a>
+        </div>
         <div style="display:flex; align-items:center; gap:20px;">
-            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
             <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
         </div>
     </nav>
@@ -180,19 +184,35 @@
     <div class="portal-bar">
         <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
         <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
-        <input type="text" id="searchIn" placeholder="Search Master Records...">
+        <input type="text" id="searchIn" placeholder="Search Records...">
         <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
     </div>
 
 <script>
-    let db = [];
+    let db = { master: [], riu: [] };
+    let currentView = 'master';
     let currentSearch = "";
+
+    function toggleMenu() {
+        const side = document.getElementById('sidebar');
+        const over = document.getElementById('overlay');
+        const isOpen = side.classList.toggle('open');
+        over.style.display = isOpen ? 'block' : 'none';
+    }
+
+    function switchSource(source) {
+        currentView = source;
+        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('viewTitle').innerText = source.toUpperCase();
+        render(db[source]);
+        toggleMenu();
+    }
 
     function toggleTheme() {
         const doc = document.documentElement;
         const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         doc.setAttribute('data-theme', next);
-        document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
     }
 
     function checkAuth() {
@@ -209,34 +229,40 @@
 
     async function autoLoad() {
         try {
-            const res = await fetch('data.csv?v=' + Date.now());
-            const text = await res.text();
-            processData(text);
-        } catch(e) {}
+            // Load Master Data
+            const resM = await fetch('data.csv?v=' + Date.now());
+            const textM = await resM.text();
+            processData(textM, 'master');
+
+            // Load RIU Data
+            const resR = await fetch('RIU.csv?v=' + Date.now());
+            const textR = await resR.text();
+            processData(textR, 'riu');
+        } catch(e) { console.log("Load Error", e); }
     }
 
     function manualUpload(e) {
         const reader = new FileReader();
-        reader.onload = (event) => processData(event.target.result);
+        reader.onload = (event) => processData(event.target.result, currentView);
         reader.readAsText(e.target.files[0]);
     }
 
-    function processData(csv) {
+    function processData(csv, target) {
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-        db = raw.map(r => ({
-            id: String(r['Item'] || r['Item ID'] || "").trim(),
+        db[target] = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || r['RIU Code'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
-            // Remove 'aed' from prices globally
-            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace(/aed/g, '').trim(),
-            um: String(r['U/M'] || "").trim(),
-            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
-            sup: String(r['Preferred Supplier'] || "").trim(),
+            // Remove 'aed' from prices globally (Rule implementation)
+            cost: String(r['Contracted SP AED'] || r['Cost AED'] || r['Cost'] || r['Price'] || "0").toLowerCase().replace(/aed/g, '').trim(),
+            um: String(r['UOM'] || r['U/M'] || "").trim(),
+            pack: String(r['Packing'] || r['Case Packing'] || "").trim(),
+            sup: String(r['Supplier'] || r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "").trim(),
             origin: String(r['Origin'] || "UAE").trim(),
-            part: String(r['Manu. Part No.'] || r['Part No'] || "").trim()
+            part: String(r['S/No.'] || r['Manu. Part No.'] || "").trim()
         }));
-        render(db);
+        if(target === currentView) render(db[target]);
     }
 
     function highlight(text) {
@@ -253,7 +279,7 @@
     document.getElementById('searchIn').addEventListener('input', (e) => {
         currentSearch = e.target.value.toLowerCase().trim();
         const terms = currentSearch.split(/\s+/);
-        const filtered = db.filter(r => {
+        const filtered = db[currentView].filter(r => {
             const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
             return terms.every(term => rowText.includes(term));
         });
