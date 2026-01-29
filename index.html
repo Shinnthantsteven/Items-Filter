@@ -22,7 +22,7 @@
             --header-bg: #010409;
             --glass-edge: rgba(255, 255, 255, 0.1);
             --danger: #ef4444;
-            --portal-bg: rgba(15, 23, 42, 0.95);
+            --portal-bg: rgba(15, 23, 42, 0.4); /* TRANSPARENT GLASS */
             --input-bg: rgba(0,0,0,0.3);
             --hl: #fbbf24;
         }
@@ -33,7 +33,7 @@
             --text: #0f172a;
             --header-bg: #ffffff;
             --glass-edge: rgba(0, 0, 0, 0.1);
-            --portal-bg: rgba(255, 255, 255, 0.95);
+            --portal-bg: rgba(255, 255, 255, 0.4); /* TRANSPARENT GLASS */
             --input-bg: rgba(255,255,255,0.4);
         }
 
@@ -53,7 +53,14 @@
             padding: 2px;
         }
 
-        mark { background: var(--hl); color: #000; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+        mark { 
+            background: var(--hl); 
+            color: #000; 
+            border-radius: 4px; 
+            padding: 2px 4px; 
+            font-weight: 800;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); 
+        }
 
         /* SIDEBAR MENU */
         #sideMenu {
@@ -123,16 +130,18 @@
 
         .out-of-stock { opacity: 0.5; }
 
-        /* SEARCH BAR */
+        /* CLEAR GLASS SEARCH BAR */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
             background: var(--portal-bg); border: 1.5px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+            backdrop-filter: blur(25px); /* BLURS BACKGROUND TEXT */
+            -webkit-backdrop-filter: blur(25px);
         }
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
-        #searchIn::placeholder { color: var(--text); opacity: 0.4; }
+        #searchIn::placeholder { color: var(--text); opacity: 0.5; }
 
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
     </style>
@@ -262,9 +271,7 @@
                     origin: String(r['Origin'] || "UAE").trim()
                 }));
                 
-                // SORT: Highest stock to lowest
                 db.sort((a, b) => b.qty - a.qty);
-                
                 render(db);
             } catch(e) { console.log("Processing error."); }
         }
