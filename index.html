@@ -1,63 +1,88 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>C2C Master Engine</title>
     <meta name="viewport" content="width=1200, initial-scale=0.1">
     <title>Chef2Chef | Master Code Engine</title>
-    
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
-    
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --brand: #10b981;
-            --bg-color: #020617;
-            --text: #f1f5f9;
-            --header-bg: #010409;
-            --glass-edge: rgba(255, 255, 255, 0.1);
-            --danger: #ef4444;
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+--brand: #10b981;
+--bg-color: #020617;
+            --card-bg: #0f172a;
+--text: #f1f5f9;
+--header-bg: #010409;
+--glass-edge: rgba(255, 255, 255, 0.1);
+--danger: #ef4444;
+            --portal-bg: rgba(15, 23, 42, 0.95);
             --portal-bg: rgba(15, 23, 42, 0.6); 
-            --input-bg: rgba(0,0,0,0.3);
-            --hl: #fbbf24;
-            --sidebar-w: 280px;
-        }
+--input-bg: rgba(0,0,0,0.3);
+--hl: #fbbf24;
+}
 
-        [data-theme="light"] {
-            --bg-color: #f8fafc;
-            --text: #0f172a;
-            --header-bg: #ffffff;
-            --glass-edge: rgba(0, 0, 0, 0.1);
+[data-theme="light"] {
+--bg-color: #f8fafc;
+            --card-bg: #ffffff;
+--text: #0f172a;
+--header-bg: #ffffff;
+--glass-edge: rgba(0, 0, 0, 0.1);
+            --portal-bg: rgba(255, 255, 255, 0.95);
             --portal-bg: rgba(255, 255, 255, 0.6);
-            --input-bg: rgba(255,255,255,0.4);
-        }
+--input-bg: rgba(255,255,255,0.4);
+}
 
+        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; }
         body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.3s; }
 
+        /* LOGO CLEANUP */
+        .header-logo {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: rgba(255,255,255,0.1); /* Subtle background instead of harsh white */
+            padding: 2px;
+        }
         mark { background: var(--hl); color: #000; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
 
-        .theme-btn { background: none; border: none; cursor: pointer; font-size: 24px; padding: 10px; border-radius: 50%; }
-
         /* SIDEBAR MENU */
-        #sidebar {
-            position: fixed; left: calc(-1 * var(--sidebar-w)); top: 0; bottom: 0; width: var(--sidebar-w);
-            background: var(--header-bg); border-right: 1px solid var(--glass-edge); z-index: 3000;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 40px 20px;
+        #sideMenu {
+            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
+            background: var(--card-bg); z-index: 3000; transition: 0.3s ease;
+            border-right: 1px solid var(--glass-edge); padding: 40px 20px; box-sizing: border-box;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
         }
-        #sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.5); }
-        .menu-item { 
-            padding: 18px 25px; border-radius: 15px; cursor: pointer; margin-bottom: 10px; 
-            font-weight: 700; transition: 0.2s; color: #94a3b8; display: flex; align-items: center; gap: 15px;
-        }
-        .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-        .menu-item.active { background: var(--brand); color: white; }
+        #sideMenu.active { left: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 2500; backdrop-filter: blur(4px); }
+        .menu-item { padding: 15px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.05); font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+        .menu-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin: 20px 0 10px 15px; font-weight: 800; }
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
 
+        /* TOP NAV */
+        .top-nav { 
+            padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+            background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); 
+            padding-top: calc(12px + env(safe-area-inset-top)); 
+            position: sticky; top: 0; z-index: 2000;
         /* LOGIN SCREEN */
         #loginScreen {
-            position: fixed; inset: 0; background: var(--bg-color); z-index: 5000;
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 2000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+}
+        .menu-btn { font-size: 26px; cursor: pointer; color: var(--brand); }
+        .logo-text { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; flex: 1; display: flex; align-items: center; gap: 10px; }
+
+        .content-container { 
+            flex: 1; overflow-y: auto; padding: 10px 15px 180px 15px; 
+            height: calc(100vh - 110px); -webkit-overflow-scrolling: touch; 
         .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
         .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
         
@@ -69,25 +94,48 @@
             text-align: center; 
             width: 440px; 
             backdrop-filter: blur(20px);
-            display: flex; flex-direction: column; align-items: center;
-        }
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+}
         .login-card h1 { margin: 0; font-weight: 800; font-size: 28px; width: 100%; }
 
+        /* CARDS - BIGGER TEXT UPDATES */
+        .item-card {
+            background: var(--card-bg); border: 1px solid var(--glass-edge);
+            border-radius: 18px; padding: 16px; margin-bottom: 12px;
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         .login-card input { 
-            width: 100%; box-sizing: border-box; padding: 20px; border-radius: 20px; 
-            border: 1px solid var(--glass-edge); background: var(--input-bg); color: var(--text); 
-            font-weight: 600; font-size: 20px; outline: none; text-align: center; margin-top: 20px;
+            width: 100%; 
+            box-sizing: border-box;
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 1px solid var(--glass-edge);
+            background: var(--input-bg); 
+            color: var(--text); 
+            font-weight: 600; 
+            font-size: 20px; 
+            outline: none; 
+            text-align: center; 
+            margin-top: 20px;
         }
         .unlock-btn { 
-            width: 100%; padding: 20px; border-radius: 20px; border: none; 
-            background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; 
-        }
+            width: 100%; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: none; 
+            background: var(--brand); 
+            color: white; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 20px; 
+}
+        .card-row-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-desc { font-weight: 800; font-size: 18px; line-height: 1.2; color: var(--text); flex: 1; padding-right: 12px; }
+        .card-price { font-size: 22px; font-weight: 800; color: var(--brand); }
 
         /* HEADER */
         .top-nav { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); border-bottom: 1px solid var(--glass-edge); }
-        .nav-left { display: flex; align-items: center; gap: 20px; }
-        .menu-trigger { font-size: 28px; cursor: pointer; opacity: 0.7; transition: 0.3s; }
-        .menu-trigger:hover { opacity: 1; transform: scale(1.1); }
         .logo-container { display: flex; align-items: center; text-decoration: none; color: inherit; }
         .logo-text { font-weight: 800; font-size: 26px; }
 
@@ -97,73 +145,107 @@
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
         th:nth-child(1) { width: 90px; }
-        th:nth-child(2) { width: 40%; }
+        th:nth-child(2) { width: 40%; } /* Adjusted for better balance */
         th:nth-child(3) { width: 90px; }
         th:nth-child(4) { width: 80px; }
-        th:nth-child(5) { width: 140px; }
+        th:nth-child(5) { width: 140px; } /* Increased width for Packing */
         th:nth-child(6) { width: 160px; }
         th:nth-child(7) { width: 180px; }
         th:nth-child(8) { width: 80px; }
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        td:nth-child(5) { white-space: normal !important; line-height: 1.3; word-break: break-word; }
+
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+        /* Specific Fix for Packing (5th Column) */
+        td:nth-child(5) { 
+            white-space: normal !important; 
+            line-height: 1.3; 
+            word-break: break-word; 
+        }
+
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
-        
+
+        /* BIGGER DATA TEXT */
+        .data-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.3px; }
+        .data-value { font-size: 14px; font-weight: 700; display: block; margin-top: 2px; line-height: 1.3; }
         .brand-pill { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; }
         .origin-pill { background: rgba(16, 185, 129, 0.1); color: var(--brand); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; margin-left: 5px; display: inline-block; }
-        
-        /* SEARCH BAR */
+
+        .brand-pill { background: rgba(59,130,246,0.15); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
+        .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; margin-left: 4px; display: inline-block; }
+
+/* SEARCH BAR */
+        .portal-bar { 
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); 
+            width: 92%; max-width: 500px; padding: 12px 20px; border-radius: 100px; 
+            background: var(--portal-bg); border: 1px solid var(--glass-edge); 
+            display: flex; align-items: center; gap: 12px; z-index: 1000; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5); backdrop-filter: blur(20px);
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 15px 40px; border-radius: 100px;
-            background: var(--portal-bg); border: 1.5px solid var(--glass-edge);
+            background: var(--portal-bg); 
+            border: 1.5px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); backdrop-filter: blur(10px); 
-        }
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            backdrop-filter: none; 
+}
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 24px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.4; }
 
+        #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 25px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
+        #loginScreen { position: fixed; inset: 0; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
-        
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2500; display: none; }
-    </style>
+</style>
 </head>
 <body onload="document.getElementById('passIn').focus()">
 
-    <div id="loginScreen">
-        <div id="knife" class="knife-box">🔪</div>
-        <div class="login-card">
-            <h1>C2C ENGINE ACCESS</h1>
-            <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
-            <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
-            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
-        </div>
-    </div>
-
-    <div id="sidebar">
-        <h2 style="padding: 0 25px; margin-bottom: 30px; font-size: 14px; color: #64748b;">DATA SOURCES</h2>
-        <div class="menu-item active" onclick="switchSource('master')">📦 Master Records</div>
-        <div class="menu-item" onclick="switchSource('riu')">🏨 RIU Items</div>
-        <hr style="border:0; border-top:1px solid var(--glass-edge); margin: 20px 0;">
-        <div class="menu-item" onclick="toggleTheme()" style="color:var(--brand)">Theme Toggle</div>
+    <div id="sideMenu">
+        <h2 style="margin-left:15px; font-size:18px;">MASTER MENU</h2>
+        <div class="menu-label">View Mode</div>
+        <div class="menu-item" onclick="setView('full')">📋 Full Master View</div>
+        <div class="menu-item" onclick="setView('items')">📦 Item List Only</div>
+        <div class="menu-item" onclick="setView('supplier')">🚚 Supplier List Only</div>
+        <div class="menu-label">Settings</div>
+        <div class="menu-item" onclick="toggleTheme(); toggleMenu();">🌓 Switch Theme</div>
+        <div class="menu-item" onclick="location.reload()">🔄 Refresh Data</div>
+        <button onclick="toggleMenu()" style="width:100%; padding:15px; margin-top:30px; border-radius:12px; border:none; background:var(--danger); color:white; font-weight:800;">CLOSE</button>
     </div>
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-    <div id="toast">COPIED</div>
+<div id="loginScreen">
+        <div style="background: rgba(128,128,128,0.05); padding: 30px; border-radius: 30px; border: 1px solid var(--glass-edge); text-align: center; width: 80%; max-width: 400px; backdrop-filter: blur(20px);">
+            <h1 style="margin:0; font-size:22px;">CHEF2CHEF MASTER</h1>
+            <input type="password" id="passIn" placeholder="Access Code" style="width:100%; box-sizing:border-box; padding:15px; border-radius:15px; border:1px solid var(--glass-edge); background:var(--input-bg); color:white; text-align:center; font-size:16px; margin-top:15px;" onkeydown="if(event.key === 'Enter') checkAuth()">
+            <button onclick="checkAuth()" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--brand); color:white; font-weight:800; margin-top:15px;">UNLOCK</button>
+        <div id="knife" class="knife-box">🔪</div>
+        <div class="login-card">
+            <h1>C2C ITEM LIST</h1>
+            <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
+            <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
+            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
+</div>
+</div>
 
-    <nav class="top-nav">
-        <div class="nav-left">
-            <div class="menu-trigger" onclick="toggleMenu()">☰</div>
-            <a href="https://chef2chef.ae" target="_blank" class="logo-container">
-                <div class="logo-text">CHEF2CHEF <span id="viewTitle" style="color:var(--brand)">MASTER</span></div>
-            </a>
-        </div>
+<div id="toast">COPIED</div>
+
+<nav class="top-nav">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div class="logo-text">
+            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="header-logo" alt="logo">
+            CHEF2CHEF <span style="color:var(--brand)">MASTER</span>
+        <a href="https://chef2chef.ae" target="_blank" class="logo-container">
+            <div class="logo-text">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></div>
+        </a>
         <div style="display:flex; align-items:center; gap:20px;">
+            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
             <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
-        </div>
-    </nav>
+</div>
+</nav>
 
-    <div class="content-container">
+<div class="content-container">
+        <div id="list"></div>
         <table>
             <thead>
                 <tr>
@@ -179,44 +261,44 @@
             </thead>
             <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
         </table>
-    </div>
+</div>
 
-    <div class="portal-bar">
+<div class="portal-bar">
         <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
         <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
-        <input type="text" id="searchIn" placeholder="Search Records...">
+<input type="text" id="searchIn" placeholder="Search Master Records...">
+        <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:8px 15px; border-radius:50px; font-weight:800; cursor:pointer; font-size:11px;">EXIT</button>
         <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
-    </div>
+</div>
 
 <script>
-    let db = { master: [], riu: [] };
-    let currentView = 'master';
-    let currentSearch = "";
+let db = [];
+let currentSearch = "";
+    let activeView = 'full'; 
 
     function toggleMenu() {
-        const side = document.getElementById('sidebar');
-        const over = document.getElementById('overlay');
-        const isOpen = side.classList.toggle('open');
-        over.style.display = isOpen ? 'block' : 'none';
+        document.getElementById('sideMenu').classList.toggle('active');
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
     }
 
-    function switchSource(source) {
-        currentView = source;
-        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.getElementById('viewTitle').innerText = source.toUpperCase();
-        render(db[source]);
+    function setView(view) {
+        activeView = view;
+        render(db);
         toggleMenu();
     }
 
-    function toggleTheme() {
-        const doc = document.documentElement;
-        const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        doc.setAttribute('data-theme', next);
-    }
+function toggleTheme() {
+const doc = document.documentElement;
+const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+doc.setAttribute('data-theme', next);
+        document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
+}
 
-    function checkAuth() {
-        if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
+function checkAuth() {
+if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
+            document.getElementById('loginScreen').style.display = 'none';
+            autoLoad();
             document.getElementById('knife').classList.add('knife-slice');
             setTimeout(() => {
                 document.getElementById('loginScreen').style.display = 'none';
@@ -224,70 +306,105 @@
             }, 400);
         } else {
             document.getElementById('err').innerText = "INVALID ACCESS CODE";
-        }
-    }
+}
+}
 
-    async function autoLoad() {
-        try {
-            // Load Master Data
-            const resM = await fetch('data.csv?v=' + Date.now());
-            const textM = await resM.text();
-            processData(textM, 'master');
+async function autoLoad() {
+try {
+            const res = await fetch('data.json?v=' + Date.now());
+            const data = await res.json();
+            processData(data);
+            const res = await fetch('data.csv?v=' + Date.now());
+            const text = await res.text();
+            processData(text);
+} catch(e) {}
+}
 
-            // Load RIU Data
-            const resR = await fetch('RIU.csv?v=' + Date.now());
-            const textR = await resR.text();
-            processData(textR, 'riu');
-        } catch(e) { console.log("Load Error", e); }
-    }
-
+    function processData(jsonData) {
+        db = jsonData.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || r['id'] || "").trim(),
+            desc: String(r['Description'] || r['desc'] || "").trim(),
+            cost: String(r['Cost'] || r['Price'] || r['cost'] || "0").toLowerCase().replace(/aed/g, '').trim(),
+            um: String(r['U/M'] || r['um'] || r['UOM'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || r['pack'] || "").trim(),
+            sup: String(r['Preferred Supplier'] || r['supplier'] || r['sup'] || "").trim(),
+            brand: String(r['Brand'] || r['brand'] || "").trim(),
+            origin: String(r['Origin'] || r['origin'] || "UAE").trim(),
+            part: String(r['Manu. Part No.'] || r['Part No'] || r['part'] || "").trim()
     function manualUpload(e) {
         const reader = new FileReader();
-        reader.onload = (event) => processData(event.target.result, currentView);
+        reader.onload = (event) => processData(event.target.result);
         reader.readAsText(e.target.files[0]);
     }
 
-    function processData(csv, target) {
+    function processData(csv) {
         const wb = XLSX.read(csv, { type: 'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-        db[target] = raw.map(r => ({
-            id: String(r['Item'] || r['Item ID'] || r['RIU Code'] || "").trim(),
+        db = raw.map(r => ({
+            id: String(r['Item'] || r['Item ID'] || "").trim(),
             desc: String(r['Description'] || "").trim(),
-            // Remove 'aed' from prices globally (Rule implementation)
-            cost: String(r['Contracted SP AED'] || r['Cost AED'] || r['Cost'] || r['Price'] || "0").toLowerCase().replace(/aed/g, '').trim(),
-            um: String(r['UOM'] || r['U/M'] || "").trim(),
-            pack: String(r['Packing'] || r['Case Packing'] || "").trim(),
-            sup: String(r['Supplier'] || r['Preferred Supplier'] || "").trim(),
+            // Remove 'aed' from prices globally
+            cost: String(r['Cost'] || r['Price'] || "0").toLowerCase().replace(/aed/g, '').trim(),
+            um: String(r['U/M'] || "").trim(),
+            pack: String(r['Case Packing'] || r['Case Pack'] || r['Packing'] || "").trim(),
+            sup: String(r['Preferred Supplier'] || "").trim(),
             brand: String(r['Brand'] || "").trim(),
             origin: String(r['Origin'] || "UAE").trim(),
-            part: String(r['S/No.'] || r['Manu. Part No.'] || "").trim()
-        }));
-        if(target === currentView) render(db[target]);
-    }
+            part: String(r['Manu. Part No.'] || r['Part No'] || "").trim()
+}));
+render(db);
+}
 
-    function highlight(text) {
+function highlight(text) {
+        if (!currentSearch || !text) return text;
         if (!currentSearch) return text;
-        const words = currentSearch.split(/\s+/).filter(w => w.length > 0);
+const words = currentSearch.split(/\s+/).filter(w => w.length > 0);
+        let result = text;
         let highlighted = text;
-        words.forEach(word => {
+words.forEach(word => {
+            const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            result = result.replace(regex, '<span style="background:var(--hl); color:#000; border-radius:4px; padding:0 1.5px;">$1</span>');
             const reg = new RegExp(`(${word})`, 'gi');
             highlighted = highlighted.replace(reg, '<mark>$1</mark>');
-        });
+});
+        return result;
         return highlighted;
-    }
+}
 
-    document.getElementById('searchIn').addEventListener('input', (e) => {
-        currentSearch = e.target.value.toLowerCase().trim();
+document.getElementById('searchIn').addEventListener('input', (e) => {
+currentSearch = e.target.value.toLowerCase().trim();
         const terms = currentSearch.split(/\s+/);
-        const filtered = db[currentView].filter(r => {
-            const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
+const filtered = db.filter(r => {
+const rowText = `${r.id} ${r.desc} ${r.pack} ${r.um} ${r.sup} ${r.brand} ${r.origin} ${r.part}`.toLowerCase();
+            return currentSearch.split(/\s+/).every(term => rowText.includes(term));
             return terms.every(term => rowText.includes(term));
-        });
-        render(filtered);
-    });
+});
+render(filtered);
+});
 
-    function render(data) {
-        const list = document.getElementById('list');
+function render(data) {
+const list = document.getElementById('list');
+        list.innerHTML = data.slice(0, 100).map(r => {
+            if (activeView === 'items') {
+                return `<div class="item-card" onclick="copyText('${r.desc}')"><div class="card-row-top"><div class="card-desc">${highlight(r.desc)}</div><div class="card-price">${r.cost}</div></div></div>`;
+            }
+            if (activeView === 'supplier') {
+                return `<div class="item-card" onclick="copyText('${r.sup}')"><div class="card-row-top"><div class="card-desc" style="color:var(--brand)">${highlight(r.sup)}</div></div><div style="margin-top:5px;"><span class="brand-pill">${highlight(r.brand)}</span><span class="origin-pill">${highlight(r.origin)}</span></div></div>`;
+            }
+            return `
+            <div class="item-card" onclick="copyText('${r.desc}')">
+                <div class="card-row-top">
+                    <div class="card-desc">${highlight(r.desc)}</div>
+                    <div class="card-price">${r.cost}</div>
+                </div>
+                <div class="card-grid">
+                    <div><span class="data-label">Packing / UOM</span><span class="data-value">${highlight(r.pack)} ${r.um ? '(' + highlight(r.um) + ')' : ''}</span></div>
+                    <div><span class="data-label">Supplier</span><span class="data-value" style="color:var(--brand)">${highlight(r.sup)}</span></div>
+                    <div><span class="data-label">ID / Part No.</span><span class="data-value" style="font-family:monospace; font-size:12px; opacity:0.8;">${r.id} / ${r.part}</span></div>
+                    <div><span class="data-label">Brand & Origin</span><div style="margin-top:2px;"><span class="brand-pill">${highlight(r.brand)}</span><span class="origin-pill">${highlight(r.origin)}</span></div></div>
+                </div>
+            </div>`;
+        }).join('');
         list.innerHTML = data.slice(0, 150).map(r => `
             <tr>
                 <td style="color:#64748b; font-size:12px;">${highlight(r.id)}</td>
@@ -303,17 +420,17 @@
                 <td style="font-weight:700; color:#64748b; font-size:12px;">${highlight(r.part)}</td>
             </tr>
         `).join('');
-    }
+}
 
+    function copyText(val) {
+        navigator.clipboard.writeText(val).then(() => {
     function handleQuickCopy(e) {
         const cell = e.target.closest('td');
         if (!cell) return;
         navigator.clipboard.writeText(cell.innerText).then(() => {
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 600);
-        });
-    }
-</script>
-</body>
-</html>
+const toast = document.getElementById('toast');
+toast.style.display = 'block';
+            if (window.navigator.vibrate) window.navigator.vibrate(50);
+setTimeout(() => { toast.style.display = 'none'; }, 600);
+});
+}
