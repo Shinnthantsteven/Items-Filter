@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Chef2Chef | Master Code Engine</title>
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 
@@ -13,74 +17,183 @@
         :root {
             --brand: #10b981;
             --bg-color: #020617;
+            --card-bg: #0f172a;
             --text: #f1f5f9;
+            --header-bg: #010409;
             --glass-edge: rgba(255, 255, 255, 0.15);
             --danger: #ef4444;
+            --portal-bg: transparent; 
+            --input-bg: rgba(0,0,0,0.3);
+            --hl: #fbbf24;
         }
 
-        body, html { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; }
-
-        /* THE TUBE SEARCH BAR */
-        .portal-bar {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
-            background: transparent; border: 2px solid var(--glass-edge);
-            display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --header-bg: #ffffff;
+            --glass-edge: rgba(0, 0, 0, 0.15);
+            --portal-bg: transparent;
+            --input-bg: rgba(255,255,255,0.4);
         }
-        #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
 
-        /* PHYSICAL STOCK COLUMN STYLE */
-        .stock-entry { 
-            background: rgba(16, 185, 129, 0.1); 
-            border: 1px dashed var(--brand); 
-            color: var(--brand); 
-            font-weight: 800; 
-            text-align: center; 
-            border-radius: 8px; 
-            cursor: pointer; 
+        body, html { 
+            margin: 0; padding: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-color); color: var(--text); 
+            height: 100vh; overflow: hidden; 
+            transition: background 0.3s; 
         }
-        .active-input { background: var(--brand); color: white; width: 80px; border: none; border-radius: 4px; font-weight: 800; text-align: center; outline: none; }
+
+        .header-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 2px; }
+
+        mark { 
+            background: var(--hl); 
+            color: #000; 
+            border-radius: 4px; 
+            padding: 2px 4px; 
+            font-weight: 800;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); 
+        }
+
+        /* SIDEBAR MENU */
+        #sideMenu {
+            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
+            background: var(--card-bg); z-index: 3000; transition: 0.3s ease;
+            border-right: 1px solid var(--glass-edge); padding: 40px 20px; box-sizing: border-box;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
+        #sideMenu.active { left: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 2500; backdrop-filter: blur(4px); }
+        .menu-item { padding: 15px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.05); font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+        .menu-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin: 20px 0 10px 15px; font-weight: 800; }
+        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
+
+        /* TOP NAV */
+        .top-nav { 
+            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; 
+            background: var(--header-bg); border-bottom: 1px solid var(--glass-edge);
+            position: sticky; top: 0; z-index: 2000;
+        }
+        .menu-btn { font-size: 26px; cursor: pointer; color: var(--brand); }
+        .logo-text { font-weight: 800; font-size: 26px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;}
+
+        /* LOGIN SCREEN */
+        #loginScreen {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
+        .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
+        
+        .login-card { 
+            background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; 
+            border: 1px solid var(--glass-edge); text-align: center; width: 440px; 
+            backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center;
+        }
+        .login-card input { 
+            width: 100%; box-sizing: border-box; padding: 20px; border-radius: 20px; 
+            border: 1px solid var(--glass-edge); background: var(--input-bg); 
+            color: var(--text); font-weight: 600; font-size: 20px; outline: none; 
+            text-align: center; margin-top: 20px;
+        }
+        .unlock-btn { 
+            width: 100%; padding: 20px; border-radius: 20px; border: none; 
+            background: var(--brand); color: white; font-weight: 800; 
+            cursor: pointer; margin-top: 20px; 
+        }
 
         /* TABLE */
         .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
-        
-        td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .desc-cell { font-weight: 800; color: var(--text); white-space: normal; }
 
-        #loginScreen { position: fixed; inset: 0; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
-        .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
-        .login-card { background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; border: 1px solid var(--glass-edge); text-align: center; width: 400px; backdrop-filter: blur(20px); }
-        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
-        
+        th:nth-child(1) { width: 100px; }
+        th:nth-child(2) { width: 35%; }
+        th:nth-child(3) { width: 120px; } /* Physical Stock Column */
+        th:nth-child(4) { width: 80px; }  /* Qty QB */
+        th:nth-child(5) { width: 80px; }
+        th:nth-child(6) { width: 80px; }
+        th:nth-child(7) { width: 130px; }
+        th:nth-child(8) { width: 160px; }
+        th:nth-child(9) { width: 160px; }
+
+        td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
+        .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
+        .brand-pill { background: rgba(59,130,246,0.15); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
+        .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; margin-left: 4px; display: inline-block; }
+
+        /* PHYSICAL STOCK INPUT STYLE */
+        .stock-entry { background: rgba(16, 185, 129, 0.1); border: 1px dashed var(--brand); color: var(--brand); font-weight: 800; text-align: center; border-radius: 8px; cursor: pointer; }
+        .active-input { background: var(--brand); color: white; width: 100%; border: none; border-radius: 4px; font-weight: 800; text-align: center; outline: none; }
+
+        .out-of-stock { opacity: 0.5; }
+
+        /* THE TUBE SEARCH BAR */
+        .portal-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
+            background: transparent; 
+            border: 2px solid var(--glass-edge); 
+            display: flex; align-items: center; gap: 20px; z-index: 1000;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); 
+        }
+        #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
+        #searchIn::placeholder { color: var(--text); opacity: 0.5; }
+
         #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
     </style>
 </head>
 <body onload="document.getElementById('passIn').focus()">
 
+    <div id="sideMenu">
+        <h2 style="margin-left:15px; font-size:18px;">MASTER MENU</h2>
+        <div class="menu-label">Settings</div>
+        <div class="menu-item" onclick="toggleTheme(); toggleMenu();">🌓 Switch Theme</div>
+        <div class="menu-item" onclick="location.reload()">🔄 Refresh Data</div>
+        <button onclick="toggleMenu()" style="width:100%; padding:15px; margin-top:30px; border-radius:12px; border:none; background:var(--danger); color:white; font-weight:800; cursor:pointer;">CLOSE</button>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
     <div id="loginScreen">
         <div id="knife" class="knife-box">🔪</div>
         <div class="login-card">
-            <h1 style="font-weight: 800;">CHEF2CHEF</h1>
-            <input type="password" id="passIn" placeholder="Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
+            <h1>C2C ITEM LIST</h1>
+            <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
             <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
+            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
         </div>
     </div>
 
-    <div id="toast">SAVED TO SHEET</div>
+    <div id="toast">SAVED</div>
+
+    <nav class="top-nav">
+        <div style="display:flex; align-items:center; gap:20px;">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <a href="https://chef2chef.ae" target="_blank" class="logo-text">
+                <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="header-logo" alt="logo">
+                CHEF2CHEF <span style="color:var(--brand)">MASTER</span>
+            </a>
+        </div>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
+            <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
+        </div>
+    </nav>
 
     <div class="content-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 100px;">ID</th>
-                    <th style="width: 40%;">Description</th>
-                    <th style="width: 150px;">Physical Stock</th>
-                    <th style="width: 100px;">Current (F)</th>
+                    <th>ID</th>
+                    <th>Description / Cat</th>
+                    <th>Physical Stock</th>
+                    <th>Qty QB</th>
+                    <th>Cost</th>
+                    <th>U/M</th>
+                    <th>Packing</th>
                     <th>Supplier</th>
+                    <th>Brand/Origin</th>
                 </tr>
             </thead>
             <tbody id="list"></tbody>
@@ -88,19 +201,24 @@
     </div>
 
     <div class="portal-bar">
-        <input type="text" id="searchIn" placeholder="Search item to update physical stock...">
+        <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
+        <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
+        <input type="text" id="searchIn" placeholder="Search Master Records...">
         <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTTp2qsWhUgEPduXejNOKbB8L5A9lWkQsTMBKqKXumCN6nUuIGzHbmsI8gI-s2aKy4/exec";
         let db = [];
+        let currentSearch = "";
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); const overlay = document.getElementById('overlay'); overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block'; }
+        function toggleTheme() { const doc = document.documentElement; const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; doc.setAttribute('data-theme', next); document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙'; }
 
         function checkAuth() {
             if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
                 document.getElementById('knife').classList.add('knife-slice');
                 setTimeout(() => { document.getElementById('loginScreen').style.display = 'none'; autoLoad(); }, 400);
-            }
+            } else { document.getElementById('err').innerText = "INVALID ACCESS CODE"; }
         }
 
         async function autoLoad() {
@@ -108,65 +226,77 @@
                 const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSczmC8ZzKg2RCZTF-iKzzDNNCzi61Q3tx5dsL19Pi7NIBUJnD2Tf6xftWocimVuWpvJZgFzJUFAbWB/pub?output=csv');
                 const text = await res.text();
                 processData(text);
-            } catch(e) { console.error("Load failed"); }
+            } catch(e) { console.log("Load failed."); }
+        }
+
+        function manualUpload(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => processData(event.target.result);
+            reader.readAsText(e.target.files[0]);
         }
 
         function processData(csv) {
             const wb = XLSX.read(csv, { type: 'string' });
             const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-            
             db = raw.map(r => ({
                 id: String(r['Item'] || "").trim(),
                 desc: String(r['item Description'] || "").trim(),
-                currentF: r['C2C WH Current Stock'] || 0, // Maps to Column F
-                sup: r['Preferred Supp'] || ""
-            })).filter(r => r.id !== "");
-            
+                qty: parseFloat(r['C2C WH Current Stock']) || 0,
+                cost: String(r['Avg Cost'] || "0").trim(),
+                um: String(r['U/M'] || "").trim(),
+                pack: String(r['Case Pack'] || "").trim(),
+                cat: String(r['Cat 2'] || "").trim(),
+                sup: String(r['Preferred Supp'] || "").trim(),
+                brand: String(r['Brand'] || "").trim(),
+                origin: String(r['Origin'] || "UAE").trim()
+            }));
             render(db);
         }
 
         function render(data) {
             const list = document.getElementById('list');
-            list.innerHTML = data.map(r => `
+            list.innerHTML = data.slice(0, 300).map(r => `
                 <tr>
-                    <td style="color:#64748b; font-weight:700;">${r.id}</td>
-                    <td class="desc-cell">${r.desc}</td>
-                    <td class="stock-entry" onclick="editStock(this, '${r.id}')">ENTRY</td>
-                    <td style="color:#38bdf8; font-weight:800;">${r.currentF}</td>
-                    <td style="color:#a78bfa;">${r.sup}</td>
+                    <td style="color:#64748b; font-size:11px; font-weight:700;">${r.id}</td>
+                    <td>
+                        <div class="desc-cell">${r.desc}</div>
+                        <div style="font-size:10px; color:var(--brand); font-weight:800; margin-top:2px;">${r.cat}</div>
+                    </td>
+                    <td class="stock-entry" onclick="makeEditable(this)">ENTRY</td>
+                    <td style="color:#38bdf8; font-weight:800; font-size:16px;">${r.qty}</td>
+                    <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
+                    <td style="font-weight:700;">${r.um}</td>
+                    <td><div style="color:#818cf8; font-weight:700;">${r.pack}</div></td>
+                    <td style="color:#a78bfa; font-size:13px; font-weight:700;">${r.sup}</td>
+                    <td>
+                        <span class="brand-pill">${r.brand}</span>
+                        <span class="origin-pill">${r.origin}</span>
+                    </td>
                 </tr>
             `).join('');
         }
 
-        async function editStock(cell, itemCode) {
+        function makeEditable(cell) {
             if (cell.querySelector('input')) return;
-            cell.innerHTML = `<input type="number" class="active-input" onblur="submitStock(this, '${itemCode}')" onkeydown="if(event.key==='Enter') this.blur()">`;
+            const currentVal = cell.innerText === "ENTRY" ? "" : cell.innerText;
+            cell.innerHTML = `<input type="number" class="active-input" value="${currentVal}" onblur="saveStock(this)" onkeydown="if(event.key==='Enter') this.blur()">`;
             cell.querySelector('input').focus();
         }
 
-        async function submitStock(input, itemCode) {
-            const val = input.value;
+        function saveStock(input) {
             const cell = input.parentElement;
-            if (!val) { cell.innerText = "ENTRY"; return; }
-            
-            cell.innerText = "UPDATING...";
-            try {
-                // Sends value to Google Script to update Column F (C2C WH Current Stock)
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ itemCode: itemCode, stockValue: val })
-                });
-                cell.innerText = val;
-                cell.style.background = "rgba(16, 185, 129, 0.3)";
-                document.getElementById('toast').style.display = 'block';
-                setTimeout(() => document.getElementById('toast').style.display = 'none', 2000);
-            } catch(e) { cell.innerText = "ERR"; }
+            const val = input.value;
+            cell.innerText = val === "" ? "ENTRY" : val;
+            if(val !== "") {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, 1000);
+            }
         }
 
         document.getElementById('searchIn').addEventListener('input', (e) => {
-            const s = e.target.value.toLowerCase();
-            const filtered = db.filter(r => `${r.id} ${r.desc}`.toLowerCase().includes(s));
+            currentSearch = e.target.value.toLowerCase().trim();
+            const filtered = db.filter(r => `${r.id} ${r.desc} ${r.sup}`.toLowerCase().includes(currentSearch));
             render(filtered);
         });
     </script>
