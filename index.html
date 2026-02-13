@@ -22,9 +22,8 @@
             --header-bg: #010409;
             --glass-edge: rgba(255, 255, 255, 0.15);
             --danger: #ef4444;
-            --portal-bg: transparent; 
-            --input-bg: rgba(0,0,0,0.3);
             --hl: #fbbf24;
+            --input-bg: rgba(0,0,0,0.3);
         }
 
         [data-theme="light"] {
@@ -33,7 +32,6 @@
             --text: #0f172a;
             --header-bg: #ffffff;
             --glass-edge: rgba(0, 0, 0, 0.15);
-            --portal-bg: transparent;
             --input-bg: rgba(255,255,255,0.4);
         }
 
@@ -45,22 +43,9 @@
             transition: background 0.3s; 
         }
 
-        .header-logo {
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            object-fit: contain;
-            background: rgba(255,255,255,0.1);
-            padding: 2px;
-        }
+        .header-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 2px; }
 
-        mark { 
-            background: var(--hl); 
-            color: #000; 
-            border-radius: 4px; 
-            padding: 2px 4px; 
-            font-weight: 800;
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); 
-        }
+        mark { background: var(--hl); color: #000; border-radius: 4px; padding: 2px 4px; font-weight: 800; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
 
         #sideMenu {
             position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
@@ -82,10 +67,7 @@
         .menu-btn { font-size: 26px; cursor: pointer; color: var(--brand); }
         .logo-text { font-weight: 800; font-size: 26px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;}
 
-        #loginScreen {
-            position: fixed; inset: 0; background: var(--bg-color); z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+        #loginScreen { position: fixed; inset: 0; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
         .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
         
@@ -100,24 +82,21 @@
             color: var(--text); font-weight: 600; font-size: 20px; outline: none; 
             text-align: center; margin-top: 20px;
         }
-        .unlock-btn { 
-            width: 100%; padding: 20px; border-radius: 20px; border: none; 
-            background: var(--brand); color: white; font-weight: 800; 
-            cursor: pointer; margin-top: 20px; 
-        }
+        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
 
         .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-        th:nth-child(1) { width: 100px; }
-        th:nth-child(2) { width: 35%; }
-        th:nth-child(3) { width: 80px; }
-        th:nth-child(4) { width: 80px; }
-        th:nth-child(5) { width: 100px; }
-        th:nth-child(6) { width: 140px; }
-        th:nth-child(7) { width: 160px; }
-        th:nth-child(8) { width: 140px; }
+        /* COLUMN WIDTHS ADJUSTED */
+        th:nth-child(1) { width: 90px; }  /* ID */
+        th:nth-child(2) { width: 42%; }   /* Description - INCREASED */
+        th:nth-child(3) { width: 75px; }  /* Cost */
+        th:nth-child(4) { width: 85px; }  /* U/M */
+        th:nth-child(5) { width: 100px; } /* Packing */
+        th:nth-child(6) { width: 140px; } /* Supplier */
+        th:nth-child(7) { width: 160px; } /* Brand */
+        th:nth-child(8) { width: 80px; }  /* Manu No - REDUCED */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
@@ -127,8 +106,7 @@
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
-            background: transparent; 
-            border: 2px solid var(--glass-edge);
+            background: transparent; border: 2px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
         }
@@ -142,8 +120,6 @@
 
     <div id="sideMenu">
         <h2 style="margin-left:15px; font-size:18px;">MASTER MENU</h2>
-        <div class="menu-label">View Mode</div>
-        <div class="menu-item" onclick="setView('full')">📋 Full Master View</div>
         <div class="menu-label">Settings</div>
         <div class="menu-item" onclick="toggleTheme(); toggleMenu();">🌓 Switch Theme</div>
         <div class="menu-item" onclick="location.reload()">🔄 Refresh Data</div>
@@ -245,22 +221,27 @@
             reader.readAsText(e.target.files[0]);
         }
 
+        // FONT ERROR FIX: Clean non-printable characters from data
+        function cleanString(str) {
+            return String(str || "").replace(/[^\x20-\x7E]/g, '').trim();
+        }
+
         function processData(csv) {
             try {
                 const wb = XLSX.read(csv, { type: 'string' });
                 const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                 db = raw.map(r => ({
-                    id: String(r['Item'] || "").trim(),
-                    desc: String(r['Description'] || "").trim(),
-                    cost: String(r['Cost'] || "0").toLowerCase().replace(/aed/g, '').trim(),
-                    um: String(r['Base U/M'] || "").trim(),
-                    pack: String(r['Case Packing'] || r['Case Pack'] || "").trim(),
-                    cat: String(r['Cat 2'] || "").trim(),
-                    state: String(r['State'] || "").trim(),
-                    sup: String(r['Preferred Supplier'] || "").trim(),
-                    brand: String(r['Brand'] || "").trim(),
-                    origin: String(r['Origin'] || "UAE").trim(),
-                    manu: String(r['Manu. Part No.'] || r['Manu. Par'] || "").trim()
+                    id: cleanString(r['Item']),
+                    desc: cleanString(r['Description']),
+                    cost: cleanString(r['Cost']).toLowerCase().replace(/aed/g, '').trim(),
+                    um: cleanString(r['Base U/M']),
+                    pack: cleanString(r['Case Packing'] || r['Case Pack']),
+                    cat: cleanString(r['Cat 2']),
+                    state: cleanString(r['State']),
+                    sup: cleanString(r['Preferred Supplier']),
+                    brand: cleanString(r['Brand']),
+                    origin: cleanString(r['Origin'] || "UAE"),
+                    manu: cleanString(r['Manu. Part No.'] || r['Manu. Par'])
                 }));
                 render(db);
             } catch(e) { console.log("Processing error."); }
@@ -289,7 +270,7 @@
 
         function render(data) {
             const list = document.getElementById('list');
-            // LIMIT TO 100 ITEMS TO STOP LAG
+            // PERFORMANCE FIX: Limit to 100 items
             list.innerHTML = data.slice(0, 100).map(r => `
                 <tr>
                     <td style="color:#64748b; font-size:11px; font-weight:700;">${highlight(r.id)}</td>
