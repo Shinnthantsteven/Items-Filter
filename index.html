@@ -20,7 +20,7 @@
             --card-bg: #0f172a;
             --text: #f1f5f9;
             --header-bg: #010409;
-            --glass-edge: rgba(255, 255, 255, 0.15); /* Slightly sharper edge for the tube */
+            --glass-edge: rgba(255, 255, 255, 0.15);
             --danger: #ef4444;
             --portal-bg: transparent; 
             --input-bg: rgba(0,0,0,0.3);
@@ -118,26 +118,23 @@
         th:nth-child(2) { width: 35%; }
         th:nth-child(3) { width: 80px; }
         th:nth-child(4) { width: 80px; }
-        th:nth-child(5) { width: 80px; }
-        th:nth-child(6) { width: 130px; }
+        th:nth-child(5) { width: 130px; }
+        th:nth-child(6) { width: 160px; }
         th:nth-child(7) { width: 160px; }
-        th:nth-child(8) { width: 160px; }
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
         .brand-pill { background: rgba(59,130,246,0.15); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
         .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; margin-left: 4px; display: inline-block; }
 
-        .out-of-stock { opacity: 0.5; }
-
         /* THE TUBE SEARCH BAR */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
             background: transparent; 
-            border: 2px solid var(--glass-edge); /* THE TUBE BORDER */
+            border: 2px solid var(--glass-edge); 
             display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); /* SOFT GLOW TO DEFINE SHAPE */
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); 
         }
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.5; }
@@ -190,7 +187,6 @@
                 <tr>
                     <th>ID</th>
                     <th>Description / Cat</th>
-                    <th>Qty QB</th>
                     <th>Cost</th>
                     <th>U/M</th>
                     <th>Packing</th>
@@ -259,7 +255,6 @@
                 db = raw.map(r => ({
                     id: String(r['Item'] || "").trim(),
                     desc: String(r['Description'] || "").trim(),
-                    qty: parseFloat(r['Quantity On Q.B']) || 0,
                     cost: String(r['Cost'] || "0").toLowerCase().replace(/aed/g, '').trim(),
                     um: String(r['U/M'] || "").trim(),
                     pack: String(r['Case Packing'] || "").trim(),
@@ -270,7 +265,6 @@
                     origin: String(r['Origin'] || "UAE").trim()
                 }));
                 
-                db.sort((a, b) => b.qty - a.qty);
                 render(db);
             } catch(e) { console.log("Processing error."); }
         }
@@ -299,16 +293,13 @@
         function render(data) {
             const list = document.getElementById('list');
             list.innerHTML = data.slice(0, 300).map(r => {
-                const isOutOfStock = r.qty <= 0;
-                const qtyColor = isOutOfStock ? 'var(--danger)' : '#38bdf8';
                 return `
-                <tr class="${isOutOfStock ? 'out-of-stock' : ''}">
+                <tr>
                     <td style="color:#64748b; font-size:11px; font-weight:700;">${highlight(r.id)}</td>
                     <td>
                         <div class="desc-cell">${highlight(r.desc)}</div>
                         <div style="font-size:10px; color:var(--brand); font-weight:800; margin-top:2px;">${highlight(r.cat)}</div>
                     </td>
-                    <td style="color:${qtyColor}; font-weight:800; font-size:16px;">${r.qty}</td>
                     <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
                     <td style="font-weight:700;">${highlight(r.um)}</td>
                     <td>
