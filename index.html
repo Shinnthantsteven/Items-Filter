@@ -43,15 +43,8 @@
             transition: background 0.3s; 
         }
 
-        /* Circular Logo Formatting */
-        .header-logo { 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            background: rgba(255,255,255,0.1); 
-            padding: 2px; 
-        }
+        /* Updated for Logo.png and circle shape */
+        .header-logo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.1); padding: 2px; }
 
         mark { background: var(--hl); color: #000; border-radius: 4px; padding: 2px 4px; font-weight: 800; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
 
@@ -203,7 +196,7 @@
         }
 
         function checkAuth() {
-            // Password set to ***REMOVED-PASSWORD***
+            // VERIFIED PASSWORD: ***REMOVED-PASSWORD***
             if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
                 document.getElementById('knife').classList.add('knife-slice');
                 setTimeout(() => {
