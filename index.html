@@ -9,7 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -44,15 +45,19 @@
             transition: background 0.3s; 
         }
 
-        /* Updated Logo Styling for Header */
+        /* RESOLUTION FIX: CSS for Sharp Logo Rendering */
         .header-logo { 
             width: 38px; 
             height: 38px; 
             border-radius: 50%; 
-            object-fit: cover; 
+            /* object-fit: contain ensures the logo doesn't stretch or cut off */
+            object-fit: contain; 
             background: #fff; 
             padding: 2px; 
             border: 1px solid var(--glass-edge);
+            /* Prevents browser blurring on high-res displays */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
         mark { background: var(--hl); color: #000; border-radius: 4px; padding: 2px 4px; font-weight: 800; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
