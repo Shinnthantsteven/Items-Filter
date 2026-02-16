@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Chef2Chef | Master Code Engine</title>
 
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
+    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="Logo.png">
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -43,7 +45,7 @@
             transition: background 0.3s; 
         }
 
-        .header-logo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.1); padding: 2px; }
+        .header-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 2px; }
 
         mark { background: var(--hl); color: #000; border-radius: 4px; padding: 2px 4px; font-weight: 800; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
 
@@ -54,9 +56,7 @@
             box-shadow: 20px 0 50px rgba(0,0,0,0.5);
         }
         #sideMenu.active { left: 0; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 5500; backdrop-filter: blur(4px); pointer-events: none; }
-        .overlay.active { display: block; pointer-events: auto; }
-
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 5500; backdrop-filter: blur(4px); }
         .menu-item { padding: 15px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.05); font-weight: 700; cursor: pointer; border: 1px solid transparent; }
         .menu-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin: 20px 0 10px 15px; font-weight: 800; }
         .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
@@ -70,14 +70,14 @@
         .logo-text { font-weight: 800; font-size: 26px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;}
 
         #loginScreen { position: fixed; inset: 0; background: var(--bg-color); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; pointer-events: none; }
+        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
         .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
         
         .login-card { 
             background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; 
             border: 1px solid var(--glass-edge); text-align: center; width: 440px; 
             backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center;
-            z-index: 9001; pointer-events: auto;
+            z-index: 9001;
         }
         .login-card input { 
             width: 100%; box-sizing: border-box; padding: 20px; border-radius: 20px; 
@@ -108,9 +108,10 @@
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
-            background: var(--header-bg); border: 2px solid var(--glass-edge);
+            background: transparent; border: 2px solid var(--glass-edge);
             display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
         }
         #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
         #searchIn::placeholder { color: var(--text); opacity: 0.5; }
@@ -142,12 +143,15 @@
     <div id="toast">COPIED</div>
 
     <nav class="top-nav">
-        <div style="display:flex; align-items:center; gap:20px;">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
-            <a href="https://chef2chef.ae" target="_blank" class="logo-text">
-                <img src="Logo.png" class="header-logo" alt="logo">
-                CHEF2CHEF <span style="color:var(--brand)">MASTER</span>
-            </a>
+    <div style="display:flex; align-items:center; gap:20px;">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <a href="https://chef2chef.ae" target="_blank" class="logo-text" style="display:flex; align-items:center; text-decoration:none; color:inherit;">
+            <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" 
+                 class="header-logo" 
+                 alt="logo" 
+                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;">
+            <span style="margin-left: 10px;">CHEF2CHEF <span style="color:var(--brand)">MASTER</span></span>
+        </a>
         </div>
         <div style="display:flex; align-items:center; gap:20px;">
             <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
@@ -187,7 +191,7 @@
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('active');
             const overlay = document.getElementById('overlay');
-            overlay.classList.toggle('active');
+            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
         }
 
         function toggleTheme() {
