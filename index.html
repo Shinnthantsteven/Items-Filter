@@ -1,316 +1,343 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Chef2Chef | Master Code Engine</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C2C STOCK SYSTEM</title>
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
-
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --brand: #10b981;
-            --bg-color: #020617;
-            --card-bg: #0f172a;
-            --text: #f1f5f9;
-            --header-bg: #010409;
-            --glass-edge: rgba(255, 255, 255, 0.15);
-            --danger: #ef4444;
-            --hl: #fbbf24;
-            --input-bg: rgba(0,0,0,0.3);
-        }
-
-        [data-theme="light"] {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #0f172a;
-            --header-bg: #ffffff;
-            --glass-edge: rgba(0, 0, 0, 0.15);
-            --input-bg: rgba(255,255,255,0.4);
-        }
-
-        body, html { 
-            margin: 0; padding: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg-color); color: var(--text); 
-            height: 100vh; overflow: hidden; 
-            transition: background 0.3s; 
-        }
-
-        .header-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 2px; }
-
-        mark { background: var(--hl); color: #000; border-radius: 4px; padding: 2px 4px; font-weight: 800; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
-
-        #sideMenu {
-            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
-            background: var(--card-bg); z-index: 3000; transition: 0.3s ease;
-            border-right: 1px solid var(--glass-edge); padding: 40px 20px; box-sizing: border-box;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
-        }
-        #sideMenu.active { left: 0; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 2500; backdrop-filter: blur(4px); }
-        .menu-item { padding: 15px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.05); font-weight: 700; cursor: pointer; border: 1px solid transparent; }
-        .menu-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin: 20px 0 10px 15px; font-weight: 800; }
-        .theme-btn { background: none; border: none; cursor: pointer; font-size: 28px; padding: 10px; border-radius: 50%; }
-
-        .top-nav { 
-            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; 
-            background: var(--header-bg); border-bottom: 1px solid var(--glass-edge);
-            position: sticky; top: 0; z-index: 2000;
-        }
-        .menu-btn { font-size: 26px; cursor: pointer; color: var(--brand); }
-        .logo-text { font-weight: 800; font-size: 26px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;}
-
-        #loginScreen { position: fixed; inset: 0; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .knife-box { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--brand)); transition: 0.5s; }
-        .knife-slice { transform: scale(15) translateX(100px); opacity: 0; }
-        
-        .login-card { 
-            background: rgba(128,128,128,0.05); padding: 50px; border-radius: 40px; 
-            border: 1px solid var(--glass-edge); text-align: center; width: 440px; 
-            backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center;
-        }
-        .login-card input { 
-            width: 100%; box-sizing: border-box; padding: 20px; border-radius: 20px; 
-            border: 1px solid var(--glass-edge); background: var(--input-bg); 
-            color: var(--text); font-weight: 600; font-size: 20px; outline: none; 
-            text-align: center; margin-top: 20px;
-        }
-        .unlock-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--brand); color: white; font-weight: 800; cursor: pointer; margin-top: 20px; }
-
-        .content-container { flex: 1; overflow-y: auto; padding: 0 40px 180px 40px; height: calc(100vh - 80px); }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
-
-        /* COLUMN WIDTHS */
-        th:nth-child(1) { width: 100px; }  /* Item ID */
-        th:nth-child(2) { width: 35%; }   /* Description */
-        th:nth-child(3) { width: 80px; }  /* QB Stock QTY */
-        th:nth-child(4) { width: 140px; } /* Supplier */
-        th:nth-child(5) { width: 60px; }  /* U/M */
-        th:nth-child(6) { width: 90px; }  /* Case Pack */
-        th:nth-child(7) { width: 120px; } /* Brand */
-        th:nth-child(8) { width: 90px; }  /* Origin */
-        th:nth-child(9) { width: 100px; } /* Cat 2 */
-
-        td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
-        .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
-        .brand-pill { background: rgba(59,130,246,0.15); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
-        .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
-
-        .portal-bar {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
-            background: transparent; border: 2px solid var(--glass-edge);
-            display: flex; align-items: center; gap: 20px; z-index: 1000;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
-        }
-        #searchIn { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 700; outline: none; flex: 1; }
-        #searchIn::placeholder { color: var(--text); opacity: 0.5; }
-
-        #toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 800; display: none; z-index: 9999; }
-    </style>
+<style>
+:root{
+  --bg:#111;
+  --card:#1b1b1b;
+  --text:#fff;
+  --accent:#00ff99;
+  --danger:#ff4d4d;
+}
+[data-theme="light"]{
+  --bg:#f5f5f5;
+  --card:#ffffff;
+  --text:#000;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  padding:15px;
+  background:var(--card);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+button{
+  cursor:pointer;
+  border:none;
+  padding:8px 12px;
+  background:var(--accent);
+  color:#000;
+  font-weight:bold;
+  border-radius:4px;
+}
+button:disabled{opacity:.5}
+input{
+  padding:6px;
+  border-radius:4px;
+  border:1px solid #333;
+}
+#search{
+  width:250px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #333;
+  text-align:left;
+}
+tr:hover{
+  background:rgba(255,255,255,0.05);
+}
+.toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:var(--accent);
+  color:#000;
+  padding:10px 15px;
+  border-radius:5px;
+  display:none;
+}
+.login{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  z-index:10;
+}
+</style>
 </head>
-<body onload="document.getElementById('passIn').focus()">
 
-    <div id="sideMenu">
-        <h2 style="margin-left:15px; font-size:18px;">MASTER MENU</h2>
-        <div class="menu-label">Settings</div>
-        <div class="menu-item" onclick="toggleTheme(); toggleMenu();">🌓 Switch Theme</div>
-        <div class="menu-item" onclick="location.reload()">🔄 Refresh Data</div>
-        <button onclick="toggleMenu()" style="width:100%; padding:15px; margin-top:30px; border-radius:12px; border:none; background:var(--danger); color:white; font-weight:800; cursor:pointer;">CLOSE</button>
-    </div>
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<body>
 
-    <div id="loginScreen">
-        <div id="knife" class="knife-box">🔪</div>
-        <div class="login-card">
-            <h1>C2C ITEM LIST</h1>
-            <input type="password" id="passIn" placeholder="Enter Access Code" onkeydown="if(event.key === 'Enter') checkAuth()">
-            <button class="unlock-btn" onclick="checkAuth()">UNLOCK ENGINE</button>
-            <p id="err" style="color:var(--danger); font-size:11px; margin-top:15px; font-weight:700;"></p>
-        </div>
-    </div>
+<div id="loginScreen" class="login">
+  <h2>ENTER ACCESS CODE</h2>
+  <input type="password" id="passIn">
+  <button onclick="checkAuth()">ENTER</button>
+  <div id="err" style="color:red;margin-top:10px;"></div>
+</div>
 
-    <div id="toast">COPIED</div>
+<header>
+  <div>
+    <button onclick="toggleTheme()">🌙</button>
+    <button onclick="clearPhysicalCounts()">CLEAR</button>
+    <button id="syncBtn" onclick="syncToCloud()">☁️ SYNC</button>
+  </div>
+  <input id="search" placeholder="Search..." oninput="searchData()">
+</header>
 
-    <nav class="top-nav">
-        <div style="display:flex; align-items:center; gap:20px;">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
-            <a href="https://chef2chef.ae" target="_blank" class="logo-text">
-                <img src="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png" class="header-logo" alt="logo">
-                CHEF2CHEF <span style="color:var(--brand)">MASTER</span>
-            </a>
-        </div>
-        <div style="display:flex; align-items:center; gap:20px;">
-            <button class="theme-btn" onclick="toggleTheme()" id="navToggle">🌙</button>
-            <div style="color: #94a3b8; font-size: 11px; font-weight: 800; border-left: 1px solid var(--glass-edge); padding-left: 20px;">ROOT: STEVE</div>
-        </div>
-    </nav>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Item Code</th>
+      <th>Description</th>
+      <th>System</th>
+      <th>Physical</th>
+      <th>Diff</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-    <div class="content-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Item Description</th>
-                    <th>QB Stock</th>
-                    <th>Supplier</th>
-                    <th>U/M</th>
-                    <th>Case Pack</th>
-                    <th>Brand</th>
-                    <th>Origin</th>
-                    <th>Cat 2</th>
-                </tr>
-            </thead>
-            <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
-        </table>
-    </div>
+<div id="toast" class="toast"></div>
 
-    <div class="portal-bar">
-        <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
-        <button onclick="document.getElementById('fileIn').click()" style="background:none; border:none; cursor:pointer; font-size:24px; opacity:0.6;">📁</button>
-        <input type="text" id="searchIn" placeholder="Search Master Records...">
-        <button onclick="location.reload()" style="background:var(--danger); border:none; color:white; padding:12px 30px; border-radius:50px; font-weight:800; cursor:pointer;">EXIT</button>
-    </div>
+<script>
+/* =========================
+   STATE
+========================= */
+let db=[];
+let physCounts=JSON.parse(localStorage.getItem('c2c_phys_store'))||{};
+const CLOUD_API="YOUR_GOOGLE_SCRIPT_URL";
 
-    <script>
-        let db = [];
-        let currentSearch = "";
-
-        function toggleMenu() {
-            document.getElementById('sideMenu').classList.toggle('active');
-            const overlay = document.getElementById('overlay');
-            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function toggleTheme() {
-            const doc = document.documentElement;
-            const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            doc.setAttribute('data-theme', next);
-            document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
-        }
-
-        function checkAuth() {
-            if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
-                document.getElementById('knife').classList.add('knife-slice');
-                setTimeout(() => {
-                    document.getElementById('loginScreen').style.display = 'none';
-                    autoLoad();
-                }, 400);
-            } else {
-                document.getElementById('err').innerText = "INVALID ACCESS CODE";
-            }
-        }
-
-        async function autoLoad() {
-            try {
-                const res = await fetch('data.csv?v=' + Date.now());
-                const text = await res.text();
-                processData(text);
-            } catch(e) { console.log("Load failed."); }
-        }
-
-        function manualUpload(e) {
-            const reader = new FileReader();
-            reader.onload = (event) => processData(event.target.result);
-            reader.readAsText(e.target.files[0]);
-        }
-
-        function cleanString(str) {
-            return String(str || "").replace(/[^\x20-\x7E]/g, '').trim();
-        }
-
-        function processData(csv) {
-            try {
-                const wb = XLSX.read(csv, { type: 'string' });
-                const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                db = raw.map(r => ({
-                    // MAPPING DATA SOURCE HEADERS
-                    id: cleanString(r['Item']),
-                    desc: cleanString(r['Item Description']),
-                    stock: cleanString(r['QB System Stock QTY']),
-                    sup: cleanString(r['Preferred Supplier']),
-                    um: cleanString(r['U/M']),
-                    pack: cleanString(r['Case Pack']),
-                    brand: cleanString(r['Brand']),
-                    origin: cleanString(r['Origin']),
-                    cat: cleanString(r['Cat 2'])
-                }));
-                render(db);
-            } catch(e) { console.log("Processing error."); }
-        }
-
-        function highlight(text) {
-            if (!currentSearch || !text) return text;
-            const terms = currentSearch.split(/\s+/).filter(w => w.length > 0);
-            let highlighted = text;
-            terms.forEach(word => {
-                const reg = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                highlighted = highlighted.replace(reg, '<mark>$1</mark>');
-            });
-            return highlighted;
-        }
-
-        document.getElementById('searchIn').addEventListener('input', (e) => {
-            currentSearch = e.target.value.toLowerCase().trim();
-            const terms = currentSearch.split(/\s+/);
-            const filtered = db.filter(r => {
-                const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.cat}`.toLowerCase();
-                return terms.every(term => rowText.includes(term));
-            });
-            render(filtered);
-        });
-
-function render(data) {
-    const list = document.getElementById('list');
-    list.innerHTML = data.slice(0, 100).map(r => {
-        const stockVal = parseFloat(r.stock) || 0;
-        const stockColor = stockVal < 0 ? 'var(--danger)' : 'var(--text)';
-        
-        return `
-        <tr>
-            <td style="color:var(--brand); font-weight:800; font-size:14px; font-family: monospace;">
-                ${highlight(r.id)}
-            </td>
-            
-            <td class="desc-cell">${highlight(r.desc)}</td>
-            
-            <td style="font-weight:900; font-style: italic; font-size: 16px; color: ${stockColor};">
-                ${r.stock}
-            </td>
-            
-            <td style="color:#a78bfa; font-size:13px; font-weight:700;">${highlight(r.sup)}</td>
-            
-            <td style="font-weight:700;">${highlight(r.um)}</td>
-            
-            <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
-            
-            <td><span class="brand-pill">${highlight(r.brand)}</span></td>
-            
-            <td><span class="origin-pill">${highlight(r.origin)}</span></td>
-            
-            <td style="color:var(--brand); font-weight:800; font-size:12px;">${highlight(r.cat)}</td>
-        </tr>
-    `}).join('');
+/* =========================
+   AUTH
+========================= */
+function checkAuth(){
+  if(document.getElementById('passIn').value==="***REMOVED-PASSWORD***"){
+    document.getElementById('loginScreen').style.display="none";
+    autoLoad();
+  }else{
+    document.getElementById('err').innerText="INVALID ACCESS CODE";
+  }
 }
 
-        function handleQuickCopy(e) {
-            const cell = e.target.closest('td');
-            if (!cell) return;
-            navigator.clipboard.writeText(cell.innerText).then(() => {
-                const toast = document.getElementById('toast');
-                toast.style.display = 'block';
-                if (window.navigator.vibrate) window.navigator.vibrate(50);
-                setTimeout(() => { toast.style.display = 'none'; }, 600);
-            });
-        }
-    </script>
+/* =========================
+   LOAD CSV
+========================= */
+async function autoLoad(){
+  try{
+    const res=await fetch('data.csv?v='+Date.now());
+    const text=await res.text();
+    processData(text);
+  }catch(e){
+    console.error("Load failed");
+  }
+}
+
+function parseCsvLine(line){
+  const values=[];
+  let current="";
+  let inQuotes=false;
+
+  for(let i=0;i<line.length;i++){
+    const char=line[i];
+
+    if(char==='"'){
+      if(inQuotes && line[i+1]==='"'){
+        current+='"';
+        i++;
+      }else{
+        inQuotes=!inQuotes;
+      }
+      continue;
+    }
+
+    if(char===',' && !inQuotes){
+      values.push(current);
+      current="";
+      continue;
+    }
+
+    current+=char;
+  }
+
+  values.push(current);
+  return values;
+}
+
+function normalizeDescription(itemCode, description){
+  const code=(itemCode||"").trim();
+  const desc=(description||"").trim();
+  if(!code || !desc) return desc;
+
+  if(desc.toLowerCase().startsWith(code.toLowerCase())){
+    return desc
+      .slice(code.length)
+      .trim()
+      .replace(/^[-–:()\s]+/, '')
+      .replace(/[)\s]+$/, '')
+      .trim() || desc;
+  }
+
+  return desc;
+}
+
+function processData(csv){
+  const rows=csv
+    .split(/\r?\n/)
+    .filter(line=>line.trim().length>0)
+    .map(parseCsvLine);
+
+  if(rows.length<2){
+    db=[];
+    render(db);
+    return;
+  }
+
+  const headers=rows[0].map(h=>h.trim());
+  const index={};
+  headers.forEach((header,i)=>{ index[header]=i; });
+
+  const get=(row, names)=>{
+    for(const name of names){
+      const idx=index[name];
+      if(idx!==undefined){
+        return (row[idx]||"").trim();
+      }
+    }
+    return "";
+  };
+
+  db=rows.slice(1).map(row=>{
+    const id=get(row,['Item','Item Code','SKU']);
+    const rawName=get(row,['Item Description','Description']);
+
+    return {
+      id,
+      name:normalizeDescription(id, rawName),
+      systemQty:Number(get(row,['QB System Stock QTY','Quantity On Q.B','QB Stock','System'])||0)
+    };
+  }).filter(item=>item.id || item.name);
+
+  render(db);
+}
+
+/* =========================
+   RENDER
+========================= */
+function render(data){
+  const tbody=document.querySelector('#table tbody');
+  tbody.innerHTML="";
+  data.slice(0,500).forEach(item=>{
+    const phys=physCounts[item.id]?.value||0;
+    const diff=phys-item.systemQty;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-family:monospace;font-weight:700;">${item.id||'-'}</td>
+      <td>${item.name||'-'}</td>
+      <td>${item.systemQty}</td>
+      <td><input type="number" value="${phys}" 
+          oninput="updatePhys('${item.id}',this.value)"></td>
+      <td style="color:${diff!==0?'var(--danger)':'var(--accent)'}">${diff}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+   SEARCH
+========================= */
+function searchData(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const filtered=db.filter(i=>`${i.id} ${i.name}`.toLowerCase().includes(q));
+  render(filtered);
+}
+
+/* =========================
+   UPDATE PHYSICAL
+========================= */
+function updatePhys(id,val){
+  physCounts[id]={value:Number(val)};
+  localStorage.setItem('c2c_phys_store',JSON.stringify(physCounts));
+  searchData();
+}
+
+/* =========================
+   SYNC
+========================= */
+async function syncToCloud(){
+  const btn=document.getElementById('syncBtn');
+  btn.disabled=true;
+  btn.innerText="SYNCING...";
+
+  try{
+    await fetch(CLOUD_API,{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(physCounts)
+    });
+    showToast("SYNCED");
+  }catch(e){
+    showToast("FAILED");
+  }
+
+  btn.disabled=false;
+  btn.innerText="☁️ SYNC";
+}
+
+/* =========================
+   CLEAR
+========================= */
+function clearPhysicalCounts(){
+  if(confirm("Clear all physical data?")){
+    physCounts={};
+    localStorage.removeItem('c2c_phys_store');
+    render(db);
+  }
+}
+
+/* =========================
+   THEME
+========================= */
+function toggleTheme(){
+  const root=document.documentElement;
+  root.setAttribute(
+    "data-theme",
+    root.getAttribute("data-theme")==="dark"?"light":"dark"
+  );
+}
+
+/* =========================
+   TOAST
+========================= */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerText=msg;
+  t.style.display="block";
+  setTimeout(()=>t.style.display="none",1500);
+}
+</script>
+
 </body>
 </html>
