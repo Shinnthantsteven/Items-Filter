@@ -88,21 +88,21 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-        /* COLUMN WIDTHS UPDATED FOR QB STOCK */
-        th:nth-child(1) { width: 85px; }  /* ID */
-        th:nth-child(2) { width: 32%; }   /* Description */
-        th:nth-child(3) { width: 70px; }  /* QB STOCK */
-        th:nth-child(4) { width: 80px; }  /* Cost */
-        th:nth-child(5) { width: 75px; }  /* U/M */
-        th:nth-child(6) { width: 100px; } /* Packing */
-        th:nth-child(7) { width: 140px; } /* Supplier */
-        th:nth-child(8) { width: 160px; } /* Brand */
-        th:nth-child(9) { width: 75px; }  /* Manu No */
+        /* COLUMN WIDTHS UPDATED TO MATCH UPLOADED FORMAT */
+        th:nth-child(1) { width: 90px; }  /* Item ID */
+        th:nth-child(2) { width: 35%; }   /* Description */
+        th:nth-child(3) { width: 80px; }  /* QB Stock QTY */
+        th:nth-child(4) { width: 140px; } /* Supplier */
+        th:nth-child(5) { width: 60px; }  /* U/M */
+        th:nth-child(6) { width: 90px; }  /* Case Pack */
+        th:nth-child(7) { width: 120px; } /* Brand */
+        th:nth-child(8) { width: 90px; }  /* Origin */
+        th:nth-child(9) { width: 100px; } /* Cat 2 */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
         .brand-pill { background: rgba(59,130,246,0.15); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
-        .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; margin-left: 4px; display: inline-block; }
+        .origin-pill { background: rgba(16,185,129,0.15); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-block; }
 
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -158,15 +158,15 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Description / Cat</th>
-                    <th>Stock</th>
-                    <th>Cost</th>
-                    <th>U/M</th>
-                    <th>Packing</th>
+                    <th>Item</th>
+                    <th>Item Description</th>
+                    <th>QB Stock</th>
                     <th>Supplier</th>
-                    <th>Brand/Origin</th>
-                    <th>Manu No.</th>
+                    <th>U/M</th>
+                    <th>Case Pack</th>
+                    <th>Brand</th>
+                    <th>Origin</th>
+                    <th>Cat 2</th>
                 </tr>
             </thead>
             <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
@@ -233,17 +233,14 @@
                 const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                 db = raw.map(r => ({
                     id: cleanString(r['Item']),
-                    desc: cleanString(r['Description']),
-                    stock: cleanString(r['QB System Stock QTY']),
-                    cost: cleanString(r['Cost']).toLowerCase().replace(/aed/g, '').trim(),
-                    um: cleanString(r['Base U/M']),
-                    pack: cleanString(r['Case Packing'] || r['Case Pack']),
-                    cat: cleanString(r['Cat 2']),
-                    state: cleanString(r['State']),
+                    desc: cleanString(r['Item Description']), // Linked to new column name
+                    stock: cleanString(r['QB System Stock QTY']), // Linked to stock column
                     sup: cleanString(r['Preferred Supplier']),
+                    um: cleanString(r['U/M']),
+                    pack: cleanString(r['Case Pack']),
                     brand: cleanString(r['Brand']),
-                    origin: cleanString(r['Origin'] || "UAE"),
-                    manu: cleanString(r['Manu. Part No.'] || r['Manu. Par'])
+                    origin: cleanString(r['Origin']),
+                    cat: cleanString(r['Cat 2'])
                 }));
                 render(db);
             } catch(e) { console.log("Processing error."); }
@@ -264,7 +261,7 @@
             currentSearch = e.target.value.toLowerCase().trim();
             const terms = currentSearch.split(/\s+/);
             const filtered = db.filter(r => {
-                const rowText = `${r.id} ${r.desc} ${r.pack} ${r.cat} ${r.sup} ${r.brand} ${r.manu}`.toLowerCase();
+                const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.cat}`.toLowerCase();
                 return terms.every(term => rowText.includes(term));
             });
             render(filtered);
@@ -273,36 +270,29 @@
         function render(data) {
             const list = document.getElementById('list');
             list.innerHTML = data.slice(0, 100).map(r => {
-                // Determine if stock is negative to apply red color
+                // Apply styling to stock (bold & italics as per image)
                 const stockVal = parseFloat(r.stock) || 0;
-                const stockStyle = stockVal < 0 ? 'color:var(--danger)' : 'color:var(--text)';
+                const stockColor = stockVal < 0 ? 'var(--danger)' : 'var(--text)';
                 
                 return `
                 <tr>
                     <td style="color:#64748b; font-size:11px; font-weight:700;">${highlight(r.id)}</td>
-                    <td>
-                        <div class="desc-cell">${highlight(r.desc)}</div>
-                        <div style="font-size:10px; color:var(--brand); font-weight:800; margin-top:2px;">${highlight(r.cat)}</div>
-                    </td>
-                    <td style="${stockStyle}; font-weight:800; font-size:16px;">${r.stock}</td>
-                    <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
-                    <td style="font-weight:700;">${highlight(r.um)}</td>
-                    <td>
-                        <div style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</div>
-                        <div style="font-size:9px; opacity:0.6; font-weight:800;">${r.state}</div>
+                    <td class="desc-cell">${highlight(r.desc)}</td>
+                    <td style="font-weight:900; font-style: italic; font-size: 16px; color: ${stockColor};">
+                        ${r.stock}
                     </td>
                     <td style="color:#a78bfa; font-size:13px; font-weight:700;">${highlight(r.sup)}</td>
-                    <td>
-                        <span class="brand-pill">${highlight(r.brand)}</span>
-                        <span class="origin-pill">${highlight(r.origin)}</span>
-                    </td>
-                    <td style="color:#94a3b8; font-size:11px; font-family: monospace;">${highlight(r.manu)}</td>
+                    <td style="font-weight:700;">${highlight(r.um)}</td>
+                    <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
+                    <td><span class="brand-pill">${highlight(r.brand)}</span></td>
+                    <td><span class="origin-pill">${highlight(r.origin)}</span></td>
+                    <td style="color:var(--brand); font-weight:800; font-size:12px;">${highlight(r.cat)}</td>
                 </tr>
             `}).join('');
         }
 
-        function handleQuickCopy(event) {
-            const cell = event.target.closest('td');
+        function handleQuickCopy(e) {
+            const cell = e.target.closest('td');
             if (!cell) return;
             navigator.clipboard.writeText(cell.innerText).then(() => {
                 const toast = document.getElementById('toast');
