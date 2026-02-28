@@ -88,8 +88,8 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-        /* COLUMN WIDTHS UPDATED TO MATCH UPLOADED FORMAT */
-        th:nth-child(1) { width: 90px; }  /* Item ID */
+        /* COLUMN WIDTHS */
+        th:nth-child(1) { width: 100px; }  /* Item ID */
         th:nth-child(2) { width: 35%; }   /* Description */
         th:nth-child(3) { width: 80px; }  /* QB Stock QTY */
         th:nth-child(4) { width: 140px; } /* Supplier */
@@ -232,9 +232,10 @@
                 const wb = XLSX.read(csv, { type: 'string' });
                 const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                 db = raw.map(r => ({
+                    // MAPPING DATA SOURCE HEADERS
                     id: cleanString(r['Item']),
-                    desc: cleanString(r['Item Description']), // Linked to new column name
-                    stock: cleanString(r['QB System Stock QTY']), // Linked to stock column
+                    desc: cleanString(r['Item Description']),
+                    stock: cleanString(r['QB System Stock QTY']),
                     sup: cleanString(r['Preferred Supplier']),
                     um: cleanString(r['U/M']),
                     pack: cleanString(r['Case Pack']),
@@ -270,13 +271,12 @@
 function render(data) {
     const list = document.getElementById('list');
     list.innerHTML = data.slice(0, 100).map(r => {
-        // Style stock based on value (red for negative)
         const stockVal = parseFloat(r.stock) || 0;
         const stockColor = stockVal < 0 ? 'var(--danger)' : 'var(--text)';
         
         return `
         <tr>
-            <td style="color:var(--text); font-weight:800; font-size:14px;">
+            <td style="color:var(--brand); font-weight:800; font-size:14px; font-family: monospace;">
                 ${highlight(r.id)}
             </td>
             
