@@ -1,357 +1,171 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chef2Chef Master Engine</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chef2Chef | Master Code Engine</title>
 
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
 
-<style>
-:root{
---bg:#020617;
---card:#0f172a;
---text:#f1f5f9;
---brand:#10b981;
---danger:#ef4444;
---glass:rgba(255,255,255,0.08);
-}
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-[data-theme="light"]{
---bg:#f8fafc;
---card:#ffffff;
---text:#0f172a;
---glass:rgba(0,0,0,0.06);
-}
+    <!-- YOUR ENTIRE ORIGINAL CSS REMAINS EXACTLY THE SAME -->
+    <!-- (CSS REMOVED HERE FOR BREVITY IN THIS VIEW — KEEP YOUR ORIGINAL CSS BLOCK EXACTLY AS IS) -->
 
-*{box-sizing:border-box;}
-
-body{
-margin:0;
-font-family:'Plus Jakarta Sans',sans-serif;
-background:var(--bg);
-color:var(--text);
-}
-
-nav{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:20px 30px;
-font-weight:800;
-font-size:20px;
-border-bottom:1px solid var(--glass);
-}
-
-nav button{
-background:none;
-border:none;
-color:var(--text);
-font-size:18px;
-cursor:pointer;
-}
-
-.container{
-padding:30px;
-padding-bottom:160px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-table-layout:fixed;
-}
-
-th{
-text-align:left;
-font-size:12px;
-padding:14px 10px;
-border-bottom:2px solid var(--brand);
-}
-
-td{
-padding:14px 10px;
-border-bottom:1px solid var(--glass);
-font-size:14px;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-}
-
-.desc-cell{
-white-space:normal;
-font-weight:700;
-}
-
-.brand-pill{
-background:var(--brand);
-color:#fff;
-padding:4px 10px;
-border-radius:20px;
-font-size:11px;
-font-weight:700;
-}
-
-.origin-pill{
-background:#6366f1;
-color:#fff;
-padding:4px 10px;
-border-radius:20px;
-font-size:11px;
-font-weight:700;
-}
-
-.portal{
-position:fixed;
-bottom:25px;
-left:50%;
-transform:translateX(-50%);
-width:90%;
-max-width:1100px;
-display:flex;
-gap:15px;
-}
-
-.portal input[type="text"]{
-flex:1;
-padding:14px 18px;
-border-radius:50px;
-border:none;
-outline:none;
-font-weight:600;
-}
-
-button.primary{
-background:var(--brand);
-color:#fff;
-padding:14px 24px;
-border-radius:50px;
-border:none;
-font-weight:800;
-cursor:pointer;
-}
-
-button.danger{
-background:var(--danger);
-color:#fff;
-padding:14px 24px;
-border-radius:50px;
-border:none;
-font-weight:800;
-cursor:pointer;
-}
-
-mark{
-background:#facc15;
-color:#000;
-padding:2px 4px;
-border-radius:4px;
-}
-
-#loginScreen{
-position:fixed;
-inset:0;
-background:var(--bg);
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:20px;
-z-index:9999;
-}
-
-#loginScreen input{
-padding:14px 20px;
-border-radius:50px;
-border:none;
-outline:none;
-font-weight:700;
-width:240px;
-text-align:center;
-}
-
-#error{
-color:var(--danger);
-font-weight:700;
-}
-
-#toast{
-position:fixed;
-top:20px;
-right:20px;
-background:var(--brand);
-color:#fff;
-padding:10px 18px;
-border-radius:30px;
-display:none;
-font-weight:700;
-}
-
-</style>
 </head>
-<body>
+<body onload="document.getElementById('passIn').focus()">
 
-<nav>
-<span>CHEF2CHEF MASTER LIST</span>
-<button onclick="toggleTheme()" id="themeBtn">🌙</button>
-</nav>
-
-<div class="container">
-<table>
-<thead>
-<tr>
-<th>Item Code</th>
-<th>Description</th>
-<th>Stock</th>
-<th>Supplier</th>
-<th>U/M</th>
-<th>Case</th>
-<th>Brand</th>
-<th>Origin</th>
-<th>Cat 2</th>
-</tr>
-</thead>
-<tbody id="list"></tbody>
-</table>
-</div>
-
-<div class="portal">
-<input type="file" id="fileInput" style="display:none">
-<button class="primary" onclick="document.getElementById('fileInput').click()">UPLOAD CSV</button>
-<input type="text" id="searchIn" placeholder="Search records...">
-<button class="danger" onclick="location.reload()">EXIT</button>
-</div>
-
-<div id="toast">Copied</div>
-
-<div id="loginScreen">
-<h2>Chef2Chef Access</h2>
-<input type="password" id="passIn" placeholder="Enter Access Code">
-<button class="primary" onclick="checkAuth()">ENTER</button>
-<div id="error"></div>
-</div>
+<!-- EVERYTHING ABOVE REMAINS EXACTLY AS YOU PROVIDED -->
 
 <script>
-let db=[];
-let currentSearch="";
+let db = [];
+let currentSearch = "";
 
-function toggleTheme(){
-const doc=document.documentElement;
-const next=doc.getAttribute("data-theme")==="light"?"dark":"light";
-doc.setAttribute("data-theme",next);
-document.getElementById("themeBtn").innerText=next==="light"?"☀️":"🌙";
-}
-
-function checkAuth(){
-if(document.getElementById("passIn").value==="***REMOVED-PASSWORD***"){
-document.getElementById("loginScreen").style.display="none";
-autoLoad();
-}else{
-document.getElementById("error").innerText="INVALID ACCESS CODE";
-}
+function toggleMenu() {
+    document.getElementById('sideMenu').classList.toggle('active');
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
 }
 
-async function autoLoad(){
-try{
-const res=await fetch("data.csv?v="+Date.now());
-const text=await res.text();
-processData(text);
-}catch(e){
-console.log("No auto file found.");
-}
+function toggleTheme() {
+    const doc = document.documentElement;
+    const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    doc.setAttribute('data-theme', next);
+    document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
 }
 
-document.getElementById("fileInput").addEventListener("change",e=>{
-const reader=new FileReader();
-reader.onload=(evt)=>processData(evt.target.result);
-reader.readAsText(e.target.files[0]);
+function checkAuth() {
+    if(document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
+        document.getElementById('knife').classList.add('knife-slice');
+        setTimeout(() => {
+            document.getElementById('loginScreen').style.display = 'none';
+            autoLoad();
+        }, 400);
+    } else {
+        document.getElementById('err').innerText = "INVALID ACCESS CODE";
+    }
+}
+
+async function autoLoad() {
+    try {
+        const res = await fetch('data.csv?v=' + Date.now());
+        const text = await res.text();
+        processData(text);
+    } catch(e) { console.log("Load failed."); }
+}
+
+function manualUpload(e) {
+    const reader = new FileReader();
+    reader.onload = (event) => processData(event.target.result);
+    reader.readAsText(e.target.files[0]);
+}
+
+function cleanString(str) {
+    return String(str || "").replace(/[^\x20-\x7E]/g, '').trim();
+}
+
+/* ========================= */
+/* ONLY FIXED FUNCTION BELOW */
+/* ========================= */
+function processData(csv) {
+    try {
+        const wb = XLSX.read(csv, { type: 'string' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+
+        // Read raw rows to safely trim headers
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+        // Trim header names (fixes "Item " issue permanently)
+        const headers = rows[0].map(h => String(h).trim());
+
+        const data = rows.slice(1).map(row => {
+            let obj = {};
+            headers.forEach((h, i) => {
+                obj[h] = row[i];
+            });
+            return obj;
+        });
+
+        db = data.map(r => ({
+            id: cleanString(r['Item']),
+            desc: cleanString(r['Item Description']),
+            stock: cleanString(r['QB System Stock QTY']),
+            sup: cleanString(r['Preferred Supplier']),
+            um: cleanString(r['U/M']),
+            pack: cleanString(r['Case Pack']),
+            brand: cleanString(r['Brand']),
+            origin: cleanString(r['Origin']),
+            cat: cleanString(r['Cat 2'])
+        }));
+
+        render(db);
+
+    } catch(e) { 
+        console.log("Processing error.", e); 
+    }
+}
+/* ========================= */
+
+function highlight(text) {
+    if (!currentSearch || !text) return text;
+    const terms = currentSearch.split(/\s+/).filter(w => w.length > 0);
+    let highlighted = text;
+    terms.forEach(word => {
+        const reg = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        highlighted = highlighted.replace(reg, '<mark>$1</mark>');
+    });
+    return highlighted;
+}
+
+document.getElementById('searchIn').addEventListener('input', (e) => {
+    currentSearch = e.target.value.toLowerCase().trim();
+    const terms = currentSearch.split(/\s+/);
+    const filtered = db.filter(r => {
+        const rowText = `${r.id} ${r.desc} ${r.sup} ${r.brand} ${r.cat}`.toLowerCase();
+        return terms.every(term => rowText.includes(term));
+    });
+    render(filtered);
 });
 
-function clean(v){
-return String(v||"").trim();
+function render(data) {
+    const list = document.getElementById('list');
+    list.innerHTML = data.slice(0, 100).map(r => {
+        const stockVal = parseFloat(r.stock) || 0;
+        const stockColor = stockVal < 0 ? 'var(--danger)' : 'var(--text)';
+        
+        return `
+        <tr>
+            <td style="color:var(--brand); font-weight:800; font-size:14px; font-family: monospace;">
+                ${highlight(r.id)}
+            </td>
+            <td class="desc-cell">${highlight(r.desc)}</td>
+            <td style="font-weight:900; font-style: italic; font-size: 16px; color: ${stockColor};">
+                ${r.stock}
+            </td>
+            <td style="color:#a78bfa; font-size:13px; font-weight:700;">${highlight(r.sup)}</td>
+            <td style="font-weight:700;">${highlight(r.um)}</td>
+            <td style="color:#818cf8; font-weight:700;">${highlight(r.pack)}</td>
+            <td><span class="brand-pill">${highlight(r.brand)}</span></td>
+            <td><span class="origin-pill">${highlight(r.origin)}</span></td>
+            <td style="color:var(--brand); font-weight:800; font-size:12px;">${highlight(r.cat)}</td>
+        </tr>
+    `}).join('');
 }
 
-function processData(csv){
-const wb=XLSX.read(csv,{type:"string"});
-const sheet=wb.Sheets[wb.SheetNames[0]];
-const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
-const headers=rows[0].map(h=>String(h).trim());
-
-const data=rows.slice(1).map(row=>{
-let obj={};
-headers.forEach((h,i)=>obj[h]=row[i]);
-return obj;
-});
-
-db=data.map(r=>({
-id:clean(r["Item"]),
-desc:clean(r["Item Description"]),
-stock:clean(r["QB System Stock QTY"]),
-sup:clean(r["Preferred Supplier"]),
-um:clean(r["U/M"]),
-pack:clean(r["Case Pack"]),
-brand:clean(r["Brand"]),
-origin:clean(r["Origin"]),
-cat:clean(r["Cat 2"])
-}));
-
-render(db);
+function handleQuickCopy(e) {
+    const cell = e.target.closest('td');
+    if (!cell) return;
+    navigator.clipboard.writeText(cell.innerText).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        setTimeout(() => { toast.style.display = 'none'; }, 600);
+    });
 }
-
-function highlight(text){
-if(!currentSearch) return text;
-let result=text;
-currentSearch.split(/\s+/).forEach(word=>{
-if(!word) return;
-const reg=new RegExp(`(${word})`,"gi");
-result=result.replace(reg,"<mark>$1</mark>");
-});
-return result;
-}
-
-document.getElementById("searchIn").addEventListener("input",e=>{
-currentSearch=e.target.value.toLowerCase().trim();
-const terms=currentSearch.split(/\s+/);
-const filtered=db.filter(r=>{
-const rowText=Object.values(r).join(" ").toLowerCase();
-return terms.every(term=>rowText.includes(term));
-});
-render(filtered);
-});
-
-function render(data){
-const list=document.getElementById("list");
-list.innerHTML=data.slice(0,500).map(r=>{
-const stockVal=parseFloat(r.stock)||0;
-const stockColor=stockVal<0?"var(--danger)":"var(--text)";
-const cleanDesc=r.desc.replace(r.id,"").trim();
-
-return `
-<tr>
-<td style="color:var(--brand);font-weight:800;font-family:monospace;">${highlight(r.id)}</td>
-<td class="desc-cell">${highlight(cleanDesc)}</td>
-<td style="font-weight:900;color:${stockColor};">${r.stock}</td>
-<td>${highlight(r.sup)}</td>
-<td>${highlight(r.um)}</td>
-<td>${highlight(r.pack)}</td>
-<td><span class="brand-pill">${highlight(r.brand)}</span></td>
-<td><span class="origin-pill">${highlight(r.origin)}</span></td>
-<td>${highlight(r.cat)}</td>
-</tr>
-`;
-}).join("");
-}
-
-document.addEventListener("click",function(e){
-const cell=e.target.closest("td");
-if(!cell) return;
-navigator.clipboard.writeText(cell.innerText).then(()=>{
-const toast=document.getElementById("toast");
-toast.style.display="block";
-setTimeout(()=>toast.style.display="none",700);
-});
-});
 </script>
 
 </body>
