@@ -3,340 +3,355 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C2C STOCK SYSTEM</title>
+<title>Chef2Chef Master Engine</title>
+
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:#111;
-  --card:#1b1b1b;
-  --text:#fff;
-  --accent:#00ff99;
-  --danger:#ff4d4d;
+--bg:#020617;
+--card:#0f172a;
+--text:#f1f5f9;
+--brand:#10b981;
+--danger:#ef4444;
+--glass:rgba(255,255,255,0.08);
 }
+
 [data-theme="light"]{
-  --bg:#f5f5f5;
-  --card:#ffffff;
-  --text:#000;
+--bg:#f8fafc;
+--card:#ffffff;
+--text:#0f172a;
+--glass:rgba(0,0,0,0.06);
 }
-*{box-sizing:border-box}
+
+*{box-sizing:border-box;}
+
 body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
+margin:0;
+font-family:'Plus Jakarta Sans',sans-serif;
+background:var(--bg);
+color:var(--text);
 }
-header{
-  padding:15px;
-  background:var(--card);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:5;
+
+nav{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 30px;
+font-weight:800;
+font-size:20px;
+border-bottom:1px solid var(--glass);
 }
-button{
-  cursor:pointer;
-  border:none;
-  padding:8px 12px;
-  background:var(--accent);
-  color:#000;
-  font-weight:bold;
-  border-radius:4px;
+
+nav button{
+background:none;
+border:none;
+color:var(--text);
+font-size:18px;
+cursor:pointer;
 }
-button:disabled{opacity:.5}
-input{
-  padding:6px;
-  border-radius:4px;
-  border:1px solid #333;
+
+.container{
+padding:30px;
+padding-bottom:160px;
 }
-#search{
-  width:250px;
-}
+
 table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
 }
-th,td{
-  padding:8px;
-  border-bottom:1px solid #333;
-  text-align:left;
+
+th{
+text-align:left;
+font-size:12px;
+padding:14px 10px;
+border-bottom:2px solid var(--brand);
 }
-tr:hover{
-  background:rgba(255,255,255,0.05);
+
+td{
+padding:14px 10px;
+border-bottom:1px solid var(--glass);
+font-size:14px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
 }
-.toast{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:var(--accent);
-  color:#000;
-  padding:10px 15px;
-  border-radius:5px;
-  display:none;
+
+.desc-cell{
+white-space:normal;
+font-weight:700;
 }
-.login{
-  position:fixed;
-  inset:0;
-  background:#000;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:10;
+
+.brand-pill{
+background:var(--brand);
+color:#fff;
+padding:4px 10px;
+border-radius:20px;
+font-size:11px;
+font-weight:700;
 }
+
+.origin-pill{
+background:#6366f1;
+color:#fff;
+padding:4px 10px;
+border-radius:20px;
+font-size:11px;
+font-weight:700;
+}
+
+.portal{
+position:fixed;
+bottom:25px;
+left:50%;
+transform:translateX(-50%);
+width:90%;
+max-width:1100px;
+display:flex;
+gap:15px;
+}
+
+.portal input[type="text"]{
+flex:1;
+padding:14px 18px;
+border-radius:50px;
+border:none;
+outline:none;
+font-weight:600;
+}
+
+button.primary{
+background:var(--brand);
+color:#fff;
+padding:14px 24px;
+border-radius:50px;
+border:none;
+font-weight:800;
+cursor:pointer;
+}
+
+button.danger{
+background:var(--danger);
+color:#fff;
+padding:14px 24px;
+border-radius:50px;
+border:none;
+font-weight:800;
+cursor:pointer;
+}
+
+mark{
+background:#facc15;
+color:#000;
+padding:2px 4px;
+border-radius:4px;
+}
+
+#loginScreen{
+position:fixed;
+inset:0;
+background:var(--bg);
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:20px;
+z-index:9999;
+}
+
+#loginScreen input{
+padding:14px 20px;
+border-radius:50px;
+border:none;
+outline:none;
+font-weight:700;
+width:240px;
+text-align:center;
+}
+
+#error{
+color:var(--danger);
+font-weight:700;
+}
+
+#toast{
+position:fixed;
+top:20px;
+right:20px;
+background:var(--brand);
+color:#fff;
+padding:10px 18px;
+border-radius:30px;
+display:none;
+font-weight:700;
+}
+
 </style>
 </head>
-
 <body>
 
-<div id="loginScreen" class="login">
-  <h2>ENTER ACCESS CODE</h2>
-  <input type="password" id="passIn">
-  <button onclick="checkAuth()">ENTER</button>
-  <div id="err" style="color:red;margin-top:10px;"></div>
+<nav>
+<span>CHEF2CHEF MASTER LIST</span>
+<button onclick="toggleTheme()" id="themeBtn">🌙</button>
+</nav>
+
+<div class="container">
+<table>
+<thead>
+<tr>
+<th>Item Code</th>
+<th>Description</th>
+<th>Stock</th>
+<th>Supplier</th>
+<th>U/M</th>
+<th>Case</th>
+<th>Brand</th>
+<th>Origin</th>
+<th>Cat 2</th>
+</tr>
+</thead>
+<tbody id="list"></tbody>
+</table>
 </div>
 
-<header>
-  <div>
-    <button onclick="toggleTheme()">🌙</button>
-    <button onclick="clearPhysicalCounts()">CLEAR</button>
-    <button id="syncBtn" onclick="syncToCloud()">☁️ SYNC</button>
-  </div>
-  <input id="search" placeholder="Search..." oninput="searchData()">
-</header>
+<div class="portal">
+<input type="file" id="fileInput" style="display:none">
+<button class="primary" onclick="document.getElementById('fileInput').click()">UPLOAD CSV</button>
+<input type="text" id="searchIn" placeholder="Search records...">
+<button class="danger" onclick="location.reload()">EXIT</button>
+</div>
 
-<table id="table">
-  <thead>
-    <tr>
-      <th>Item Code</th>
-      <th>Description</th>
-      <th>System</th>
-      <th>Physical</th>
-      <th>Diff</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div id="toast">Copied</div>
 
-<div id="toast" class="toast"></div>
+<div id="loginScreen">
+<h2>Chef2Chef Access</h2>
+<input type="password" id="passIn" placeholder="Enter Access Code">
+<button class="primary" onclick="checkAuth()">ENTER</button>
+<div id="error"></div>
+</div>
 
 <script>
-/* =========================
-   STATE
-========================= */
 let db=[];
-let physCounts=JSON.parse(localStorage.getItem('c2c_phys_store'))||{};
-const CLOUD_API="YOUR_GOOGLE_SCRIPT_URL";
+let currentSearch="";
 
-/* =========================
-   AUTH
-========================= */
+function toggleTheme(){
+const doc=document.documentElement;
+const next=doc.getAttribute("data-theme")==="light"?"dark":"light";
+doc.setAttribute("data-theme",next);
+document.getElementById("themeBtn").innerText=next==="light"?"☀️":"🌙";
+}
+
 function checkAuth(){
-  if(document.getElementById('passIn').value==="***REMOVED-PASSWORD***"){
-    document.getElementById('loginScreen').style.display="none";
-    autoLoad();
-  }else{
-    document.getElementById('err').innerText="INVALID ACCESS CODE";
-  }
+if(document.getElementById("passIn").value==="***REMOVED-PASSWORD***"){
+document.getElementById("loginScreen").style.display="none";
+autoLoad();
+}else{
+document.getElementById("error").innerText="INVALID ACCESS CODE";
+}
 }
 
-/* =========================
-   LOAD CSV
-========================= */
 async function autoLoad(){
-  try{
-    const res=await fetch('data.csv?v='+Date.now());
-    const text=await res.text();
-    processData(text);
-  }catch(e){
-    console.error("Load failed");
-  }
+try{
+const res=await fetch("data.csv?v="+Date.now());
+const text=await res.text();
+processData(text);
+}catch(e){
+console.log("No auto file found.");
+}
 }
 
-function parseCsvLine(line){
-  const values=[];
-  let current="";
-  let inQuotes=false;
+document.getElementById("fileInput").addEventListener("change",e=>{
+const reader=new FileReader();
+reader.onload=(evt)=>processData(evt.target.result);
+reader.readAsText(e.target.files[0]);
+});
 
-  for(let i=0;i<line.length;i++){
-    const char=line[i];
-
-    if(char==='"'){
-      if(inQuotes && line[i+1]==='"'){
-        current+='"';
-        i++;
-      }else{
-        inQuotes=!inQuotes;
-      }
-      continue;
-    }
-
-    if(char===',' && !inQuotes){
-      values.push(current);
-      current="";
-      continue;
-    }
-
-    current+=char;
-  }
-
-  values.push(current);
-  return values;
-}
-
-function normalizeDescription(itemCode, description){
-  const code=(itemCode||"").trim();
-  const desc=(description||"").trim();
-  if(!code || !desc) return desc;
-
-  if(desc.toLowerCase().startsWith(code.toLowerCase())){
-    return desc
-      .slice(code.length)
-      .trim()
-      .replace(/^[-–:()\s]+/, '')
-      .replace(/[)\s]+$/, '')
-      .trim() || desc;
-  }
-
-  return desc;
+function clean(v){
+return String(v||"").trim();
 }
 
 function processData(csv){
-  const rows=csv
-    .split(/\r?\n/)
-    .filter(line=>line.trim().length>0)
-    .map(parseCsvLine);
+const wb=XLSX.read(csv,{type:"string"});
+const sheet=wb.Sheets[wb.SheetNames[0]];
+const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+const headers=rows[0].map(h=>String(h).trim());
 
-  if(rows.length<2){
-    db=[];
-    render(db);
-    return;
-  }
+const data=rows.slice(1).map(row=>{
+let obj={};
+headers.forEach((h,i)=>obj[h]=row[i]);
+return obj;
+});
 
-  const headers=rows[0].map(h=>h.trim());
-  const index={};
-  headers.forEach((header,i)=>{ index[header]=i; });
+db=data.map(r=>({
+id:clean(r["Item"]),
+desc:clean(r["Item Description"]),
+stock:clean(r["QB System Stock QTY"]),
+sup:clean(r["Preferred Supplier"]),
+um:clean(r["U/M"]),
+pack:clean(r["Case Pack"]),
+brand:clean(r["Brand"]),
+origin:clean(r["Origin"]),
+cat:clean(r["Cat 2"])
+}));
 
-  const get=(row, names)=>{
-    for(const name of names){
-      const idx=index[name];
-      if(idx!==undefined){
-        return (row[idx]||"").trim();
-      }
-    }
-    return "";
-  };
-
-  db=rows.slice(1).map(row=>{
-    const id=get(row,['Item','Item Code','SKU']);
-    const rawName=get(row,['Item Description','Description']);
-
-    return {
-      id,
-      name:normalizeDescription(id, rawName),
-      systemQty:Number(get(row,['QB System Stock QTY','Quantity On Q.B','QB Stock','System'])||0)
-    };
-  }).filter(item=>item.id || item.name);
-
-  render(db);
+render(db);
 }
 
-/* =========================
-   RENDER
-========================= */
+function highlight(text){
+if(!currentSearch) return text;
+let result=text;
+currentSearch.split(/\s+/).forEach(word=>{
+if(!word) return;
+const reg=new RegExp(`(${word})`,"gi");
+result=result.replace(reg,"<mark>$1</mark>");
+});
+return result;
+}
+
+document.getElementById("searchIn").addEventListener("input",e=>{
+currentSearch=e.target.value.toLowerCase().trim();
+const terms=currentSearch.split(/\s+/);
+const filtered=db.filter(r=>{
+const rowText=Object.values(r).join(" ").toLowerCase();
+return terms.every(term=>rowText.includes(term));
+});
+render(filtered);
+});
+
 function render(data){
-  const tbody=document.querySelector('#table tbody');
-  tbody.innerHTML="";
-  data.slice(0,500).forEach(item=>{
-    const phys=physCounts[item.id]?.value||0;
-    const diff=phys-item.systemQty;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="font-family:monospace;font-weight:700;">${item.id||'-'}</td>
-      <td>${item.name||'-'}</td>
-      <td>${item.systemQty}</td>
-      <td><input type="number" value="${phys}" 
-          oninput="updatePhys('${item.id}',this.value)"></td>
-      <td style="color:${diff!==0?'var(--danger)':'var(--accent)'}">${diff}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+const list=document.getElementById("list");
+list.innerHTML=data.slice(0,500).map(r=>{
+const stockVal=parseFloat(r.stock)||0;
+const stockColor=stockVal<0?"var(--danger)":"var(--text)";
+const cleanDesc=r.desc.replace(r.id,"").trim();
+
+return `
+<tr>
+<td style="color:var(--brand);font-weight:800;font-family:monospace;">${highlight(r.id)}</td>
+<td class="desc-cell">${highlight(cleanDesc)}</td>
+<td style="font-weight:900;color:${stockColor};">${r.stock}</td>
+<td>${highlight(r.sup)}</td>
+<td>${highlight(r.um)}</td>
+<td>${highlight(r.pack)}</td>
+<td><span class="brand-pill">${highlight(r.brand)}</span></td>
+<td><span class="origin-pill">${highlight(r.origin)}</span></td>
+<td>${highlight(r.cat)}</td>
+</tr>
+`;
+}).join("");
 }
 
-/* =========================
-   SEARCH
-========================= */
-function searchData(){
-  const q=document.getElementById('search').value.toLowerCase();
-  const filtered=db.filter(i=>`${i.id} ${i.name}`.toLowerCase().includes(q));
-  render(filtered);
-}
-
-/* =========================
-   UPDATE PHYSICAL
-========================= */
-function updatePhys(id,val){
-  physCounts[id]={value:Number(val)};
-  localStorage.setItem('c2c_phys_store',JSON.stringify(physCounts));
-  searchData();
-}
-
-/* =========================
-   SYNC
-========================= */
-async function syncToCloud(){
-  const btn=document.getElementById('syncBtn');
-  btn.disabled=true;
-  btn.innerText="SYNCING...";
-
-  try{
-    await fetch(CLOUD_API,{
-      method:"POST",
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(physCounts)
-    });
-    showToast("SYNCED");
-  }catch(e){
-    showToast("FAILED");
-  }
-
-  btn.disabled=false;
-  btn.innerText="☁️ SYNC";
-}
-
-/* =========================
-   CLEAR
-========================= */
-function clearPhysicalCounts(){
-  if(confirm("Clear all physical data?")){
-    physCounts={};
-    localStorage.removeItem('c2c_phys_store');
-    render(db);
-  }
-}
-
-/* =========================
-   THEME
-========================= */
-function toggleTheme(){
-  const root=document.documentElement;
-  root.setAttribute(
-    "data-theme",
-    root.getAttribute("data-theme")==="dark"?"light":"dark"
-  );
-}
-
-/* =========================
-   TOAST
-========================= */
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.innerText=msg;
-  t.style.display="block";
-  setTimeout(()=>t.style.display="none",1500);
-}
+document.addEventListener("click",function(e){
+const cell=e.target.closest("td");
+if(!cell) return;
+navigator.clipboard.writeText(cell.innerText).then(()=>{
+const toast=document.getElementById("toast");
+toast.style.display="block";
+setTimeout(()=>toast.style.display="none",700);
+});
+});
 </script>
 
 </body>
