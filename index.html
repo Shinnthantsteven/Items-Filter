@@ -88,15 +88,16 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: var(--bg-color); padding: 25px 15px; text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; z-index: 50; border-bottom: 2px solid var(--brand); }
 
-        /* COLUMN WIDTHS ADJUSTED */
-        th:nth-child(1) { width: 90px; }  /* ID */
-        th:nth-child(2) { width: 42%; }   /* Description - INCREASED */
-        th:nth-child(3) { width: 75px; }  /* Cost */
-        th:nth-child(4) { width: 85px; }  /* U/M */
-        th:nth-child(5) { width: 100px; } /* Packing */
-        th:nth-child(6) { width: 140px; } /* Supplier */
-        th:nth-child(7) { width: 160px; } /* Brand */
-        th:nth-child(8) { width: 80px; }  /* Manu No - REDUCED */
+        /* COLUMN WIDTHS UPDATED FOR QB STOCK */
+        th:nth-child(1) { width: 85px; }  /* ID */
+        th:nth-child(2) { width: 32%; }   /* Description */
+        th:nth-child(3) { width: 70px; }  /* QB STOCK */
+        th:nth-child(4) { width: 80px; }  /* Cost */
+        th:nth-child(5) { width: 75px; }  /* U/M */
+        th:nth-child(6) { width: 100px; } /* Packing */
+        th:nth-child(7) { width: 140px; } /* Supplier */
+        th:nth-child(8) { width: 160px; } /* Brand */
+        th:nth-child(9) { width: 75px; }  /* Manu No */
 
         td { padding: 22px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 14px; cursor: pointer; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s; }
         .desc-cell { font-weight: 800; line-height: 1.6; color: var(--text); white-space: normal; }
@@ -159,6 +160,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Description / Cat</th>
+                    <th>Stock</th>
                     <th>Cost</th>
                     <th>U/M</th>
                     <th>Packing</th>
@@ -221,7 +223,6 @@
             reader.readAsText(e.target.files[0]);
         }
 
-        // FONT ERROR FIX: Clean non-printable characters from data
         function cleanString(str) {
             return String(str || "").replace(/[^\x20-\x7E]/g, '').trim();
         }
@@ -233,6 +234,7 @@
                 db = raw.map(r => ({
                     id: cleanString(r['Item']),
                     desc: cleanString(r['Description']),
+                    stock: cleanString(r['QB System Stock QTY']),
                     cost: cleanString(r['Cost']).toLowerCase().replace(/aed/g, '').trim(),
                     um: cleanString(r['Base U/M']),
                     pack: cleanString(r['Case Packing'] || r['Case Pack']),
@@ -270,14 +272,19 @@
 
         function render(data) {
             const list = document.getElementById('list');
-            // PERFORMANCE FIX: Limit to 100 items
-            list.innerHTML = data.slice(0, 100).map(r => `
+            list.innerHTML = data.slice(0, 100).map(r => {
+                // Determine if stock is negative to apply red color
+                const stockVal = parseFloat(r.stock) || 0;
+                const stockStyle = stockVal < 0 ? 'color:var(--danger)' : 'color:var(--text)';
+                
+                return `
                 <tr>
                     <td style="color:#64748b; font-size:11px; font-weight:700;">${highlight(r.id)}</td>
                     <td>
                         <div class="desc-cell">${highlight(r.desc)}</div>
                         <div style="font-size:10px; color:var(--brand); font-weight:800; margin-top:2px;">${highlight(r.cat)}</div>
                     </td>
+                    <td style="${stockStyle}; font-weight:800; font-size:16px;">${r.stock}</td>
                     <td style="color:var(--brand); font-weight:800; font-size:18px;">${r.cost}</td>
                     <td style="font-weight:700;">${highlight(r.um)}</td>
                     <td>
@@ -291,11 +298,11 @@
                     </td>
                     <td style="color:#94a3b8; font-size:11px; font-family: monospace;">${highlight(r.manu)}</td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
-        function handleQuickCopy(e) {
-            const cell = e.target.closest('td');
+        function handleQuickCopy(event) {
+            const cell = event.target.closest('td');
             if (!cell) return;
             navigator.clipboard.writeText(cell.innerText).then(() => {
                 const toast = document.getElementById('toast');
