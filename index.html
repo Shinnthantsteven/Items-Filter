@@ -117,15 +117,15 @@
             z-index: 50; border-bottom: 2px solid var(--brand); letter-spacing: 1px;
         }
 
-        /* Column widths — Description & Supplier get the most space */
-        th:nth-child(1) { width: 90px; }   /* UID */
-        th:nth-child(2) { width: 28%; }     /* Description */
-        th:nth-child(3) { width: 70px; }    /* Cost */
-        th:nth-child(4) { width: 55px; }    /* U/M */
-        th:nth-child(5) { width: 120px; }   /* Case Pack */
-        th:nth-child(6) { width: 18%; }     /* Supplier */
-        th:nth-child(7) { width: 140px; }   /* Brand/Origin */
-        th:nth-child(8) { width: 60px; }    /* MPN */
+        /* Column widths — Description gets dominant space, MPN minimal */
+        th:nth-child(1) { width: 80px; }    /* UID */
+        th:nth-child(2) { width: 34%; }     /* Description — most space */
+        th:nth-child(3) { width: 65px; }    /* Cost */
+        th:nth-child(4) { width: 50px; }    /* U/M */
+        th:nth-child(5) { width: 110px; }   /* Case Pack */
+        th:nth-child(6) { width: 16%; }     /* Supplier */
+        th:nth-child(7) { width: 130px; }   /* Brand/Origin */
+        th:nth-child(8) { width: 40px; }    /* MPN — minimal */
 
         td { 
             padding: 14px 12px; border-bottom: 1px solid var(--glass-edge); 
@@ -136,10 +136,10 @@
         
         /* Description cell — item name + category pill below */
         .desc-cell { font-weight: 700; line-height: 1.4; color: var(--text); white-space: normal; }
-        .desc-name { font-weight: 700; line-height: 1.4; margin-bottom: 5px; }
+        .desc-name { font-weight: 700; font-size: 15px; line-height: 1.4; margin-bottom: 6px; }
 
-        /* Pack cell — pack size + state pill below */
-        .pack-cell { display: flex; flex-direction: column; gap: 5px; }
+        /* Pack cell — pack size + state pill below, pill is inline not full width */
+        .pack-cell { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
         .pack-value { color: #818cf8; font-weight: 700; }
 
         /* Supplier cell */
