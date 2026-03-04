@@ -114,14 +114,15 @@
             z-index: 50; border-bottom: 2px solid var(--brand); letter-spacing: 1px;
         }
 
-        th:nth-child(1) { width: 90px; }
-        th:nth-child(2) { width: 42%; }
-        th:nth-child(3) { width: 85px; }
-        th:nth-child(4) { width: 75px; }
-        th:nth-child(5) { width: 110px; }
-        th:nth-child(6) { width: 140px; }
-        th:nth-child(7) { width: 200px; }
-        th:nth-child(8) { width: 100px; }
+        /* Adjusted Column Widths */
+        th:nth-child(1) { width: 90px; }  /* UID */
+        th:nth-child(2) { width: 35%; }   /* Description */
+        th:nth-child(3) { width: 80px; }  /* Cost */
+        th:nth-child(4) { width: 70px; }  /* U/M */
+        th:nth-child(5) { width: 100px; } /* Case Pack */
+        th:nth-child(6) { width: 180px; } /* Supplier (Increased) */
+        th:nth-child(7) { width: 150px; } /* Brand/Origin */
+        th:nth-child(8) { width: 70px; }  /* MPN (Decreased) */
 
         td { padding: 18px 15px; border-bottom: 1px solid var(--glass-edge); font-size: 13px; cursor: pointer; vertical-align: middle; transition: background 0.2s; overflow: hidden; text-overflow: ellipsis; }
         tr:hover td { background: rgba(255,255,255,0.02); }
@@ -129,10 +130,8 @@
         .desc-cell { font-weight: 700; line-height: 1.4; color: var(--text); white-space: normal; }
         .brand-pill { background: rgba(59,130,246,0.1); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 10px; display: inline-block; border: 1px solid rgba(59,130,246,0.2); }
         .origin-pill { background: rgba(16,185,129,0.1); color: var(--brand); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 10px; margin-left: 4px; display: inline-block; border: 1px solid rgba(16,185,129,0.2); }
-        /* NEW PILLS FOR CAT/STATE */
-        .cat-pill { background: rgba(251,191,36,0.1); color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 10px; margin-left: 4px; display: inline-block; border: 1px solid rgba(251,191,36,0.2); }
-        .state-pill { background: rgba(167,139,250,0.1); color: #a78bfa; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 10px; margin-left: 4px; display: inline-block; border: 1px solid rgba(167,139,250,0.2); }
 
+        /* PORTAL BAR - ORIGINAL BUBBLE DESIGN */
         .portal-bar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 1100px; padding: 12px 35px; border-radius: 100px;
@@ -196,7 +195,7 @@
                 <th>U/M</th>
                 <th>Case Pack</th>
                 <th>Supplier</th>
-                <th>Brand/Origin/Cat</th>
+                <th>Brand/Origin</th>
                 <th>MPN</th>
             </tr>
         </thead>
@@ -266,8 +265,7 @@ function processData(csv) {
             id: cleanString(r['Item']),
             desc: cleanString(r['Description']),
             cost: cleanString(r['Cost']).toLowerCase().replace(/aed/g, '').trim(),
-            // Logic to remove ( ) and duplicate text
-            um: cleanString(r['Base U/M']).split(' (')[0],
+            um: cleanString(r['Base U/M']).split(' (')[0], // Cleans the double (Kg) issue
             pack: cleanString(r['Case Packing'] || r['Case Pack']),
             cat: cleanString(r['Cat 2']),
             state: cleanString(r['State']),
@@ -308,6 +306,7 @@ function render(data) {
             <td style="color:#64748b; font-family:monospace; font-weight:700;">${highlight(r.id)}</td>
             <td>
                 <div class="desc-cell">${highlight(r.desc)}</div>
+                <div style="font-size:10px; color:var(--brand); font-weight:800; margin-top:2px; text-transform:uppercase;">${highlight(r.cat)}</div>
             </td>
             <td style="color:var(--brand); font-weight:800; font-size:16px;">${r.cost}</td>
             <td style="font-weight:700;">${highlight(r.um)}</td>
@@ -318,8 +317,6 @@ function render(data) {
             <td>
                 <span class="brand-pill">${highlight(r.brand)}</span>
                 <span class="origin-pill">${highlight(r.origin)}</span>
-                <span class="cat-pill">${highlight(r.cat)}</span>
-                <span class="state-pill">${highlight(r.state)}</span>
             </td>
             <td style="color:#64748b; font-size:11px; font-family: monospace;">${highlight(r.manu)}</td>
         </tr>
