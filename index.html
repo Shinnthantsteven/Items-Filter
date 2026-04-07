@@ -132,96 +132,131 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Grid ── */
-    .grid-wrap { padding: 20px 24px 40px; }
-
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 16px;
+    /* ── Table wrap ── */
+    .table-wrap {
+      padding: 16px 24px 40px;
+      overflow-x: auto;
     }
 
-    /* ── Card ── */
-    .card {
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
       background: var(--card-bg);
-      border: 1px solid var(--border);
       border-radius: var(--radius);
+      overflow: hidden;
       box-shadow: var(--shadow);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: transform .15s, box-shadow .15s;
-      position: relative;
+      border: 1px solid var(--border);
+      table-layout: fixed;
+    }
+
+    thead tr {
+      background: var(--primary);
+      color: #fff;
+    }
+    thead th {
+      padding: 10px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      text-align: left;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fafbfc; }
+    tbody tr:hover { background: #eef3fa !important; }
+
+    tbody td {
+      padding: 6px 12px;
+      vertical-align: middle;
       overflow: hidden;
     }
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    }
-    .card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    }
-    .card.frozen::before  { background: var(--frozen); }
-    .card.chilled::before { background: var(--chilled); }
-    .card.nonfood::before { background: var(--nonfood); }
 
-    .card-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 8px;
+    /* ── Column widths ── */
+    .col-code     { width: 108px; }
+    .col-desc     { width: auto; }
+    .col-price    { width: 96px; }
+    .col-uom      { width: 68px; }
+    .col-pack     { width: 150px; }
+    .col-supplier { width: 180px; }
+
+    /* ── Cell styles ── */
+    .td-code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.71rem;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
     }
-    .item-code {
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px;
-      color: var(--muted); font-family: 'Courier New', monospace;
-      background: var(--bg); padding: 3px 7px; border-radius: 4px;
+
+    .td-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .td-pills {
+      display: flex;
+      gap: 4px;
+      margin-top: 3px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
       white-space: nowrap;
     }
-    .state-badge {
-      font-size: 0.68rem; font-weight: 700; padding: 3px 8px;
-      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    .pill-cat     { background: #fff3e0; color: #b7590a; }
+    .pill-frozen  { background: #dbeeff; color: var(--frozen); }
+    .pill-chilled { background: #d4f5e2; color: #1e8449; }
+    .pill-nonfood { background: #f0e6ff; color: var(--nonfood); }
+    .pill-default { background: var(--bg); color: var(--muted); }
+
+    .td-price {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1a9a4a;
       white-space: nowrap;
     }
-    .badge-frozen  { background: #dbeeff; color: var(--frozen); }
-    .badge-chilled { background: #d4f5e2; color: #1e8449; }
-    .badge-nonfood { background: #f0e6ff; color: var(--nonfood); }
-    .badge-default { background: var(--bg); color: var(--muted); }
 
-    .card-title {
-      font-size: 0.98rem; font-weight: 600; color: var(--text);
-      line-height: 1.35;
-    }
-
-    .card-meta {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
-    }
-    .meta-item {
-      display: flex; flex-direction: column; gap: 1px;
-    }
-    .meta-label {
-      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.6px;
-      color: var(--muted); font-weight: 600;
-    }
-    .meta-value {
-      font-size: 0.82rem; color: var(--text); font-weight: 500;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
-    .card-footer {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 4px; padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-    .price {
-      font-size: 1.2rem; font-weight: 700; color: var(--accent);
-    }
-    .price span { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
-    .cat-tag {
-      font-size: 0.7rem; background: #fff3e0; color: #b7590a;
-      padding: 3px 8px; border-radius: 20px; font-weight: 600;
-      max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+    .td-muted {
+      font-size: 0.8rem;
+      color: var(--muted);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
+    .td-supplier {
+      font-size: 0.78rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* State accent — left border on code cell */
+    .row-frozen  td.td-code { border-left: 3px solid var(--frozen); }
+    .row-chilled td.td-code { border-left: 3px solid var(--chilled); }
+    .row-nonfood td.td-code { border-left: 3px solid var(--nonfood); }
 
     /* ── Pagination ── */
     .pagination {
@@ -244,13 +279,10 @@
       header img { height: 38px; }
       header .brand-name { font-size: 1.1rem; }
       .controls { top: 60px; padding: 10px 14px; gap: 8px; }
-      .grid-wrap { padding: 14px 14px 32px; }
+      .table-wrap { padding: 10px 10px 32px; }
       select { font-size: 0.82rem; padding: 8px 28px 8px 10px; }
       input[type="search"] { font-size: 0.85rem; }
-      .product-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 900px) {
-      .product-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+      .col-pack, .col-uom { display: none; }
     }
   </style>
 </head>
@@ -298,7 +330,7 @@
 </div>
 
 <!-- Content -->
-<div class="grid-wrap">
+<div class="table-wrap">
   <div id="loading" class="state-msg">
     <div class="spinner"></div>
     <p>Loading product catalog…</p>
@@ -310,13 +342,13 @@
     </svg>
     <p>No products match your filters.</p>
   </div>
-  <div class="product-grid" id="grid"></div>
+  <div id="grid"></div>
   <div class="pagination" id="pagination"></div>
 </div>
 
 <script>
 const CSV_URL = 'https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/data.csv';
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 100;
 
 let allProducts = [];
 let filtered    = [];
@@ -354,7 +386,6 @@ Papa.parse(CSV_URL, {
 // ── Populate filter dropdowns ─────────────────────────────
 function populateFilters() {
   const unique = (key) => [...new Set(allProducts.map(p => p[key]).filter(Boolean))].sort();
-
   fill('filter-state',    unique('state'));
   fill('filter-cat',      unique('cat'));
   fill('filter-supplier', unique('supplier'));
@@ -395,7 +426,7 @@ function applyFilters() {
   render();
 }
 
-// ── Render cards ──────────────────────────────────────────
+// ── Render table ──────────────────────────────────────────
 function render() {
   const grid  = document.getElementById('grid');
   const empty = document.getElementById('empty');
@@ -415,49 +446,56 @@ function render() {
   const start = (currentPage - 1) * PAGE_SIZE;
   const page  = filtered.slice(start, start + PAGE_SIZE);
 
-  grid.innerHTML = page.map(p => {
-    const stateClass = stateToClass(p.state);
-    const badgeClass = stateToBadge(p.state);
-    const priceStr   = p.price > 0 ? `AED ${p.price.toFixed(2)}` : '—';
+  const rows = page.map(p => {
+    const rc         = stateToClass(p.state);
+    const pillClass  = stateToPill(p.state);
+    const priceStr   = p.price > 0 ? p.price.toFixed(2) : '—';
 
-    return `
-    <div class="card ${stateClass}">
-      <div class="card-header">
-        <span class="item-code">${esc(p.code)}</span>
-        <span class="state-badge ${badgeClass}">${esc(p.state) || 'N/A'}</span>
-      </div>
-      <div class="card-title">${esc(p.name)}</div>
-      <div class="card-meta">
-        <div class="meta-item">
-          <span class="meta-label">Brand</span>
-          <span class="meta-value" title="${esc(p.brand)}">${esc(p.brand) || '—'}</span>
+    return `<tr class="row-${rc}">
+      <td class="td-code">${esc(p.code)}</td>
+      <td>
+        <div class="td-name" title="${esc(p.name)}">${esc(p.name)}</div>
+        <div class="td-pills">
+          ${p.cat   ? `<span class="pill pill-cat">${esc(p.cat)}</span>` : ''}
+          ${p.state ? `<span class="pill ${pillClass}">${esc(p.state)}</span>` : ''}
         </div>
-        <div class="meta-item">
-          <span class="meta-label">Origin</span>
-          <span class="meta-value" title="${esc(p.origin)}">${esc(p.origin) || '—'}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Pack Size</span>
-          <span class="meta-value" title="${esc(p.pack)}">${esc(p.pack) || '—'}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Supplier</span>
-          <span class="meta-value" title="${esc(p.supplier)}">${esc(p.supplier) || '—'}</span>
-        </div>
-      </div>
-      <div class="card-footer">
-        <div class="price">${priceStr}<span> / ${esc(p.um) || 'unit'}</span></div>
-        <span class="cat-tag" title="${esc(p.cat)}">${esc(p.cat) || 'General'}</span>
-      </div>
-    </div>`;
+      </td>
+      <td class="td-price">${priceStr !== '—' ? priceStr : '—'}</td>
+      <td class="td-muted">${esc(p.um)   || '—'}</td>
+      <td class="td-muted" title="${esc(p.pack)}">${esc(p.pack) || '—'}</td>
+      <td class="td-supplier" title="${esc(p.supplier)}">${esc(p.supplier) || '—'}</td>
+    </tr>`;
   }).join('');
+
+  grid.innerHTML = `
+  <table>
+    <colgroup>
+      <col class="col-code" />
+      <col class="col-desc" />
+      <col class="col-price" />
+      <col class="col-uom" />
+      <col class="col-pack" />
+      <col class="col-supplier" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="col-code">Item Code</th>
+        <th class="col-desc">Description</th>
+        <th class="col-price">Price (AED)</th>
+        <th class="col-uom">UOM</th>
+        <th class="col-pack">Pack Size</th>
+        <th class="col-supplier">Supplier</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 
   renderPagination(total);
 }
 
 // ── Pagination ────────────────────────────────────────────
 function renderPagination(total) {
-  const pag       = document.getElementById('pagination');
+  const pag        = document.getElementById('pagination');
   const totalPages = Math.ceil(total / PAGE_SIZE);
   if (totalPages <= 1) { pag.innerHTML = ''; return; }
 
@@ -493,17 +531,17 @@ function esc(s) {
 }
 function stateToClass(s) {
   const l = (s||'').toLowerCase();
-  if (l.includes('frozen'))   return 'frozen';
-  if (l.includes('chilled'))  return 'chilled';
-  if (l.includes('non'))      return 'nonfood';
-  return '';
+  if (l.includes('frozen'))  return 'frozen';
+  if (l.includes('chilled')) return 'chilled';
+  if (l.includes('non'))     return 'nonfood';
+  return 'default';
 }
-function stateToBadge(s) {
+function stateToPill(s) {
   const l = (s||'').toLowerCase();
-  if (l.includes('frozen'))   return 'badge-frozen';
-  if (l.includes('chilled'))  return 'badge-chilled';
-  if (l.includes('non'))      return 'badge-nonfood';
-  return 'badge-default';
+  if (l.includes('frozen'))  return 'pill-frozen';
+  if (l.includes('chilled')) return 'pill-chilled';
+  if (l.includes('non'))     return 'pill-nonfood';
+  return 'pill-default';
 }
 
 // ── Event listeners ───────────────────────────────────────
