@@ -42,28 +42,31 @@
         .knife-slice{transform:scale(15) translateX(100px) rotate(45deg);opacity:0}
         .login-card{background:rgba(128,128,128,.05);padding:50px;border-radius:40px;border:1px solid var(--glass-edge);text-align:center;width:440px;backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;box-shadow:0 25px 50px -12px rgba(0,0,0,.5)}
         .login-card h1{font-size:24px;margin-bottom:8px;font-weight:800}
-        .login-card input{width:100%;padding:20px;border-radius:20px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);font-weight:600;font-size:20px;outline:none;text-align:center;margin-top:20px;transition:.3s}
+        .login-card input{width:100%;padding:20px;border-radius:20px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);font-weight:600;font-size:20px;outline:none;text-align:center;margin-top:20px;transition:.3s;font-family:'Plus Jakarta Sans',sans-serif}
         .login-card input:focus{border-color:var(--brand);box-shadow:0 0 15px rgba(16,185,129,.2)}
         .unlock-btn{width:100%;padding:20px;border-radius:20px;border:none;background:var(--brand);color:#fff;font-weight:800;cursor:pointer;margin-top:20px;transition:.3s;font-family:'Plus Jakarta Sans',sans-serif}
         .unlock-btn:hover{background:var(--brand-deep);transform:translateY(-1px)}
         .content-container{flex:1;overflow-y:auto;padding:0 40px 180px 40px;height:calc(100vh - 80px);mask-image:linear-gradient(to bottom,black 78%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.08) 100%);-webkit-mask-image:linear-gradient(to bottom,black 78%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.08) 100%)}
         table{width:100%;border-collapse:collapse;table-layout:fixed}
-        thead tr th{position:sticky;top:8px;background:#0d1829;padding:20px 12px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase;z-index:50;letter-spacing:1px;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);border-left:none;border-right:none}
+        thead tr th{position:sticky;top:8px;background:#0d1829;padding:16px 12px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase;z-index:50;letter-spacing:1px;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);border-left:none;border-right:none}
         [data-theme="light"] thead tr th{background:#334155;color:#e2e8f0}
         thead tr th:first-child{border-radius:20px 0 0 20px;border-left:1px solid rgba(255,255,255,.08);padding-left:24px}
         thead tr th:last-child{border-radius:0 20px 20px 0;border-right:1px solid rgba(255,255,255,.08);padding-right:24px}
-        th:nth-child(1){width:75px} th:nth-child(2){width:42%} th:nth-child(3){width:60px}
-        th:nth-child(4){width:45px} th:nth-child(5){width:90px} th:nth-child(6){width:17%}
-        th:nth-child(7){width:130px} th:nth-child(8){width:20px}
-        td{padding:8px 12px;border-bottom:1px solid var(--glass-edge);font-size:13px;cursor:pointer;vertical-align:top;transition:background .2s;overflow:hidden;text-overflow:ellipsis}
+        th:nth-child(1){width:100px} th:nth-child(2){width:36%} th:nth-child(3){width:85px}
+        th:nth-child(4){width:55px} th:nth-child(5){width:110px} th:nth-child(6){width:14%} th:nth-child(7){width:130px}
+        td{padding:6px 12px;border-bottom:1px solid var(--glass-edge);font-size:13px;cursor:pointer;vertical-align:middle;transition:background .2s;overflow:hidden;text-overflow:ellipsis}
         tr:hover td{background:rgba(255,255,255,.02)}
-        .desc-cell-inner{display:flex;align-items:flex-start;gap:14px}
+        td:first-child{padding-left:24px}
+        .desc-cell-inner{display:flex;align-items:center;gap:12px}
+        .desc-text-wrap{flex:1;min-width:0}
+        .desc-name{font-weight:700;font-size:14px;line-height:1.4;margin-bottom:5px}
+        .desc-pills{display:flex;gap:5px;flex-wrap:wrap}
 
         /* ══ PRODUCT PHOTO ══ */
-        .prod-photo-wrap{width:64px;height:64px;flex-shrink:0;border-radius:14px;overflow:hidden;border:1px solid var(--glass-edge);position:relative;cursor:zoom-in}
-        .prod-photo-bg{position:absolute;inset:0;border-radius:14px;opacity:.95}
-        .prod-photo-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));transition:opacity .4s}
-        .prod-photo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;z-index:2;border-radius:14px}
+        .prod-photo-wrap{width:56px;height:56px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid var(--glass-edge);position:relative;cursor:zoom-in}
+        .prod-photo-bg{position:absolute;inset:0;border-radius:12px}
+        .prod-photo-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));transition:opacity .4s}
+        .prod-photo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;z-index:2;border-radius:12px}
         .prod-photo-img.visible{opacity:1}
         .photo-spinner{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:3}
         .photo-spinner svg{animation:spin 1s linear infinite}
@@ -71,13 +74,12 @@
         .photo-live-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--brand);z-index:4;display:none;animation:livepulse 1s ease-in-out infinite}
         @keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
 
-        .desc-name{font-weight:700;font-size:14px;line-height:1.4;margin-bottom:5px}
-        .pack-cell{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
         .pack-value{color:#818cf8;font-weight:700}
-        .sup-cell{color:#e2e8f0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
+        .sup-cell{color:#e2e8f0;font-size:13px;font-weight:700;white-space:normal;line-height:1.4}
         [data-theme="light"] .sup-cell{color:#1e293b}
-        .cat-pill{background:rgba(251,191,36,.12);color:#fbbf24;padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(251,191,36,.3)}
-        .state-pill{background:rgba(6,182,212,.12);color:#22d3ee;padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(6,182,212,.3)}
+        .manu-cell{color:#64748b;font-size:11px;font-family:monospace;font-weight:700}
+        .cat-pill{background:rgba(251,191,36,.12);color:#fbbf24;padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(251,191,36,.3);letter-spacing:.3px}
+        .state-pill{background:rgba(6,182,212,.12);color:#22d3ee;padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(6,182,212,.3);letter-spacing:.3px}
         .brand-pill{background:rgba(59,130,246,.1);color:#60a5fa;padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(59,130,246,.25)}
         .origin-pill{background:rgba(16,185,129,.1);color:var(--brand);padding:3px 9px;border-radius:20px;font-weight:800;font-size:10px;display:inline-block;border:1px solid rgba(16,185,129,.25)}
 
@@ -93,7 +95,7 @@
         #searchIn{background:transparent;border:none;color:var(--text);font-size:15px;font-weight:700;outline:none;flex:1;padding:18px 0;font-family:'Plus Jakarta Sans',sans-serif}
         #searchIn::placeholder{color:var(--text);opacity:.4}
         .bar-count{font-size:11px;font-weight:800;color:var(--brand);background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);border-radius:50px;padding:4px 12px;white-space:nowrap;flex-shrink:0;letter-spacing:.3px}
-        .bar-exit-btn{background:var(--danger);border:none;color:#fff;padding:0 30px;height:56px;border-radius:0 100px 100px 0;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;transition:background .2s}
+        .bar-exit-btn{background:var(--danger);border:none;color:#fff;padding:0 30px;height:56px;border-radius:0 100px 100px 0;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;transition:background .2s;letter-spacing:.5px}
         .bar-exit-btn:hover{background:#dc2626}
         #toast{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.15);backdrop-filter:blur(20px);border:1px solid rgba(16,185,129,.35);color:var(--brand);padding:10px 30px;border-radius:50px;font-weight:800;font-size:13px;display:none;z-index:9999}
         #lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(24px);z-index:9000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;cursor:zoom-out}
@@ -104,7 +106,7 @@
         #aiBadge.visible{display:flex}
         .ai-dot{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:livepulse 1s infinite}
         #loadMoreSentinel{height:60px;display:flex;align-items:center;justify-content:center;color:#475569;font-size:12px;font-weight:700;letter-spacing:.5px}
-        #errorBanner{display:none;text-align:center;padding:60px 20px;color:var(--danger);font-weight:800;font-size:14px}
+        #fileIn{display:none}
     </style>
 </head>
 <body onload="document.getElementById('passIn').focus()">
@@ -115,7 +117,7 @@
     <div class="menu-item" onclick="toggleTheme();toggleMenu()">🌓 Toggle Visual Theme</div>
     <div class="menu-item" onclick="location.reload()">🔄 Refresh Engine Data</div>
     <div class="menu-item" onclick="clearCache();toggleMenu()">🗑️ Clear Photo Cache</div>
-    <button onclick="toggleMenu()" style="width:100%;padding:15px;margin-top:30px;border-radius:12px;border:none;background:var(--danger);color:#fff;font-weight:800;cursor:pointer">CLOSE MENU</button>
+    <button onclick="toggleMenu()" style="width:100%;padding:15px;margin-top:30px;border-radius:12px;border:none;background:var(--danger);color:#fff;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">CLOSE MENU</button>
 </div>
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
@@ -155,142 +157,89 @@
     <table>
         <thead>
             <tr>
-                <th>UID</th><th>Item Description</th><th>Cost</th><th>U/M</th>
-                <th>Case Pack</th><th>Supplier</th><th>Brand / Origin</th><th>MPN</th>
+                <th>Item Code</th>
+                <th>Description</th>
+                <th>Price (AED)</th>
+                <th>UOM</th>
+                <th>Pack Size</th>
+                <th>Supplier</th>
+                <th>Manu. Part No.</th>
             </tr>
         </thead>
         <tbody id="list" onclick="handleQuickCopy(event)"></tbody>
     </table>
     <div id="loadMoreSentinel"></div>
-    <div id="errorBanner"></div>
 </div>
 
 <div class="portal-bar">
-    <input type="file" id="fileIn" style="display:none" onchange="manualUpload(event)">
+    <input type="file" id="fileIn" accept=".csv,.xlsx" onchange="manualUpload(event)">
     <button class="bar-upload-btn" onclick="document.getElementById('fileIn').click()">📁</button>
     <div class="bar-search-wrap">
         <span class="bar-search-icon">🔍</span>
         <input type="text" id="searchIn" placeholder="Search items, suppliers, categories…">
-        <span class="bar-count" id="resultCount"></span>
+        <span class="bar-count" id="resultCount">—</span>
     </div>
-    <button class="bar-exit-btn" onclick="location.reload()">EXIT</button>
+    <button class="bar-exit-btn" onclick="document.getElementById('searchIn').value='';document.getElementById('searchIn').dispatchEvent(new Event('input'))">CLEAR</button>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════
-   CATEGORY STYLES — gradient + emoji for every food type
-═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   API KEYS
+═══════════════════════════════════════════ */
+const GOOGLE_KEY  = '***REMOVED-GOOGLE-KEY***';
+const GOOGLE_CX   = '22a0523ca44084705';
+const UNSPLASH_KEY = '***REMOVED-UNSPLASH-KEY***';
+
+/* ═══════════════════════════════════════════
+   CATEGORY STYLES
+═══════════════════════════════════════════ */
 const CAT_STYLES = [
-    // seafood
-    [['tempura','tuna','salmon','cod','halibut','sea bass','snapper','tilapia','catfish','swordfish','anchovie','sardine','mackerel'],
-     'linear-gradient(135deg,#0ea5e9,#0369a1)','🐠'],
-    [['seafood','fish fillet','fish sauce','fish paste','fish cake','fish ball','fish pie','fish stock'],
-     'linear-gradient(135deg,#0ea5e9,#0369a1)','🐟'],
-    [['prawn','shrimp','langoustine'],
-     'linear-gradient(135deg,#fb923c,#ea580c)','🦐'],
-    [['lobster','crayfish'],
-     'linear-gradient(135deg,#dc2626,#991b1b)','🦞'],
-    [['crab','crabmeat'],
-     'linear-gradient(135deg,#dc2626,#991b1b)','🦀'],
-    [['squid','octopus','cuttlefish','calamari'],
-     'linear-gradient(135deg,#7c3aed,#5b21b6)','🦑'],
-    [['mussel','clam','oyster','scallop','abalone'],
-     'linear-gradient(135deg,#0e7490,#155e75)','🦪'],
-    // meat
-    [['beef','wagyu','striploin','sirloin','tenderloin','ribeye','brisket','veal'],
-     'linear-gradient(135deg,#b45309,#78350f)','🥩'],
-    [['lamb','mutton'],
-     'linear-gradient(135deg,#d97706,#92400e)','🍖'],
-    [['pork','bacon','ham','sausage','salami','chorizo','pepperoni'],
-     'linear-gradient(135deg,#e879a0,#be185d)','🥓'],
-    [['chicken','turkey','duck','goose','quail','poultry'],
-     'linear-gradient(135deg,#eab308,#a16207)','🍗'],
-    // dairy
-    [['cheese','brie','cheddar','gouda','feta','parmesan','mozzarella','halloumi','gruyere','camembert'],
-     'linear-gradient(135deg,#f59e0b,#d97706)','🧀'],
-    [['butter','ghee'],
-     'linear-gradient(135deg,#fbbf24,#d97706)','🧈'],
-    [['cream','creme','custard','crème'],
-     'linear-gradient(135deg,#fef3c7,#d97706)','🍦'],
-    [['milk','lactose'],
-     'linear-gradient(135deg,#e2e8f0,#94a3b8)','🥛'],
-    [['yogurt','yoghurt'],
-     'linear-gradient(135deg,#e0f2fe,#7dd3fc)','🫙'],
-    // produce
-    [['tomato','pepper','onion','garlic','carrot','zucchini','broccoli','spinach','lettuce','cabbage','celery','leek','asparagus','artichoke','aubergine','eggplant','cucumber','radish','beetroot'],
-     'linear-gradient(135deg,#16a34a,#15803d)','🥦'],
-    [['mushroom','truffle','porcini','shiitake'],
-     'linear-gradient(135deg,#78716c,#44403c)','🍄'],
-    [['lemon','lime','orange','grapefruit','apple','pear','mango','papaya','pineapple','watermelon','strawberry','berry','grape','fig','date','avocado','banana'],
-     'linear-gradient(135deg,#f97316,#dc2626)','🍊'],
-    [['herb','basil','thyme','rosemary','parsley','coriander','mint','dill','sage','chive'],
-     'linear-gradient(135deg,#22c55e,#15803d)','🌿'],
-    // oils & sauces
-    [['olive oil','canola oil','sunflower oil','vegetable oil','coconut oil','sesame oil','palm oil','truffle oil'],
-     'linear-gradient(135deg,#ca8a04,#a16207)','🫙'],
-    [['soy sauce','oyster sauce','fish sauce','hoisin','teriyaki','worcestershire','tabasco','sriracha','ketchup','mayo','mayonnaise','mustard','hot sauce'],
-     'linear-gradient(135deg,#dc2626,#b91c1c)','🍅'],
-    [['vinegar','balsamic'],
-     'linear-gradient(135deg,#7c3aed,#5b21b6)','🍶'],
-    // spices & dry goods
-    [['spice','pepper','paprika','cumin','turmeric','cinnamon','cardamom','coriander seed','chili','chilli','saffron','vanilla','clove','nutmeg','anise','sumac','za\'atar'],
-     'linear-gradient(135deg,#ea580c,#c2410c)','🧂'],
-    [['salt','sea salt','rock salt'],
-     'linear-gradient(135deg,#94a3b8,#64748b)','🧂'],
-    [['sugar','honey','syrup','molasses','agave','stevia','glucose','fructose'],
-     'linear-gradient(135deg,#f9a8d4,#ec4899)','🍯'],
-    [['flour','starch','cornflour','semolina','bran','wheat'],
-     'linear-gradient(135deg,#e2e8f0,#94a3b8)','🌾'],
-    [['rice','arborio','basmati','jasmine'],
-     'linear-gradient(135deg,#fef9c3,#d97706)','🍚'],
-    [['pasta','noodle','spaghetti','penne','fusilli','tagliatelle','fettuccine','linguine','gnocchi','ramen','udon','soba','vermicelli'],
-     'linear-gradient(135deg,#fef9c3,#eab308)','🍝'],
-    [['lentil','chickpea','bean','legume','lentils','split pea'],
-     'linear-gradient(135deg,#a3e635,#65a30d)','🫘'],
-    [['cereal','oat','granola','muesli','barley','quinoa','couscous'],
-     'linear-gradient(135deg,#d97706,#a16207)','🥣'],
-    // bakery
-    [['bread','sourdough','baguette','ciabatta','pita','flatbread','brioche','toast','roll','bun'],
-     'linear-gradient(135deg,#d97706,#92400e)','🍞'],
-    [['pastry','croissant','danish','muffin','scone','eclair','tart'],
-     'linear-gradient(135deg,#f59e0b,#d97706)','🥐'],
-    [['cake','cookie','biscuit','brownie','waffle','pancake','crepe'],
-     'linear-gradient(135deg,#ec4899,#be185d)','🎂'],
-    // frozen
-    [['frozen','fzn','frz','ice cream','gelato','sorbet'],
-     'linear-gradient(135deg,#38bdf8,#0284c7)','🧊'],
-    // beverages
-    [['coffee','espresso','cappuccino'],
-     'linear-gradient(135deg,#78350f,#451a03)','☕'],
-    [['tea','chamomile','green tea','black tea'],
-     'linear-gradient(135deg,#16a34a,#15803d)','🍵'],
-    [['juice','nectar','smoothie'],
-     'linear-gradient(135deg,#f97316,#ea580c)','🍊'],
-    [['water','mineral water','sparkling water'],
-     'linear-gradient(135deg,#38bdf8,#0284c7)','💧'],
-    [['wine','beer','champagne','spirits','cocktail','liqueur','vodka','whisky'],
-     'linear-gradient(135deg,#7c3aed,#4c1d95)','🍷'],
-    [['beverage','drink','cola','soda','energy drink'],
-     'linear-gradient(135deg,#0ea5e9,#0369a1)','🥤'],
-    // canned / preserved
-    [['canned','tinned','tin can','preserved','pickle','brine'],
-     'linear-gradient(135deg,#64748b,#334155)','🥫'],
-    // sweets & snacks
-    [['chocolate','cocoa','cacao'],
-     'linear-gradient(135deg,#78350f,#451a03)','🍫'],
-    [['marshmallow'],
-     'linear-gradient(135deg,#fce7f3,#fbcfe8)','☁️'],
-    [['candy','caramel','toffee','nougat'],
-     'linear-gradient(135deg,#ec4899,#be185d)','🍬'],
-    [['nut','almond','cashew','pistachio','walnut','hazelnut','peanut','pecan','macadamia'],
-     'linear-gradient(135deg,#a16207,#78350f)','🥜'],
-    [['chip','crisp','popcorn','pretzel','cracker','snack'],
-     'linear-gradient(135deg,#eab308,#ca8a04)','🍿'],
-    // non-food / equipment
-    [['non-food','equipment','utensil','knife','tool','glove','container','bag','wrap','foil','paper','plastic','packaging','disposable','box','tray','mold'],
-     'linear-gradient(135deg,#475569,#1e293b)','📦'],
-    [['cleaning','detergent','sanitiser','sanitizer','disinfectant'],
-     'linear-gradient(135deg,#0891b2,#0e7490)','🧴'],
+    [['tuna','salmon','cod','halibut','sea bass','snapper','tilapia','catfish','swordfish','anchov','sardine','mackerel','tempura'],'linear-gradient(135deg,#0ea5e9,#0369a1)','🐠'],
+    [['seafood','fish fillet','fish sauce','fish paste','fish cake','fish ball'],'linear-gradient(135deg,#0ea5e9,#0369a1)','🐟'],
+    [['prawn','shrimp','langoustine'],'linear-gradient(135deg,#fb923c,#ea580c)','🦐'],
+    [['lobster','crayfish'],'linear-gradient(135deg,#dc2626,#991b1b)','🦞'],
+    [['crab','crabmeat'],'linear-gradient(135deg,#dc2626,#991b1b)','🦀'],
+    [['squid','octopus','cuttlefish','calamari'],'linear-gradient(135deg,#7c3aed,#5b21b6)','🦑'],
+    [['mussel','clam','oyster','scallop','abalone'],'linear-gradient(135deg,#0e7490,#155e75)','🦪'],
+    [['beef','wagyu','striploin','sirloin','tenderloin','ribeye','brisket','veal'],'linear-gradient(135deg,#b45309,#78350f)','🥩'],
+    [['lamb','mutton'],'linear-gradient(135deg,#d97706,#92400e)','🍖'],
+    [['pork','bacon','ham','sausage','salami','chorizo','pepperoni'],'linear-gradient(135deg,#e879a0,#be185d)','🥓'],
+    [['chicken','turkey','duck','goose','quail','poultry'],'linear-gradient(135deg,#eab308,#a16207)','🍗'],
+    [['cheese','brie','cheddar','gouda','feta','parmesan','mozzarella','halloumi','gruyere'],'linear-gradient(135deg,#f59e0b,#d97706)','🧀'],
+    [['butter','ghee'],'linear-gradient(135deg,#fbbf24,#d97706)','🧈'],
+    [['cream','creme','custard','crème'],'linear-gradient(135deg,#fef3c7,#d97706)','🍦'],
+    [['milk','lactose'],'linear-gradient(135deg,#e2e8f0,#94a3b8)','🥛'],
+    [['yogurt','yoghurt'],'linear-gradient(135deg,#e0f2fe,#7dd3fc)','🫙'],
+    [['tomato','pepper','onion','garlic','carrot','zucchini','broccoli','spinach','lettuce','cabbage','celery','leek','asparagus','aubergine','eggplant','cucumber','beetroot'],'linear-gradient(135deg,#16a34a,#15803d)','🥦'],
+    [['mushroom','truffle','porcini','shiitake'],'linear-gradient(135deg,#78716c,#44403c)','🍄'],
+    [['lemon','lime','orange','grapefruit','apple','pear','mango','papaya','pineapple','watermelon','strawberry','berry','grape','fig','date','avocado','banana'],'linear-gradient(135deg,#f97316,#dc2626)','🍊'],
+    [['herb','basil','thyme','rosemary','parsley','coriander','mint','dill','sage','chive'],'linear-gradient(135deg,#22c55e,#15803d)','🌿'],
+    [['olive oil','canola oil','sunflower oil','vegetable oil','coconut oil','sesame oil'],'linear-gradient(135deg,#ca8a04,#a16207)','🫙'],
+    [['soy sauce','oyster sauce','hoisin','teriyaki','worcestershire','ketchup','mayo','mayonnaise','mustard','hot sauce'],'linear-gradient(135deg,#dc2626,#b91c1c)','🍅'],
+    [['spice','paprika','cumin','turmeric','cinnamon','cardamom','chili','chilli','saffron','vanilla','nutmeg','sumac'],'linear-gradient(135deg,#ea580c,#c2410c)','🧂'],
+    [['salt','sea salt','rock salt'],'linear-gradient(135deg,#94a3b8,#64748b)','🧂'],
+    [['sugar','honey','syrup','molasses','agave'],'linear-gradient(135deg,#f9a8d4,#ec4899)','🍯'],
+    [['flour','starch','cornflour','semolina','wheat'],'linear-gradient(135deg,#e2e8f0,#94a3b8)','🌾'],
+    [['rice','arborio','basmati','jasmine'],'linear-gradient(135deg,#fef9c3,#d97706)','🍚'],
+    [['pasta','noodle','spaghetti','penne','fusilli','ramen','udon','soba','vermicelli'],'linear-gradient(135deg,#fef9c3,#eab308)','🍝'],
+    [['lentil','chickpea','bean','legume'],'linear-gradient(135deg,#a3e635,#65a30d)','🫘'],
+    [['soup'],'linear-gradient(135deg,#f97316,#b45309)','🍲'],
+    [['pizza'],'linear-gradient(135deg,#dc2626,#b45309)','🍕'],
+    [['bread','sourdough','baguette','ciabatta','pita','brioche','toast','roll','bun'],'linear-gradient(135deg,#d97706,#92400e)','🍞'],
+    [['pastry','croissant','danish','muffin','scone','eclair','tart','quiche','pie','sambousik','fatayer','kibbeh'],'linear-gradient(135deg,#f59e0b,#d97706)','🥐'],
+    [['cake','cookie','biscuit','brownie','waffle','pancake','mochi'],'linear-gradient(135deg,#ec4899,#be185d)','🎂'],
+    [['frozen','fzn','frz','ice cream','gelato','sorbet'],'linear-gradient(135deg,#38bdf8,#0284c7)','🧊'],
+    [['coffee','espresso','cappuccino'],'linear-gradient(135deg,#78350f,#451a03)','☕'],
+    [['tea','chamomile','green tea','black tea'],'linear-gradient(135deg,#16a34a,#15803d)','🍵'],
+    [['juice','nectar','smoothie'],'linear-gradient(135deg,#f97316,#ea580c)','🍊'],
+    [['water','mineral water'],'linear-gradient(135deg,#38bdf8,#0284c7)','💧'],
+    [['wine','beer','champagne','spirits','vodka','whisky'],'linear-gradient(135deg,#7c3aed,#4c1d95)','🍷'],
+    [['chocolate','cocoa','cacao'],'linear-gradient(135deg,#78350f,#451a03)','🍫'],
+    [['nut','almond','cashew','pistachio','walnut','hazelnut','peanut','pecan'],'linear-gradient(135deg,#a16207,#78350f)','🥜'],
+    [['chip','crisp','popcorn','pretzel','cracker','snack'],'linear-gradient(135deg,#eab308,#ca8a04)','🍿'],
+    [['christmas','xmas','tinsel','garland','ribbon','ornament'],'linear-gradient(135deg,#dc2626,#16a34a)','🎄'],
+    [['cleaning','detergent','sanitiser','sanitizer'],'linear-gradient(135deg,#0891b2,#0e7490)','🧴'],
+    [['equipment','utensil','knife','tool','glove','container','packaging','disposable'],'linear-gradient(135deg,#475569,#1e293b)','📦'],
 ];
 
 function getCatStyle(desc, cat, brand) {
@@ -301,23 +250,20 @@ function getCatStyle(desc, cat, brand) {
     return ['linear-gradient(135deg,#334155,#0f172a)', '📦'];
 }
 
-/* ═══════════════════════════════════════════════
-   PHOTO FETCH — Google Custom Search (primary) + Open Food Facts (fallback)
-   Set GOOGLE_API_KEY and GOOGLE_CX to enable Google image search.
-   Get a key at: https://developers.google.com/custom-search/v1/introduction
-   Create a search engine (image search enabled) at: https://programmablesearchengine.google.com
-═══════════════════════════════════════════════ */
-/* ── Photo system: 4-layer fallback ─────────────────────────────────────
-   Layer 1: Open Food Facts  (unlimited, real product packaging)
-   Layer 2: TheMealDB        (unlimited, food/ingredient photos)
-   Layer 3: Unsplash         (50 req/hr, lifestyle food photos)
-   Layer 4: Emoji gradient   (always works — built into the HTML)
-──────────────────────────────────────────────────────────────────────── */
-
+/* ═══════════════════════════════════════════
+   PHOTO SYSTEM
+   Layer 1: localStorage cache (instant, free)
+   Layer 2: Google Custom Search (100/day free)
+   Layer 3: Open Food Facts (unlimited free)
+   Layer 4: TheMealDB (unlimited free)
+   Layer 5: Unsplash (50/hr free)
+   Layer 6: Emoji gradient (always works)
+═══════════════════════════════════════════ */
+const CACHE_PREFIX = 'c2c_photo_v2_';
 const imgCache = new Map();
-const imgQueue  = [];
-let   activeFetches = 0;
-const MAX_CONCURRENT = 3;
+const imgQueue = [];
+let activeFetches = 0;
+const MAX_CONCURRENT = 2;
 
 const rowObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -325,6 +271,18 @@ const rowObserver = new IntersectionObserver(entries => {
         const wrap = entry.target;
         rowObserver.unobserve(wrap);
         const q = wrap.dataset.q;
+
+        // Check localStorage first
+        try {
+            const saved = localStorage.getItem(CACHE_PREFIX + q);
+            if (saved !== null) {
+                const url = saved === 'null' ? null : saved;
+                imgCache.set(q, url);
+                setImage(wrap, url);
+                return;
+            }
+        } catch(e) {}
+
         if (imgCache.has(q)) { setImage(wrap, imgCache.get(q)); return; }
         showSpinner(wrap, true);
         imgQueue.push({ wrap, q });
@@ -337,10 +295,16 @@ function drainQueue() {
         const job = imgQueue.shift();
         activeFetches++; refreshBadge();
         lookupImage(job.q)
-            .then(url => { imgCache.set(job.q, url); setImage(job.wrap, url); })
+            .then(url => {
+                imgCache.set(job.q, url);
+                // Save to localStorage forever
+                try { localStorage.setItem(CACHE_PREFIX + job.q, url || 'null'); } catch(e) {}
+                setImage(job.wrap, url);
+            })
             .finally(() => { activeFetches--; refreshBadge(); drainQueue(); });
     }
 }
+
 function refreshBadge() {
     const n = imgQueue.length + activeFetches;
     const badge = document.getElementById('aiBadge');
@@ -350,21 +314,39 @@ function refreshBadge() {
     } else { badge.classList.remove('visible'); }
 }
 
-async function lookupImage(query) {
-    // Layer 1: Open Food Facts
-    let url = await fetchOFF(query);
+async function lookupImage(q) {
+    const short = q.split(/\s+/).slice(0,2).join(' ');
+
+    // Layer 1: Google Custom Search
+    let url = await fetchGoogle(q);
     if (url) return url;
-    const short = query.split(/\s+/).slice(0,2).join(' ');
-    if (short !== query) { url = await fetchOFF(short); if (url) return url; }
-    // Layer 2: TheMealDB
-    url = await fetchMealDB(query);
+
+    // Layer 2: Open Food Facts
+    url = await fetchOFF(q);
     if (url) return url;
-    if (short !== query) { url = await fetchMealDB(short); if (url) return url; }
-    // Layer 3: Unsplash
-    url = await fetchUnsplash(query);
+    if (short !== q) { url = await fetchOFF(short); if (url) return url; }
+
+    // Layer 3: TheMealDB
+    url = await fetchMealDB(q);
     if (url) return url;
-    if (short !== query) { url = await fetchUnsplash(short); if (url) return url; }
-    // Layer 4: emoji gradient (handled by existing HTML fallback)
+    if (short !== q) { url = await fetchMealDB(short); if (url) return url; }
+
+    // Layer 4: Unsplash
+    url = await fetchUnsplash(q + ' food');
+    if (url) return url;
+
+    return null; // emoji gradient fallback
+}
+
+async function fetchGoogle(q) {
+    try {
+        const r = await fetch(
+            `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_KEY}&cx=${GOOGLE_CX}&searchType=image&q=${encodeURIComponent(q + ' food product')}&num=1&imgType=photo&imgSize=medium&safe=active`,
+            { signal: AbortSignal.timeout(6000) }
+        );
+        const d = await r.json();
+        if (d.items && d.items.length > 0) return d.items[0].link;
+    } catch(e) {}
     return null;
 }
 
@@ -393,7 +375,6 @@ async function fetchMealDB(q) {
         const d = await r.json();
         if (d.meals && d.meals.length > 0 && d.meals[0].strMealThumb)
             return d.meals[0].strMealThumb;
-        // also try ingredient lookup
         const ri = await fetch(
             `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(q)}`,
             { signal: AbortSignal.timeout(6000) }
@@ -409,7 +390,7 @@ async function fetchUnsplash(q) {
     try {
         const r = await fetch(
             `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=squarish`,
-            { headers: { Authorization: 'Client-ID ***REMOVED-UNSPLASH-KEY***' } }
+            { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` }, signal: AbortSignal.timeout(5000) }
         );
         const d = await r.json();
         if (d.results && d.results.length > 0) return d.results[0].urls.small;
@@ -423,6 +404,7 @@ function showSpinner(wrap, on) {
     if (s) s.style.display = on ? 'flex' : 'none';
     if (dot) dot.style.display = on ? 'block' : 'none';
 }
+
 function setImage(wrap, url) {
     showSpinner(wrap, false);
     if (!url) return;
@@ -435,13 +417,21 @@ function setImage(wrap, url) {
     };
     img.onerror = () => {};
     img.src = url;
-    img.dataset.fullsrc = url;
 }
-function clearCache() { imgCache.clear(); console.log('Photo cache cleared'); }
 
-/* ═══════════════════════════════════════════════
+function clearCache() {
+    imgCache.clear();
+    try {
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith(CACHE_PREFIX)) localStorage.removeItem(k);
+        });
+    } catch(e) {}
+    alert('Photo cache cleared! Reload to fetch fresh photos.');
+}
+
+/* ═══════════════════════════════════════════
    LIGHTBOX
-═══════════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 function openLightbox(url, label) {
     document.getElementById('lightboxImg').src = url;
     document.getElementById('lightboxLabel').textContent = label;
@@ -450,13 +440,10 @@ function openLightbox(url, label) {
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
 
-/* ═══════════════════════════════════════════════
-   CORE APP
-═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   APP CORE
+═══════════════════════════════════════════ */
 const PAGE_SIZE = 200;
-const PASS_HASH = 'b08cf8e9c8ea951838d7c6c29d255c46f09f441f230de1ed24e49d2405bcde7d';
-const DATA_VERSION = '1';
-
 let db = [], filteredDb = [], currentSearch = '', totalLoaded = 0, renderOffset = 0;
 
 function debounce(fn, ms) {
@@ -468,90 +455,75 @@ function toggleMenu() {
     const o = document.getElementById('overlay');
     o.style.display = o.style.display === 'block' ? 'none' : 'block';
 }
+
 function toggleTheme() {
     const doc = document.documentElement;
     const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     doc.setAttribute('data-theme', next);
     document.getElementById('navToggle').innerText = next==='light'?'☀️':'🌙';
 }
-async function checkAuth() {
-    const val = document.getElementById('passIn').value;
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
-    const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    if (hash === PASS_HASH) {
+
+function checkAuth() {
+    if (document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
         document.getElementById('knife').classList.add('knife-slice');
         setTimeout(() => { document.getElementById('loginScreen').style.display='none'; autoLoad(); }, 400);
     } else {
         document.getElementById('err').innerText = 'ACCESS DENIED: INCORRECT CODE';
     }
 }
+
 async function autoLoad() {
     try {
-        const r = await fetch('data.csv?v=' + DATA_VERSION);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const r = await fetch('data.csv?v=' + Date.now());
         processData(await r.text());
-    } catch(e) {
-        showError('⚠ FAILED TO LOAD DATA — ' + e.message + '. Use the 📁 button to upload manually.');
-    }
+    } catch(e) {}
 }
-function showError(msg) {
-    const el = document.getElementById('errorBanner');
-    el.textContent = msg;
-    el.style.display = 'block';
-}
+
 function manualUpload(e) {
     const r = new FileReader();
     r.onload = ev => processData(ev.target.result);
     r.readAsText(e.target.files[0]);
 }
+
 function clean(s) { return String(s||'').replace(/[^\x20-\x7E]/g,'').trim(); }
 
 function processData(csv) {
     try {
-        document.getElementById('errorBanner').style.display = 'none';
         const wb = XLSX.read(csv, { type:'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
-        if (!raw.length) throw new Error('No rows found — check the file format.');
         db = raw.map(r => ({
-            id:    clean(r['Item']),
-            desc:  clean(r['Description']),
-            cost:  clean(r['Cost']).toLowerCase().replace(/aed/g,'').trim(),
-            um:    clean(r['Base U/M']).split(' (')[0],
-            pack:  clean(r['Case Packing']||r['Case Pack']),
-            cat:   clean(r['Cat 2']),
-            state: clean(r['State']),
-            sup:   clean(r['Preferred Supplier']),
-            brand: clean(r['Brand']),
-            origin:clean(r['Origin']||'UAE'),
-            manu:  clean(r['Manu. Part No.']||r['Manu. Par'])
+            id:     clean(r['Item']),
+            desc:   clean(r['Description']),
+            cost:   clean(r['Cost']).toLowerCase().replace(/aed/g,'').trim(),
+            um:     clean(r['Base U/M'] || r['U/M']).split(' (')[0],
+            pack:   clean(r['Case Packing'] || r['Case Pack']),
+            cat:    clean(r['Cat 2']),
+            state:  clean(r['State']),
+            sup:    clean(r['Preferred Supplier']),
+            brand:  clean(r['Brand']),
+            origin: clean(r['Origin'] || 'UAE'),
+            manu:   clean(r['Manu. Part No.'] || r['Manu. Par'] || ''),
         }));
         totalLoaded = db.length;
         filteredDb = db;
         renderOffset = 0;
         renderPage(true);
         updateCount();
-    } catch(e) {
-        showError('⚠ DATA ERROR — ' + e.message);
-        console.error('Data error', e);
-    }
+    } catch(e) { console.error('Data error', e); }
 }
+
 function updateCount() {
     const el = document.getElementById('resultCount');
     if (!totalLoaded) return;
-    const shown = Math.min(renderOffset, filteredDb.length);
-    if (currentSearch) {
-        el.textContent = filteredDb.length === totalLoaded
-            ? `${filteredDb.length} items`
-            : `${filteredDb.length} / ${totalLoaded}`;
-    } else {
-        el.textContent = shown < totalLoaded
-            ? `${shown} / ${totalLoaded}`
-            : `${totalLoaded} items`;
-    }
+    el.textContent = currentSearch
+        ? `${filteredDb.length} / ${totalLoaded}`
+        : `${Math.min(renderOffset, totalLoaded)} / ${totalLoaded}`;
 }
+
 function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
 function highlight(text) {
-    if (!currentSearch || !text) return text;
+    if (!currentSearch || !text) return String(text||'');
     const terms = currentSearch.split(/\s+/).filter(w=>w.length>0);
     let h = String(text);
     terms.forEach(w => {
@@ -560,7 +532,6 @@ function highlight(text) {
     return h;
 }
 
-/* ── Paginated render ── */
 function renderPage(reset) {
     const list = document.getElementById('list');
     if (reset) { list.innerHTML = ''; renderOffset = 0; }
@@ -574,18 +545,19 @@ function renderPage(reset) {
     });
     list.appendChild(frag);
     renderOffset += slice.length;
-    list.querySelectorAll('.prod-photo-wrap[data-q]:not([data-observed])').forEach(el => {
-        el.dataset.observed = '1';
+    list.querySelectorAll('.prod-photo-wrap[data-q]:not([data-obs])').forEach(el => {
+        el.dataset.obs = '1';
         rowObserver.observe(el);
     });
     updateSentinel();
     updateCount();
 }
+
 function updateSentinel() {
     const s = document.getElementById('loadMoreSentinel');
     const remaining = filteredDb.length - renderOffset;
     if (remaining > 0) {
-        s.textContent = `↓ ${remaining} MORE ITEMS`;
+        s.textContent = `↓ ${remaining.toLocaleString()} MORE ITEMS`;
         s.style.display = 'flex';
         sentinelObserver.observe(s);
     } else {
@@ -593,6 +565,7 @@ function updateSentinel() {
         sentinelObserver.unobserve(s);
     }
 }
+
 const sentinelObserver = new IntersectionObserver(entries => {
     if (entries[0].isIntersecting) {
         sentinelObserver.unobserve(entries[0].target);
@@ -613,33 +586,28 @@ document.getElementById('searchIn').addEventListener('input', debounce(e => {
     updateCount();
 }, 200));
 
-/* Build a clean search query (strips noise, brand names, units) */
 function buildQuery(r) {
-  const skipWords = [
-    'organic','australian','lebanese','fresh','frozen',
-    'chilled','fzn','frz','raw','cooked','boneless',
-    'skinless','whole','sliced','diced','minced',
-    'cleaned','trimmed','peeled','chopped','for cooking',
-    'abaca','chef2chef','chef 2 chef'
-  ];
-
-  let desc = r.desc
-    .replace(/\(.*?\)/g, '')
-    .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs|bone)?/gi, '')
-    .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt)\.?/gi, '')
-    .toLowerCase();
-
-  // Strip brand name if present
-  const brand = (r.brand || '').toLowerCase().trim();
-  if (brand && brand !== 'generic' && brand !== 'n/a' && brand.length > 1) {
-    desc = desc.replace(new RegExp('\\b' + brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), '');
-  }
-
-  skipWords.forEach(w => {
-    desc = desc.replace(new RegExp('\\b'+w+'\\b','gi'), '');
-  });
-
-  return desc.trim().replace(/\s+/g, ' ').split(' ').slice(0,3).join(' ');
+    const skipWords = [
+        'organic','australian','lebanese','fresh','frozen','chilled',
+        'fzn','frz','raw','cooked','boneless','skinless','whole',
+        'sliced','diced','minced','cleaned','trimmed','peeled','chopped',
+        'grilled','smoked','dried','halal','imported','local',
+        'chef2chef','chef 2 chef','abaca'
+    ];
+    let desc = r.desc
+        .replace(/\(.*?\)/g, '')
+        .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs|bone)?/gi, '')
+        .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt|x)\.?/gi, '')
+        .replace(/\+\/-/g, '')
+        .toLowerCase();
+    const brand = (r.brand||'').toLowerCase().trim();
+    if (brand && brand !== 'generic' && brand !== 'n/a' && brand.length > 1) {
+        desc = desc.replace(new RegExp('\\b' + brand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'gi'), '');
+    }
+    skipWords.forEach(w => {
+        desc = desc.replace(new RegExp('\\b' + w + '\\b', 'gi'), '');
+    });
+    return desc.trim().replace(/\s+/g,' ').split(' ').slice(0,4).join(' ');
 }
 
 function buildRow(r) {
@@ -662,26 +630,20 @@ function buildRow(r) {
             </div>
             <div class="photo-live-dot"></div>
           </div>
-          <div>
+          <div class="desc-text-wrap">
             <div class="desc-name">${highlight(r.desc)}</div>
-            ${r.cat ? `<span class="cat-pill">${highlight(r.cat)}</span>` : ''}
+            <div class="desc-pills">
+              ${r.cat ? `<span class="cat-pill">${highlight(r.cat)}</span>` : ''}
+              ${r.state ? `<span class="state-pill">${highlight(r.state)}</span>` : ''}
+            </div>
           </div>
         </div>
       </td>
-      <td style="color:var(--brand);font-weight:800;font-size:15px">${r.cost}</td>
+      <td style="color:var(--brand);font-weight:800;font-size:15px">${highlight(r.cost)}</td>
       <td style="font-weight:700">${highlight(r.um)}</td>
-      <td>
-        <div class="pack-cell">
-          <span class="pack-value">${highlight(r.pack)}</span>
-          ${r.state ? `<span class="state-pill">${highlight(r.state)}</span>` : ''}
-        </div>
-      </td>
+      <td><span class="pack-value">${highlight(r.pack)}</span></td>
       <td class="sup-cell">${highlight(r.sup)}</td>
-      <td>
-        <span class="brand-pill">${highlight(r.brand)}</span>
-        <span class="origin-pill">${highlight(r.origin)}</span>
-      </td>
-      <td style="color:#64748b;font-size:11px;font-family:monospace">${highlight(r.manu)}</td>`;
+      <td class="manu-cell">${highlight(r.manu)}</td>`;
 }
 
 function handlePhotoClick(e, wrap) {
@@ -689,6 +651,7 @@ function handlePhotoClick(e, wrap) {
     const img = wrap.querySelector('.prod-photo-img');
     if (img && img.classList.contains('visible')) openLightbox(img.src, wrap.dataset.desc||'');
 }
+
 function handleQuickCopy(e) {
     if (e.target.closest('.prod-photo-wrap')) return;
     const cell = e.target.closest('td');
@@ -697,7 +660,7 @@ function handleQuickCopy(e) {
         const t = document.getElementById('toast');
         t.style.display = 'block';
         if (navigator.vibrate) navigator.vibrate(50);
-        setTimeout(() => t.style.display = 'none', 600);
+        setTimeout(() => t.style.display='none', 600);
     });
 }
 </script>
