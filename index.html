@@ -307,8 +307,12 @@ function getCatStyle(desc, cat, brand) {
    Get a key at: https://developers.google.com/custom-search/v1/introduction
    Create a search engine (image search enabled) at: https://programmablesearchengine.google.com
 ═══════════════════════════════════════════════ */
-const GOOGLE_API_KEY = '';   // ← paste your Google API key here
-const GOOGLE_CX      = '';   // ← paste your Custom Search Engine ID here
+/* ── Photo system: 4-layer fallback ─────────────────────────────────────
+   Layer 1: Open Food Facts  (unlimited, real product packaging)
+   Layer 2: TheMealDB        (unlimited, food/ingredient photos)
+   Layer 3: Unsplash         (50 req/hr, lifestyle food photos)
+   Layer 4: Emoji gradient   (always works — built into the HTML)
+──────────────────────────────────────────────────────────────────────── */
 
 const imgCache = new Map();
 const imgQueue  = [];
@@ -347,68 +351,70 @@ function refreshBadge() {
 }
 
 async function lookupImage(query) {
-    // 1. Try Google Custom Search if configured
-    if (GOOGLE_API_KEY && GOOGLE_CX) {
-        let url = await fetchGoogle(query);
-        if (url) return url;
-        const short = query.split(/\s+/).slice(0,3).join(' ');
-        if (short !== query) { url = await fetchGoogle(short); if (url) return url; }
-        return null;
-    }
-    // 2. Try Open Food Facts (real product packaging)
+    // Layer 1: Open Food Facts
     let url = await fetchOFF(query);
     if (url) return url;
-    const short = query.split(/\s+/).slice(0,3).join(' ');
+    const short = query.split(/\s+/).slice(0,2).join(' ');
     if (short !== query) { url = await fetchOFF(short); if (url) return url; }
-    // 3. Fall back to Unsplash
+    // Layer 2: TheMealDB
+    url = await fetchMealDB(query);
+    if (url) return url;
+    if (short !== query) { url = await fetchMealDB(short); if (url) return url; }
+    // Layer 3: Unsplash
     url = await fetchUnsplash(query);
     if (url) return url;
     if (short !== query) { url = await fetchUnsplash(short); if (url) return url; }
+    // Layer 4: emoji gradient (handled by existing HTML fallback)
     return null;
 }
 
-async function fetchGoogle(q) {
+async function fetchOFF(q) {
     try {
-        const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&searchType=image&num=3&q=${encodeURIComponent(q + ' food product')}`;
-        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!r.ok) return null;
+        const r = await fetch(
+            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=6&fields=image_front_small_url,image_small_url,image_url`,
+            { signal: AbortSignal.timeout(7000) }
+        );
         const d = await r.json();
-        if (!d.items || !d.items.length) return null;
-        // prefer smaller thumbnails to avoid layout paint cost
-        for (const item of d.items) {
-            const img = item.pagemap?.cse_thumbnail?.[0]?.src || item.link;
+        if (!d.products) return null;
+        for (const p of d.products) {
+            const img = p.image_front_small_url || p.image_small_url || p.image_url;
             if (img && img.startsWith('https')) return img;
         }
     } catch(e) {}
     return null;
 }
 
-async function fetchOFF(q) {
-  try {
-    const r = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=6&fields=image_front_small_url,image_small_url,image_url`,
-      { signal: AbortSignal.timeout(7000) }
-    );
-    const d = await r.json();
-    if (!d.products) return null;
-    for (const p of d.products) {
-      const img = p.image_front_small_url || p.image_small_url || p.image_url;
-      if (img && img.startsWith('https')) return img;
-    }
-  } catch(e) {}
-  return null;
+async function fetchMealDB(q) {
+    try {
+        const r = await fetch(
+            `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`,
+            { signal: AbortSignal.timeout(6000) }
+        );
+        const d = await r.json();
+        if (d.meals && d.meals.length > 0 && d.meals[0].strMealThumb)
+            return d.meals[0].strMealThumb;
+        // also try ingredient lookup
+        const ri = await fetch(
+            `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(q)}`,
+            { signal: AbortSignal.timeout(6000) }
+        );
+        const di = await ri.json();
+        if (di.meals && di.meals.length > 0 && di.meals[0].strMealThumb)
+            return di.meals[0].strMealThumb;
+    } catch(e) {}
+    return null;
 }
 
 async function fetchUnsplash(q) {
-  try {
-    const r = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=squarish`,
-      { headers: { Authorization: 'Client-ID ***REMOVED-UNSPLASH-KEY***' } }
-    );
-    const d = await r.json();
-    if (d.results && d.results.length > 0) return d.results[0].urls.small;
-  } catch(e) {}
-  return null;
+    try {
+        const r = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=squarish`,
+            { headers: { Authorization: 'Client-ID ***REMOVED-UNSPLASH-KEY***' } }
+        );
+        const d = await r.json();
+        if (d.results && d.results.length > 0) return d.results[0].urls.small;
+    } catch(e) {}
+    return null;
 }
 
 function showSpinner(wrap, on) {
@@ -607,7 +613,7 @@ document.getElementById('searchIn').addEventListener('input', debounce(e => {
     updateCount();
 }, 200));
 
-/* Build a clean Open Food Facts search query */
+/* Build a clean search query (strips noise, brand names, units) */
 function buildQuery(r) {
   const skipWords = [
     'organic','australian','lebanese','fresh','frozen',
@@ -623,11 +629,17 @@ function buildQuery(r) {
     .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt)\.?/gi, '')
     .toLowerCase();
 
+  // Strip brand name if present
+  const brand = (r.brand || '').toLowerCase().trim();
+  if (brand && brand !== 'generic' && brand !== 'n/a' && brand.length > 1) {
+    desc = desc.replace(new RegExp('\\b' + brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), '');
+  }
+
   skipWords.forEach(w => {
     desc = desc.replace(new RegExp('\\b'+w+'\\b','gi'), '');
   });
 
-  return desc.trim().split(/\s+/).slice(0,3).join(' ');
+  return desc.trim().replace(/\s+/g, ' ').split(' ').slice(0,3).join(' ');
 }
 
 function buildRow(r) {
