@@ -609,18 +609,25 @@ document.getElementById('searchIn').addEventListener('input', debounce(e => {
 
 /* Build a clean Open Food Facts search query */
 function buildQuery(r) {
-    const parts = [];
-    const brandClean = (r.brand||'').toLowerCase();
-    if (brandClean && brandClean !== 'generic' && brandClean !== 'n/a' && brandClean.length > 1)
-        parts.push(r.brand);
-    const descClean = r.desc
-        .replace(/\d+\s*(?:kg|g|ml|l|ltr|cs|pc|pcs)\.?/gi,'')
-        .replace(/\bx\s*\d+\b/gi,'')
-        .replace(/\b(fzn|frz|frozen|fresh|dried|whole|sliced|diced|minced|chopped|boneless|skinless|peeled|raw|cooked)\b/gi,'')
-        .trim()
-        .split(/\s+/).slice(0,5).join(' ');
-    if (descClean) parts.push(descClean);
-    return parts.join(' ').trim();
+  const skipWords = [
+    'organic','australian','lebanese','fresh','frozen',
+    'chilled','fzn','frz','raw','cooked','boneless',
+    'skinless','whole','sliced','diced','minced',
+    'cleaned','trimmed','peeled','chopped','for cooking',
+    'abaca','chef2chef','chef 2 chef'
+  ];
+
+  let desc = r.desc
+    .replace(/\(.*?\)/g, '')
+    .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs|bone)?/gi, '')
+    .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt)\.?/gi, '')
+    .toLowerCase();
+
+  skipWords.forEach(w => {
+    desc = desc.replace(new RegExp('\\b'+w+'\\b','gi'), '');
+  });
+
+  return desc.trim().split(/\s+/).slice(0,3).join(' ');
 }
 
 function buildRow(r) {
