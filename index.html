@@ -355,10 +355,14 @@ async function lookupImage(query) {
         if (short !== query) { url = await fetchGoogle(short); if (url) return url; }
         return null;
     }
-    // 2. Fall back to Open Food Facts (free, no key needed)
-    let url = await fetchUnsplash(query);
+    // 2. Try Open Food Facts (real product packaging)
+    let url = await fetchOFF(query);
     if (url) return url;
     const short = query.split(/\s+/).slice(0,3).join(' ');
+    if (short !== query) { url = await fetchOFF(short); if (url) return url; }
+    // 3. Fall back to Unsplash
+    url = await fetchUnsplash(query);
+    if (url) return url;
     if (short !== query) { url = await fetchUnsplash(short); if (url) return url; }
     return null;
 }
@@ -377,6 +381,22 @@ async function fetchGoogle(q) {
         }
     } catch(e) {}
     return null;
+}
+
+async function fetchOFF(q) {
+  try {
+    const r = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=6&fields=image_front_small_url,image_small_url,image_url`,
+      { signal: AbortSignal.timeout(7000) }
+    );
+    const d = await r.json();
+    if (!d.products) return null;
+    for (const p of d.products) {
+      const img = p.image_front_small_url || p.image_small_url || p.image_url;
+      if (img && img.startsWith('https')) return img;
+    }
+  } catch(e) {}
+  return null;
 }
 
 async function fetchUnsplash(q) {
