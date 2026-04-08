@@ -588,26 +588,24 @@ document.getElementById('searchIn').addEventListener('input', debounce(e => {
 
 function buildQuery(r) {
     const skipWords = [
-        'organic','australian','lebanese','fresh','frozen','chilled',
-        'fzn','frz','raw','cooked','boneless','skinless','whole',
-        'sliced','diced','minced','cleaned','trimmed','peeled','chopped',
-        'grilled','smoked','dried','halal','imported','local',
-        'chef2chef','chef 2 chef','abaca'
+        'organic','australian','lebanese','fresh','frozen',
+        'chilled','fzn','frz','raw','cooked','boneless',
+        'skinless','whole','sliced','diced','minced',
+        'cleaned','trimmed','peeled','chopped','grilled',
+        'smoked','dried','halal','imported','local','uae',
+        'abaca','chef2chef','chef 2 chef','alannahs',
+        'kibsons','abela','aiad','uns'
     ];
     let desc = r.desc
         .replace(/\(.*?\)/g, '')
-        .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs|bone)?/gi, '')
-        .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt|x)\.?/gi, '')
-        .replace(/\+\/-/g, '')
+        .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs)?/gi, '')
+        .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt)\.?/gi, '')
         .toLowerCase();
-    const brand = (r.brand||'').toLowerCase().trim();
-    if (brand && brand !== 'generic' && brand !== 'n/a' && brand.length > 1) {
-        desc = desc.replace(new RegExp('\\b' + brand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'gi'), '');
-    }
     skipWords.forEach(w => {
-        desc = desc.replace(new RegExp('\\b' + w + '\\b', 'gi'), '');
+        desc = desc.replace(new RegExp('\b'+w+'\b','gi'), '');
     });
-    return desc.trim().replace(/\s+/g,' ').split(' ').slice(0,4).join(' ');
+    return desc.trim().replace(/\s+/g,' ')
+        .split(' ').slice(0,3).join(' ');
 }
 
 function buildRow(r) {
