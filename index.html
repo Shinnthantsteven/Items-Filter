@@ -52,8 +52,8 @@
         [data-theme="light"] thead tr th{background:#334155;color:#e2e8f0}
         thead tr th:first-child{border-radius:20px 0 0 20px;border-left:1px solid rgba(255,255,255,.08);padding-left:24px}
         thead tr th:last-child{border-radius:0 20px 20px 0;border-right:1px solid rgba(255,255,255,.08);padding-right:24px}
-        th:nth-child(1){width:100px} th:nth-child(2){width:36%} th:nth-child(3){width:85px}
-        th:nth-child(4){width:55px} th:nth-child(5){width:110px} th:nth-child(6){width:14%} th:nth-child(7){width:130px}
+        th:nth-child(1){width:100px} th:nth-child(2){width:30%} th:nth-child(3){width:85px}
+        th:nth-child(4){width:55px} th:nth-child(5){width:110px} th:nth-child(6){width:110px} th:nth-child(7){width:14%} th:nth-child(8){width:130px}
         td{padding:6px 12px;border-bottom:1px solid var(--glass-edge);font-size:13px;cursor:pointer;vertical-align:middle;transition:background .2s;overflow:hidden;text-overflow:ellipsis}
         tr:hover td{background:rgba(255,255,255,.02)}
         td:first-child{padding-left:24px}
@@ -162,6 +162,7 @@
                 <th>Price (AED)</th>
                 <th>UOM</th>
                 <th>Pack Size</th>
+                <th>Brand</th>
                 <th>Supplier</th>
                 <th>Manu. Part No.</th>
             </tr>
@@ -640,6 +641,7 @@ function buildRow(r) {
       <td style="color:var(--brand);font-weight:800;font-size:15px">${highlight(r.cost)}</td>
       <td style="font-weight:700">${highlight(r.um)}</td>
       <td><span class="pack-value">${highlight(r.pack)}</span></td>
+      <td>${r.brand ? `<span class="brand-pill">${highlight(r.brand)}</span>` : ''}</td>
       <td class="sup-cell">${highlight(r.sup)}</td>
       <td class="manu-cell">${highlight(r.manu)}</td>`;
 }
