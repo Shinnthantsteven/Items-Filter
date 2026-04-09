@@ -732,6 +732,46 @@ async function fetchWikipedia(q) {
 
         const d = await r.json();
 
+        // Reject disambiguation pages
+
+        if (d.type === 'disambiguation') return null;
+
+
+
+        // Must be food-related — reject colors, companies, places, people
+
+        const text = ((d.description || '') + ' ' + (d.extract || '')).toLowerCase();
+
+        const FOOD_TERMS = ['food','fruit','vegetable','meat','fish','poultry','seafood',
+
+            'cheese','dairy','herb','spice','ingredient','dish','cuisine','recipe',
+
+            'crop','plant','eaten','edible','cooked','drink','beverage','grain',
+
+            'seed','nut','oil','sauce','soup','bread','pasta','rice','egg',
+
+            'sugar','salt','flour','condiment','flavour','flavor','leaf','root',
+
+            'bean','legume','mushroom','truffle','berry','citrus','pepper'];
+
+        const BAD_TERMS = ['color','colour','company','corporation','brand','person',
+
+            'singer','actor','musician','politician','city','country','software',
+
+            'technology','album','film','television','game'];
+
+
+
+        const isFood = FOOD_TERMS.some(t => text.includes(t));
+
+        const isWrong = BAD_TERMS.some(t => text.includes(t));
+
+
+
+        if (!isFood || isWrong) return null;
+
+
+
         if (d.thumbnail && d.thumbnail.source) {
 
             return d.thumbnail.source.replace(/\/\d+px-/, '/400px-');
