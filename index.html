@@ -634,47 +634,59 @@ function refreshBadge() {
 
 async function lookupImage(q) {
 
-    const short = q.split(/\s+/).slice(0,2).join(' ');
+    const words = q.split(/\s+/).filter(w => w.length > 2);
+
+    const short = words.slice(0, 2).join(' ');
+
+    const core = words[0] || q;
 
 
 
-    // Layer 1: Google Custom Search (best quality, 100/day)
+    // Wikipedia: 3 tries — full query, 2-word, single core word
 
-    let url = await fetchGoogle(q);
-
-    if (url) return url;
-
-
-
-    // Layer 2: Wikipedia REST API (free, no key, clean food reference photos)
-
-    url = await fetchWikipedia(q);
-
-    if (url) return url;
-
-    if (short !== q) { url = await fetchWikipedia(short); if (url) return url; }
-
-
-
-    // Layer 3: TheMealDB (good for prepared foods)
-
-    url = await fetchMealDB(q);
-
-    if (url) return url;
-
-    if (short !== q) { url = await fetchMealDB(short); if (url) return url; }
-
-
-
-    // Layer 4: Unsplash (stock photos, 50/hr)
-
-    url = await fetchUnsplash(q + ' food ingredient');
+    let url = await fetchWikipedia(q);
 
     if (url) return url;
 
 
 
-    return null; // emoji gradient fallback
+    if (short && short !== q) {
+
+        url = await fetchWikipedia(short);
+
+        if (url) return url;
+
+    }
+
+
+
+    if (core && core !== short && core !== q) {
+
+        url = await fetchWikipedia(core);
+
+        if (url) return url;
+
+    }
+
+
+
+    // Google CSE: saved for hard cases (100/day quota)
+
+    url = await fetchGoogle(q);
+
+    if (url) return url;
+
+
+
+    // Unsplash: core word only — avoids vague food scenes
+
+    url = await fetchUnsplash(core + ' food');
+
+    if (url) return url;
+
+
+
+    return null;
 
 }
 
@@ -733,46 +745,6 @@ async function fetchWikipedia(q) {
 }
 
 
-
-
-
-async function fetchMealDB(q) {
-
-    try {
-
-        const r = await fetch(
-
-            `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`,
-
-            { signal: AbortSignal.timeout(6000) }
-
-        );
-
-        const d = await r.json();
-
-        if (d.meals && d.meals.length > 0 && d.meals[0].strMealThumb)
-
-            return d.meals[0].strMealThumb;
-
-        const ri = await fetch(
-
-            `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(q)}`,
-
-            { signal: AbortSignal.timeout(6000) }
-
-        );
-
-        const di = await ri.json();
-
-        if (di.meals && di.meals.length > 0 && di.meals[0].strMealThumb)
-
-            return di.meals[0].strMealThumb;
-
-    } catch(e) {}
-
-    return null;
-
-}
 
 
 
