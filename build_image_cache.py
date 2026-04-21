@@ -235,7 +235,7 @@ def main():
 
     # Read CSV, skip already-done items
     todo: list[tuple] = []
-    with open(CSV_FILE, newline='', encoding='utf-8-sig') as f:
+    with open(CSV_FILE, newline='', encoding='latin-1') as f:
         for row in csv.DictReader(f):
             item_id = str(row.get('Item', '')).strip()
             desc    = str(row.get('Description', '')).strip()
