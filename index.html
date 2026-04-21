@@ -371,973 +371,552 @@
 <script>
 
 /* ═══════════════════════════════════════════
-
    API KEYS
-
+   (Google CSE removed — only 100 req/day, useless for 13 500 items)
 ═══════════════════════════════════════════ */
-
-const GOOGLE_KEY  = '***REMOVED-GOOGLE-KEY***';
-
-const GOOGLE_CX   = '22a0523ca44084705';
-
 const UNSPLASH_KEY = '***REMOVED-UNSPLASH-KEY***';
 
-
-
 /* ═══════════════════════════════════════════
-
    CATEGORY STYLES
-
 ═══════════════════════════════════════════ */
-
 const CAT_STYLES = [
-
     [['tuna','salmon','cod','halibut','sea bass','snapper','tilapia','catfish','swordfish','anchov','sardine','mackerel','tempura'],'linear-gradient(135deg,#0ea5e9,#0369a1)','🐠'],
-
     [['seafood','fish fillet','fish sauce','fish paste','fish cake','fish ball'],'linear-gradient(135deg,#0ea5e9,#0369a1)','🐟'],
-
     [['prawn','shrimp','langoustine'],'linear-gradient(135deg,#fb923c,#ea580c)','🦐'],
-
     [['lobster','crayfish'],'linear-gradient(135deg,#dc2626,#991b1b)','🦞'],
-
     [['crab','crabmeat'],'linear-gradient(135deg,#dc2626,#991b1b)','🦀'],
-
     [['squid','octopus','cuttlefish','calamari'],'linear-gradient(135deg,#7c3aed,#5b21b6)','🦑'],
-
     [['mussel','clam','oyster','scallop','abalone'],'linear-gradient(135deg,#0e7490,#155e75)','🦪'],
-
     [['beef','wagyu','striploin','sirloin','tenderloin','ribeye','brisket','veal'],'linear-gradient(135deg,#b45309,#78350f)','🥩'],
-
     [['lamb','mutton'],'linear-gradient(135deg,#d97706,#92400e)','🍖'],
-
     [['pork','bacon','ham','sausage','salami','chorizo','pepperoni'],'linear-gradient(135deg,#e879a0,#be185d)','🥓'],
-
     [['chicken','turkey','duck','goose','quail','poultry'],'linear-gradient(135deg,#eab308,#a16207)','🍗'],
-
     [['cheese','brie','cheddar','gouda','feta','parmesan','mozzarella','halloumi','gruyere'],'linear-gradient(135deg,#f59e0b,#d97706)','🧀'],
-
     [['butter','ghee'],'linear-gradient(135deg,#fbbf24,#d97706)','🧈'],
-
     [['cream','creme','custard','crème'],'linear-gradient(135deg,#fef3c7,#d97706)','🍦'],
-
     [['milk','lactose'],'linear-gradient(135deg,#e2e8f0,#94a3b8)','🥛'],
-
     [['yogurt','yoghurt'],'linear-gradient(135deg,#e0f2fe,#7dd3fc)','🫙'],
-
     [['tomato','pepper','onion','garlic','carrot','zucchini','broccoli','spinach','lettuce','cabbage','celery','leek','asparagus','aubergine','eggplant','cucumber','beetroot'],'linear-gradient(135deg,#16a34a,#15803d)','🥦'],
-
     [['mushroom','truffle','porcini','shiitake'],'linear-gradient(135deg,#78716c,#44403c)','🍄'],
-
     [['lemon','lime','orange','grapefruit','apple','pear','mango','papaya','pineapple','watermelon','strawberry','berry','grape','fig','date','avocado','banana'],'linear-gradient(135deg,#f97316,#dc2626)','🍊'],
-
     [['herb','basil','thyme','rosemary','parsley','coriander','mint','dill','sage','chive'],'linear-gradient(135deg,#22c55e,#15803d)','🌿'],
-
     [['olive oil','canola oil','sunflower oil','vegetable oil','coconut oil','sesame oil'],'linear-gradient(135deg,#ca8a04,#a16207)','🫙'],
-
     [['soy sauce','oyster sauce','hoisin','teriyaki','worcestershire','ketchup','mayo','mayonnaise','mustard','hot sauce'],'linear-gradient(135deg,#dc2626,#b91c1c)','🍅'],
-
     [['spice','paprika','cumin','turmeric','cinnamon','cardamom','chili','chilli','saffron','vanilla','nutmeg','sumac'],'linear-gradient(135deg,#ea580c,#c2410c)','🧂'],
-
     [['salt','sea salt','rock salt'],'linear-gradient(135deg,#94a3b8,#64748b)','🧂'],
-
     [['sugar','honey','syrup','molasses','agave'],'linear-gradient(135deg,#f9a8d4,#ec4899)','🍯'],
-
     [['flour','starch','cornflour','semolina','wheat'],'linear-gradient(135deg,#e2e8f0,#94a3b8)','🌾'],
-
     [['rice','arborio','basmati','jasmine'],'linear-gradient(135deg,#fef9c3,#d97706)','🍚'],
-
     [['pasta','noodle','spaghetti','penne','fusilli','ramen','udon','soba','vermicelli'],'linear-gradient(135deg,#fef9c3,#eab308)','🍝'],
-
     [['lentil','chickpea','bean','legume'],'linear-gradient(135deg,#a3e635,#65a30d)','🫘'],
-
     [['soup'],'linear-gradient(135deg,#f97316,#b45309)','🍲'],
-
     [['pizza'],'linear-gradient(135deg,#dc2626,#b45309)','🍕'],
-
     [['bread','sourdough','baguette','ciabatta','pita','brioche','toast','roll','bun'],'linear-gradient(135deg,#d97706,#92400e)','🍞'],
-
     [['pastry','croissant','danish','muffin','scone','eclair','tart','quiche','pie','sambousik','fatayer','kibbeh'],'linear-gradient(135deg,#f59e0b,#d97706)','🥐'],
-
     [['cake','cookie','biscuit','brownie','waffle','pancake','mochi'],'linear-gradient(135deg,#ec4899,#be185d)','🎂'],
-
     [['frozen','fzn','frz','ice cream','gelato','sorbet'],'linear-gradient(135deg,#38bdf8,#0284c7)','🧊'],
-
     [['coffee','espresso','cappuccino'],'linear-gradient(135deg,#78350f,#451a03)','☕'],
-
     [['tea','chamomile','green tea','black tea'],'linear-gradient(135deg,#16a34a,#15803d)','🍵'],
-
     [['juice','nectar','smoothie'],'linear-gradient(135deg,#f97316,#ea580c)','🍊'],
-
     [['water','mineral water'],'linear-gradient(135deg,#38bdf8,#0284c7)','💧'],
-
     [['wine','beer','champagne','spirits','vodka','whisky'],'linear-gradient(135deg,#7c3aed,#4c1d95)','🍷'],
-
     [['chocolate','cocoa','cacao'],'linear-gradient(135deg,#78350f,#451a03)','🍫'],
-
     [['nut','almond','cashew','pistachio','walnut','hazelnut','peanut','pecan'],'linear-gradient(135deg,#a16207,#78350f)','🥜'],
-
     [['chip','crisp','popcorn','pretzel','cracker','snack'],'linear-gradient(135deg,#eab308,#ca8a04)','🍿'],
-
     [['christmas','xmas','tinsel','garland','ribbon','ornament'],'linear-gradient(135deg,#dc2626,#16a34a)','🎄'],
-
     [['cleaning','detergent','sanitiser','sanitizer'],'linear-gradient(135deg,#0891b2,#0e7490)','🧴'],
-
     [['equipment','utensil','knife','tool','glove','container','packaging','disposable'],'linear-gradient(135deg,#475569,#1e293b)','📦'],
-
 ];
 
-
-
 function getCatStyle(desc, cat, brand) {
-
     const hay = `${desc||''} ${cat||''} ${brand||''}`.toLowerCase();
-
     for (const [keys, grad, emoji] of CAT_STYLES) {
-
         if (keys.some(k => hay.includes(k))) return [grad, emoji];
-
     }
-
     return ['linear-gradient(135deg,#334155,#0f172a)', '📦'];
-
 }
 
+/* ═══════════════════════════════════════════
+   PRE-BUILT IMAGE MAP  (images.json)
+   Generated by build_image_cache.py
+   Format: { "ITEM_CODE": "https://…" | null }
+   Loaded once at startup — zero live API calls for cached items.
+═══════════════════════════════════════════ */
+let imageMap = {};
 
+async function loadImageMap() {
+    try {
+        const r = await fetch('images.json?v=' + Date.now());
+        if (r.ok) {
+            imageMap = await r.json();
+        }
+    } catch(e) { /* images.json not present yet — fall through to live lookup */ }
+}
 
 /* ═══════════════════════════════════════════
-
    PHOTO SYSTEM
 
-   Layer 1: localStorage cache (instant, free)
-
-   Layer 2: Google Custom Search (100/day free)
-
-   Layer 3: Open Food Facts (unlimited free)
-
-   Layer 4: TheMealDB (unlimited free)
-
-   Layer 5: Unsplash (50/hr free)
-
-   Layer 6: Emoji gradient (always works)
-
+   Priority order (fastest / most accurate first):
+   0. images.json pre-cache  — instant, no API call
+   1. localStorage cache     — instant, no API call
+   2. Open Food Facts        — unlimited, real product photos
+   3. Wikipedia              — unlimited, great for raw ingredients
+   4. Wikimedia Commons      — unlimited, broad food library
+   5. Unsplash               — 50/hr, generic fallback
+   6. Emoji gradient         — always works
 ═══════════════════════════════════════════ */
-
-const CACHE_PREFIX = 'c2c_photo_v2_';
-
+const CACHE_PREFIX = 'c2c_photo_v3_';
 const imgCache = new Map();
-
 const imgQueue = [];
-
 let activeFetches = 0;
-
-const MAX_CONCURRENT = 2;
-
-
+const MAX_CONCURRENT = 3;
 
 const rowObserver = new IntersectionObserver(entries => {
-
     entries.forEach(entry => {
-
         if (!entry.isIntersecting) return;
-
         const wrap = entry.target;
-
         rowObserver.unobserve(wrap);
+        const q  = wrap.dataset.q;
+        const id = wrap.dataset.id;
 
-        const q = wrap.dataset.q;
+        // 0. Pre-built image map
+        if (id && Object.prototype.hasOwnProperty.call(imageMap, id)) {
+            const url = imageMap[id] || null;
+            imgCache.set(id, url);
+            setImage(wrap, url);
+            return;
+        }
 
-
-
-        // Check localStorage first
-
+        // 1. localStorage cache
         try {
-
             const saved = localStorage.getItem(CACHE_PREFIX + q);
-
             if (saved !== null) {
-
                 const url = saved === 'null' ? null : saved;
-
                 imgCache.set(q, url);
-
                 setImage(wrap, url);
-
                 return;
-
             }
-
         } catch(e) {}
-
-
 
         if (imgCache.has(q)) { setImage(wrap, imgCache.get(q)); return; }
 
         showSpinner(wrap, true);
-
         imgQueue.push({ wrap, q });
-
         drainQueue();
-
     });
-
 }, { rootMargin: '300px 0px', threshold: 0.01 });
 
-
-
 function drainQueue() {
-
     while (activeFetches < MAX_CONCURRENT && imgQueue.length > 0) {
-
         const job = imgQueue.shift();
-
         activeFetches++; refreshBadge();
-
         lookupImage(job.q)
-
             .then(url => {
-
                 imgCache.set(job.q, url);
-
-                // Save to localStorage forever
-
                 try { localStorage.setItem(CACHE_PREFIX + job.q, url || 'null'); } catch(e) {}
-
                 setImage(job.wrap, url);
-
             })
-
             .finally(() => { activeFetches--; refreshBadge(); drainQueue(); });
-
     }
-
 }
-
-
 
 function refreshBadge() {
-
     const n = imgQueue.length + activeFetches;
-
     const badge = document.getElementById('aiBadge');
-
     if (n > 0) {
-
         badge.classList.add('visible');
-
         document.getElementById('aiBadgeText').textContent = `LOADING ${n} PHOTO${n>1?'S':''}…`;
-
     } else { badge.classList.remove('visible'); }
-
 }
 
-
-
+/* ── Live lookup (runs only when item not in pre-cache or localStorage) ── */
 async function lookupImage(q) {
-
     const words = q.split(/\s+/).filter(w => w.length > 2);
+    const short3 = words.slice(0, 3).join(' ');
+    const short2 = words.slice(0, 2).join(' ');
+    const core   = words[0] || q;
 
-    const short = words.slice(0, 2).join(' ');
-
-    const core = words[0] || q;
-
-
-
-    // Wikipedia: 3 tries — full query, 2-word, single core word
-
-    let url = await fetchWikipedia(q);
-
+    // Layer 1 — Open Food Facts (best for branded/packaged products, unlimited)
+    let url = await fetchOpenFoodFacts(q);
     if (url) return url;
-
-
-
-    if (short && short !== q) {
-
-        url = await fetchWikipedia(short);
-
+    if (short3 && short3 !== q) {
+        url = await fetchOpenFoodFacts(short3);
         if (url) return url;
-
+    }
+    if (short2 && short2 !== short3) {
+        url = await fetchOpenFoodFacts(short2);
+        if (url) return url;
     }
 
-
-
-    if (core && core !== short && core !== q) {
-
-        url = await fetchWikipedia(core);
-
+    // Layer 2 — Wikipedia (great for raw ingredients, unlimited)
+    for (const attempt of [...new Set([q, short3, core])]) {
+        url = await fetchWikipedia(attempt);
         if (url) return url;
-
     }
 
-
-
-    // Google CSE: saved for hard cases (100/day quota)
-
-    url = await fetchGoogle(q);
-
+    // Layer 3 — Wikimedia Commons (broad food image library, unlimited)
+    url = await fetchWikimediaCommons(short3 || q);
     if (url) return url;
 
-
-
-    // Unsplash: core word only — avoids vague food scenes
-
+    // Layer 4 — Unsplash (generic food scene, 50/hr)
     url = await fetchUnsplash(core + ' food');
-
     if (url) return url;
 
-
-
     return null;
-
 }
 
-
-
-async function fetchGoogle(q) {
-
+/* ── Open Food Facts ── */
+async function fetchOpenFoodFacts(q) {
     try {
-
         const r = await fetch(
-
-            `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_KEY}&cx=${GOOGLE_CX}&searchType=image&q=${encodeURIComponent(q + ' food ingredient photo')}&num=3&imgType=photo&imgSize=medium&safe=active`,
-
-            { signal: AbortSignal.timeout(6000) }
-
+            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5&fields=image_front_small_url,image_small_url,product_name`,
+            { signal: AbortSignal.timeout(7000) }
         );
-
         const d = await r.json();
-
-        if (d.items && d.items.length > 0) return d.items[0].link;
-
-    } catch(e) {}
-
-    return null;
-
-}
-
-
-
-async function fetchWikipedia(q) {
-
-    try {
-
-        const r = await fetch(
-
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`,
-
-            { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(5000) }
-
-        );
-
-        if (!r.ok) return null;
-
-        const d = await r.json();
-
-        // Reject disambiguation pages
-
-        if (d.type === 'disambiguation') return null;
-
-
-
-        // Must be food-related — reject colors, companies, places, people
-
-        const text = ((d.description || '') + ' ' + (d.extract || '')).toLowerCase();
-
-        const FOOD_TERMS = ['food','fruit','vegetable','meat','fish','poultry','seafood',
-
-            'cheese','dairy','herb','spice','ingredient','dish','cuisine','recipe',
-
-            'crop','plant','eaten','edible','cooked','drink','beverage','grain',
-
-            'seed','nut','oil','sauce','soup','bread','pasta','rice','egg',
-
-            'sugar','salt','flour','condiment','flavour','flavor','leaf','root',
-
-            'bean','legume','mushroom','truffle','berry','citrus','pepper'];
-
-        const BAD_TERMS = ['color','colour','company','corporation','brand','person',
-
-            'singer','actor','musician','politician','city','country','software',
-
-            'technology','album','film','television','game'];
-
-
-
-        const isFood = FOOD_TERMS.some(t => text.includes(t));
-
-        const isWrong = BAD_TERMS.some(t => text.includes(t));
-
-
-
-        if (!isFood || isWrong) return null;
-
-
-
-        if (d.thumbnail && d.thumbnail.source) {
-
-            return d.thumbnail.source.replace(/\/\d+px-/, '/400px-');
-
+        for (const p of (d.products || [])) {
+            const url = p.image_front_small_url || p.image_small_url;
+            if (url) return url;
         }
-
     } catch(e) {}
-
     return null;
-
 }
 
-
-
-
-
-async function fetchUnsplash(q) {
-
+/* ── Wikipedia ── */
+async function fetchWikipedia(q) {
     try {
-
         const r = await fetch(
-
-            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=squarish`,
-
-            { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` }, signal: AbortSignal.timeout(5000) }
-
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`,
+            { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(5000) }
         );
-
+        if (!r.ok) return null;
         const d = await r.json();
-
-        if (d.results && d.results.length > 0) return d.results[0].urls.small;
-
+        if (d.type === 'disambiguation') return null;
+        const text = ((d.description || '') + ' ' + (d.extract || '')).toLowerCase();
+        const FOOD = ['food','fruit','vegetable','meat','fish','poultry','seafood',
+            'cheese','dairy','herb','spice','ingredient','dish','cuisine','recipe',
+            'crop','plant','eaten','edible','cooked','drink','beverage','grain',
+            'seed','nut','oil','sauce','soup','bread','pasta','rice','egg',
+            'sugar','salt','flour','condiment','flavour','flavor','leaf','root',
+            'bean','legume','mushroom','truffle','berry','citrus','pepper'];
+        const BAD = ['color','colour','company','corporation','brand','person',
+            'singer','actor','musician','politician','city','country','software',
+            'technology','album','film','television','game'];
+        if (!FOOD.some(t => text.includes(t))) return null;
+        if (BAD.some(t => text.includes(t))) return null;
+        if (d.thumbnail && d.thumbnail.source) {
+            return d.thumbnail.source.replace(/\/\d+px-/, '/400px-');
+        }
     } catch(e) {}
-
     return null;
-
 }
 
+/* ── Wikimedia Commons ── */
+async function fetchWikimediaCommons(q) {
+    try {
+        const r = await fetch(
+            `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q + ' food')}&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`,
+            { signal: AbortSignal.timeout(6000) }
+        );
+        const d = await r.json();
+        const pages = Object.values((d.query || {}).pages || {});
+        for (const page of pages) {
+            const info = (page.imageinfo || [{}])[0];
+            const url  = info.thumburl || info.url || '';
+            if (url && !/\.(svg|ogg|webm|pdf)$/i.test(url)) return url;
+        }
+    } catch(e) {}
+    return null;
+}
 
+/* ── Unsplash ── */
+async function fetchUnsplash(q) {
+    try {
+        const r = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=squarish`,
+            { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` }, signal: AbortSignal.timeout(5000) }
+        );
+        const d = await r.json();
+        if (d.results && d.results.length > 0) return d.results[0].urls.small;
+    } catch(e) {}
+    return null;
+}
 
 function showSpinner(wrap, on) {
-
-    const s = wrap.querySelector('.photo-spinner');
-
+    const s   = wrap.querySelector('.photo-spinner');
     const dot = wrap.querySelector('.photo-live-dot');
-
-    if (s) s.style.display = on ? 'flex' : 'none';
-
+    if (s)   s.style.display   = on ? 'flex'  : 'none';
     if (dot) dot.style.display = on ? 'block' : 'none';
-
 }
-
-
 
 function setImage(wrap, url) {
-
     showSpinner(wrap, false);
-
     if (!url) return;
-
     const img = wrap.querySelector('.prod-photo-img');
-
     if (!img) return;
-
-    img.onload = () => {
-
+    img.onload  = () => {
         img.classList.add('visible');
-
         const em = wrap.querySelector('.prod-photo-emoji');
-
         if (em) em.style.opacity = '0';
-
     };
-
     img.onerror = () => {};
-
     img.src = url;
-
 }
-
-
 
 function clearCache() {
-
     imgCache.clear();
-
     try {
-
         Object.keys(localStorage).forEach(k => {
-
             if (k.startsWith(CACHE_PREFIX)) localStorage.removeItem(k);
-
         });
-
     } catch(e) {}
-
     alert('Photo cache cleared! Reload to fetch fresh photos.');
-
 }
-
-
 
 /* ═══════════════════════════════════════════
-
    LIGHTBOX
-
 ═══════════════════════════════════════════ */
-
 function openLightbox(url, label) {
-
     document.getElementById('lightboxImg').src = url;
-
     document.getElementById('lightboxLabel').textContent = label;
-
     document.getElementById('lightbox').classList.add('open');
-
 }
-
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
 
-
-
 /* ═══════════════════════════════════════════
-
    APP CORE
-
 ═══════════════════════════════════════════ */
-
 const PAGE_SIZE = 200;
-
 let db = [], filteredDb = [], currentSearch = '', totalLoaded = 0, renderOffset = 0;
 
-
-
 function debounce(fn, ms) {
-
     let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-
 }
-
-
 
 function toggleMenu() {
-
     document.getElementById('sideMenu').classList.toggle('active');
-
     const o = document.getElementById('overlay');
-
     o.style.display = o.style.display === 'block' ? 'none' : 'block';
-
 }
-
-
 
 function toggleTheme() {
-
-    const doc = document.documentElement;
-
+    const doc  = document.documentElement;
     const next = doc.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-
     doc.setAttribute('data-theme', next);
-
-    document.getElementById('navToggle').innerText = next==='light'?'☀️':'🌙';
-
+    document.getElementById('navToggle').innerText = next === 'light' ? '☀️' : '🌙';
 }
-
-
 
 function checkAuth() {
-
     if (document.getElementById('passIn').value === '***REMOVED-PASSWORD***') {
-
         document.getElementById('knife').classList.add('knife-slice');
-
         setTimeout(() => { document.getElementById('loginScreen').style.display='none'; autoLoad(); }, 400);
-
     } else {
-
         document.getElementById('err').innerText = 'ACCESS DENIED: INCORRECT CODE';
-
     }
-
 }
-
-
 
 async function autoLoad() {
-
     try {
-
+        // Load pre-built image map first so every visible row gets instant photos
+        await loadImageMap();
         const r = await fetch('data.csv?v=' + Date.now());
-
         processData(await r.text());
-
     } catch(e) {}
-
 }
-
-
 
 function manualUpload(e) {
-
     const r = new FileReader();
-
     r.onload = ev => processData(ev.target.result);
-
     r.readAsText(e.target.files[0]);
-
 }
-
-
 
 function clean(s) { return String(s||'').replace(/[^\x20-\x7E]/g,'').trim(); }
 
-
-
 function processData(csv) {
-
     try {
-
-        const wb = XLSX.read(csv, { type:'string' });
-
+        const wb  = XLSX.read(csv, { type:'string' });
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
-
         db = raw.map(r => ({
-
-            id:     clean(r['Item']),
-
-            desc:   clean(r['Description']),
-
-            cost:   clean(r['Cost']).toLowerCase().replace(/aed/g,'').trim(),
-
-            um:     clean(r['Base U/M'] || r['U/M']).split(' (')[0],
-
-            pack:   clean(r['Case Packing'] || r['Case Pack']),
-
-            cat:    clean(r['Cat 2']),
-
-            state:  clean(r['State']),
-
-            sup:    clean(r['Preferred Supplier']),
-
-            brand:  clean(r['Brand']),
-
-            origin: clean(r['Origin'] || 'UAE'),
-
-            manu:   clean(r['Manu. Part No.'] || r['Manu. Par'] || ''),
-
+            id:    clean(r['Item']),
+            desc:  clean(r['Description']),
+            cost:  clean(r['Cost']).toLowerCase().replace(/aed/g,'').trim(),
+            um:    clean(r['Base U/M'] || r['U/M']).split(' (')[0],
+            pack:  clean(r['Case Packing'] || r['Case Pack']),
+            cat:   clean(r['Cat 2']),
+            state: clean(r['State']),
+            sup:   clean(r['Preferred Supplier']),
+            brand: clean(r['Brand']),
+            origin:clean(r['Origin'] || 'UAE'),
+            manu:  clean(r['Manu. Part No.'] || r['Manu. Par'] || ''),
         }));
-
         totalLoaded = db.length;
-
-        filteredDb = db;
-
+        filteredDb  = db;
         renderOffset = 0;
-
         renderPage(true);
-
         updateCount();
-
     } catch(e) { console.error('Data error', e); }
-
 }
-
-
 
 function updateCount() {
-
     const el = document.getElementById('resultCount');
-
     if (!totalLoaded) return;
-
     el.textContent = currentSearch
-
         ? `${filteredDb.length} / ${totalLoaded}`
-
         : `${Math.min(renderOffset, totalLoaded)} / ${totalLoaded}`;
-
 }
-
-
 
 function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
-
-
 function highlight(text) {
-
     if (!currentSearch || !text) return String(text||'');
-
     const terms = currentSearch.split(/\s+/).filter(w=>w.length>0);
-
     let h = String(text);
-
     terms.forEach(w => {
-
         h = h.replace(new RegExp(`(${escapeRe(w)})`, 'gi'), '<mark>$1</mark>');
-
     });
-
     return h;
-
 }
-
-
 
 function renderPage(reset) {
-
     const list = document.getElementById('list');
-
     if (reset) { list.innerHTML = ''; renderOffset = 0; }
-
     const slice = filteredDb.slice(renderOffset, renderOffset + PAGE_SIZE);
-
     if (!slice.length) { updateSentinel(); return; }
-
     const frag = document.createDocumentFragment();
-
     slice.forEach(r => {
-
         const tr = document.createElement('tr');
-
         tr.innerHTML = buildRow(r);
-
         frag.appendChild(tr);
-
     });
-
     list.appendChild(frag);
-
     renderOffset += slice.length;
-
     list.querySelectorAll('.prod-photo-wrap[data-q]:not([data-obs])').forEach(el => {
-
         el.dataset.obs = '1';
-
         rowObserver.observe(el);
-
     });
-
     updateSentinel();
-
     updateCount();
-
 }
-
-
 
 function updateSentinel() {
-
-    const s = document.getElementById('loadMoreSentinel');
-
+    const s         = document.getElementById('loadMoreSentinel');
     const remaining = filteredDb.length - renderOffset;
-
     if (remaining > 0) {
-
-        s.textContent = `↓ ${remaining.toLocaleString()} MORE ITEMS`;
-
+        s.textContent   = `↓ ${remaining.toLocaleString()} MORE ITEMS`;
         s.style.display = 'flex';
-
         sentinelObserver.observe(s);
-
     } else {
-
         s.style.display = 'none';
-
         sentinelObserver.unobserve(s);
-
     }
-
 }
-
-
 
 const sentinelObserver = new IntersectionObserver(entries => {
-
     if (entries[0].isIntersecting) {
-
         sentinelObserver.unobserve(entries[0].target);
-
         renderPage(false);
-
     }
-
 }, { rootMargin: '200px 0px' });
 
-
-
 document.getElementById('searchIn').addEventListener('input', debounce(e => {
-
     currentSearch = e.target.value.toLowerCase().trim();
-
-    const terms = currentSearch.split(/\s+/).filter(Boolean);
-
-    filteredDb = currentSearch
-
+    const terms   = currentSearch.split(/\s+/).filter(Boolean);
+    filteredDb    = currentSearch
         ? db.filter(r => {
-
             const t = `${r.id} ${r.desc} ${r.pack} ${r.cat} ${r.state} ${r.sup} ${r.brand} ${r.origin} ${r.manu} ${r.cost}`.toLowerCase();
-
             return terms.every(w => t.includes(w));
-
           })
-
         : db;
-
     renderPage(true);
-
     updateCount();
-
 }, 150));
 
-
+/* ── Improved query builder ── */
+const _SKIP_WORDS = new Set([
+    'organic','australian','lebanese','french','spanish','italian','thai',
+    'fresh','frozen','chilled','fzn','frz','raw','cooked','boneless',
+    'skinless','whole','sliced','diced','minced','cleaned','trimmed',
+    'peeled','chopped','grilled','smoked','dried','halal','kosher',
+    'imported','local','uae','premium','select','extra','grade','quality',
+    'style','type','approx','portion','serving','large','medium','small',
+    'mini','baby','young','aged','pack','per','the','and','with','from',
+    'abaca','chef2chef','alannahs','kibsons','abela','aiad','uns',
+]);
+const _INTERNAL_BRANDS = ['chef 2 chef','chef2chef','c2c','own brand','house brand'];
 
 function buildQuery(r) {
-
-    const skipWords = [
-
-        'organic','australian','lebanese','fresh','frozen',
-
-        'chilled','fzn','frz','raw','cooked','boneless',
-
-        'skinless','whole','sliced','diced','minced',
-
-        'cleaned','trimmed','peeled','chopped','grilled',
-
-        'smoked','dried','halal','imported','local','uae',
-
-        'abaca','chef2chef','chef 2 chef','alannahs',
-
-        'kibsons','abela','aiad','uns'
-
-    ];
-
     let desc = r.desc
-
-        .replace(/\(.*?\)/g, '')
-
-        .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pc|pcs)?/gi, '')
-
-        .replace(/\d+\s*(?:kg|g|ml|l|pcs|pc|pkt)\.?/gi, '')
-
+        .replace(/\(.*?\)/g, ' ')
+        .replace(/\d+\s*[xX]\s*\d+\s*(?:kg|g|ml|l|pcs?|pkt)?/gi, ' ')
+        .replace(/\d+[-–]\d+\s*(?:kg|g|ml|l|pcs?)?/gi, ' ')
+        .replace(/\d+\s*(?:kg|g|ml|l|pcs?|pkt|ltr|litre|liter)\.?/gi, ' ')
+        .replace(/\b[A-Z0-9]{6,}\b/g, ' ')
         .toLowerCase();
 
-    skipWords.forEach(w => {
+    const words = desc.split(/\W+/).filter(w => w.length > 2 && !_SKIP_WORDS.has(w));
 
-        desc = desc.replace(new RegExp(escapeRe(w), 'gi'), ' ');
+    const b = (r.brand || '').toLowerCase().trim();
+    const useBrand = b && !_INTERNAL_BRANDS.some(ib => b.includes(ib));
 
-    });
-
-    return desc.replace(/\s+/g, ' ').trim()
-
-        .split(' ').filter(w => w.length > 2).slice(0, 4).join(' ');
-
+    return useBrand
+        ? (r.brand + ' ' + words.slice(0, 3).join(' ')).trim()
+        : words.slice(0, 4).join(' ');
 }
-
-
 
 function buildRow(r) {
-
     const [grad, emoji] = getCatStyle(r.desc, r.cat, r.brand);
-
-    const q = buildQuery(r).replace(/"/g,'&quot;');
-
+    const q        = buildQuery(r).replace(/"/g,'&quot;');
     const descSafe = r.desc.replace(/"/g,'&quot;');
-
+    const idSafe   = r.id.replace(/"/g,'&quot;');
     return `
-
       <td style="color:#64748b;font-family:monospace;font-weight:700;font-size:11px">${highlight(r.id)}</td>
-
       <td>
-
         <div class="desc-cell-inner">
-
-          <div class="prod-photo-wrap" data-q="${q}" data-desc="${descSafe}" onclick="handlePhotoClick(event,this)">
-
+          <div class="prod-photo-wrap" data-q="${q}" data-id="${idSafe}" data-desc="${descSafe}" onclick="handlePhotoClick(event,this)">
             <div class="prod-photo-bg" style="background:${grad}"></div>
-
             <div class="prod-photo-emoji">${emoji}</div>
-
             <img class="prod-photo-img" src="" alt="${descSafe}">
-
             <div class="photo-spinner">
-
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-
                 <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-
                 <path d="M10 2a8 8 0 0 1 8 8" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"/>
-
               </svg>
-
             </div>
-
             <div class="photo-live-dot"></div>
-
           </div>
-
           <div class="desc-text-wrap">
-
             <div class="desc-name">${highlight(r.desc)}</div>
-
             <div class="desc-pills">
-
-              ${r.cat ? `<span class="cat-pill">${highlight(r.cat)}</span>` : ''}
-
+              ${r.cat   ? `<span class="cat-pill">${highlight(r.cat)}</span>`     : ''}
               ${r.state ? `<span class="state-pill">${highlight(r.state)}</span>` : ''}
-
             </div>
-
           </div>
-
         </div>
-
       </td>
-
       <td style="color:var(--brand);font-weight:800;font-size:15px">${highlight(r.cost)}</td>
-
       <td style="font-weight:700">${highlight(r.um)}</td>
-
       <td><span class="pack-value">${highlight(r.pack)}</span></td>
-
       <td>${r.brand ? `<span class="brand-pill">${highlight(r.brand)}</span>` : ''}</td>
-
       <td class="sup-cell">${highlight(r.sup)}</td>
-
       <td class="manu-cell">${highlight(r.manu)}</td>`;
-
 }
-
-
 
 function handlePhotoClick(e, wrap) {
-
     e.stopPropagation();
-
     const img = wrap.querySelector('.prod-photo-img');
-
     if (img && img.classList.contains('visible')) openLightbox(img.src, wrap.dataset.desc||'');
-
 }
 
-
-
 function handleQuickCopy(e) {
-
     if (e.target.closest('.prod-photo-wrap')) return;
-
     const cell = e.target.closest('td');
-
     if (!cell) return;
-
     navigator.clipboard.writeText(cell.innerText).then(() => {
-
         const t = document.getElementById('toast');
-
         t.style.display = 'block';
-
         if (navigator.vibrate) navigator.vibrate(50);
-
         setTimeout(() => t.style.display='none', 600);
-
     });
-
 }
 
 </script>
@@ -1345,4 +924,3 @@ function handleQuickCopy(e) {
 </body>
 
 </html>
-
