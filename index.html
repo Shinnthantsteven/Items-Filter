@@ -376,9 +376,10 @@
    Get API key: console.cloud.google.com → Custom Search JSON API
    Get CX ID:   programmablesearchengine.google.com (enable Image Search)
 ═══════════════════════════════════════════ */
-const UNSPLASH_KEY  = '***REMOVED-UNSPLASH-KEY***';
+const UNSPLASH_KEY   = '***REMOVED-UNSPLASH-KEY***';
 const GOOGLE_API_KEY = '***REMOVED-GOOGLE-KEY***';
 const GOOGLE_CX      = '533bff69cc6d84e5a';
+const PIXABAY_KEY    = '';   // ← free key at pixabay.com/api/docs — 20 000 req/month, best for produce & ingredients
 
 /* ═══════════════════════════════════════════
    CATEGORY STYLES
@@ -469,7 +470,7 @@ async function loadImageMap() {
    5. Unsplash               — 50/hr, generic fallback
    6. Emoji gradient         — always works
 ═══════════════════════════════════════════ */
-const CACHE_PREFIX = 'c2c_photo_v3_';
+const CACHE_PREFIX = 'c2c_photo_v4_';
 const imgCache = new Map();
 const imgQueue = [];
 let activeFetches = 0;
@@ -569,7 +570,15 @@ async function lookupImage(q) {
     url = await fetchWikimediaCommons(short3 || q);
     if (url) return url;
 
-    // Layer 4 — Unsplash (generic food scene, 50/hr)
+    // Layer 4 — Pixabay (20 000/month free, excellent for fresh produce & ingredients)
+    if (PIXABAY_KEY) {
+        url = await fetchPixabay(short3 || q);
+        if (url) return url;
+        url = await fetchPixabay(core + ' food');
+        if (url) return url;
+    }
+
+    // Layer 5 — Unsplash (generic food scene, 50/hr)
     url = await fetchUnsplash(core + ' food');
     if (url) return url;
 
@@ -648,6 +657,19 @@ async function fetchWikimediaCommons(q) {
             const url  = info.thumburl || info.url || '';
             if (url && !/\.(svg|ogg|webm|pdf)$/i.test(url)) return url;
         }
+    } catch(e) {}
+    return null;
+}
+
+/* ── Pixabay ── */
+async function fetchPixabay(q) {
+    try {
+        const r = await fetch(
+            `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q)}&image_type=photo&category=food&per_page=3&safesearch=true`,
+            { signal: AbortSignal.timeout(5000) }
+        );
+        const d = await r.json();
+        if (d.hits && d.hits.length > 0) return d.hits[0].webformatURL;
     } catch(e) {}
     return null;
 }
