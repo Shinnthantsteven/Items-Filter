@@ -94,7 +94,7 @@
 
         .unlock-btn:hover{background:var(--brand-deep);transform:translateY(-1px)}
 
-        .content-container{flex:1;overflow-y:auto;padding:0 40px 180px 40px;height:calc(100vh - 80px);mask-image:linear-gradient(to bottom,black 78%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.08) 100%);-webkit-mask-image:linear-gradient(to bottom,black 78%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.08) 100%)}
+        .content-container{flex:1;overflow-y:auto;padding:0 40px 120px 40px;height:calc(100vh - 80px);mask-image:linear-gradient(to bottom,black 52%,rgba(0,0,0,.55) 70%,rgba(0,0,0,.12) 85%,transparent 94%);-webkit-mask-image:linear-gradient(to bottom,black 52%,rgba(0,0,0,.55) 70%,rgba(0,0,0,.12) 85%,transparent 94%)}
 
         table{width:100%;border-collapse:collapse;table-layout:fixed}
 
@@ -168,7 +168,7 @@
 
 
 
-        .portal-bar{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);width:85%;max-width:1100px;border-radius:100px;background:transparent;border:1.5px solid rgba(255,255,255,.28);display:flex;align-items:center;z-index:1000;transition:border-color .3s}
+        .portal-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:85%;max-width:1100px;border-radius:100px;background:transparent;border:1.5px solid rgba(255,255,255,.28);display:flex;align-items:center;z-index:1000;transition:border-color .3s}
 
         .portal-bar::before{content:'';position:absolute;top:-1.5px;left:12%;right:12%;height:3px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9) 40%,#fff 50%,rgba(255,255,255,.9) 60%,transparent);border-radius:999px;pointer-events:none;z-index:10}
 
@@ -196,7 +196,7 @@
 
         .bar-exit-btn:hover{background:#dc2626}
 
-        #toast{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.15);backdrop-filter:blur(20px);border:1px solid rgba(16,185,129,.35);color:var(--brand);padding:10px 30px;border-radius:50px;font-weight:800;font-size:13px;display:none;z-index:9999}
+        #toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.15);backdrop-filter:blur(20px);border:1px solid rgba(16,185,129,.35);color:var(--brand);padding:10px 30px;border-radius:50px;font-weight:800;font-size:13px;display:none;z-index:9999}
 
         #lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(24px);z-index:9000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;cursor:zoom-out}
 
@@ -206,7 +206,7 @@
 
         #lightboxLabel{color:#94a3b8;font-size:13px;font-weight:700;text-align:center;max-width:400px;line-height:1.5}
 
-        #aiBadge{position:fixed;bottom:170px;right:40px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:50px;padding:8px 16px;font-size:11px;font-weight:800;color:var(--brand);display:none;z-index:1001;gap:8px;align-items:center}
+        #aiBadge{position:fixed;bottom:96px;right:40px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:50px;padding:8px 16px;font-size:11px;font-weight:800;color:var(--brand);display:none;z-index:1001;gap:8px;align-items:center}
 
         #aiBadge.visible{display:flex}
 
@@ -372,9 +372,13 @@
 
 /* ═══════════════════════════════════════════
    API KEYS
-   (Google CSE removed — only 100 req/day, useless for 13 500 items)
+   Fill in GOOGLE_API_KEY + GOOGLE_CX to enable Google Image Search.
+   Get API key: console.cloud.google.com → Custom Search JSON API
+   Get CX ID:   programmablesearchengine.google.com (enable Image Search)
 ═══════════════════════════════════════════ */
-const UNSPLASH_KEY = '***REMOVED-UNSPLASH-KEY***';
+const UNSPLASH_KEY  = '***REMOVED-UNSPLASH-KEY***';
+const GOOGLE_API_KEY = '';   // ← paste your Google API key here
+const GOOGLE_CX      = '';   // ← paste your Custom Search Engine ID here
 
 /* ═══════════════════════════════════════════
    CATEGORY STYLES
@@ -536,6 +540,13 @@ async function lookupImage(q) {
     const short2 = words.slice(0, 2).join(' ');
     const core   = words[0] || q;
 
+    // Layer 0 — Google Custom Search (best accuracy, requires API key + CX)
+    if (GOOGLE_API_KEY && GOOGLE_CX) {
+        let url = await fetchGoogleImages(q);
+        if (url) return url;
+        if (short3 && short3 !== q) { url = await fetchGoogleImages(short3); if (url) return url; }
+    }
+
     // Layer 1 — Open Food Facts (best for branded/packaged products, unlimited)
     let url = await fetchOpenFoodFacts(q);
     if (url) return url;
@@ -562,6 +573,19 @@ async function lookupImage(q) {
     url = await fetchUnsplash(core + ' food');
     if (url) return url;
 
+    return null;
+}
+
+/* ── Google Custom Search Images ── */
+async function fetchGoogleImages(q) {
+    try {
+        const r = await fetch(
+            `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(q + ' food product')}&searchType=image&imgSize=medium&imgType=photo&num=1&safe=active&key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}`,
+            { signal: AbortSignal.timeout(6000) }
+        );
+        const d = await r.json();
+        if (d.items && d.items.length > 0) return d.items[0].link;
+    } catch(e) {}
     return null;
 }
 
