@@ -765,8 +765,13 @@ async function autoLoad() {
     try {
         // Load pre-built image map first so every visible row gets instant photos
         await loadImageMap();
-        const r = await fetch('data.csv?v=' + Date.now());
-        processData(await r.text());
+        const SUPABASE_URL = 'https://***REMOVED-SUPABASE-URL***';
+        const SUPABASE_KEY = 'sb_publishable_Vo_nV-UJ0P3vBS7ZgTDH0g_JW_S9lFyeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.***REMOVED-SUPABASE-TOKEN***.g9OE9_sM3SZbLT60qG6UUpRsupv5QaKe4fuuoLyiNuU';
+        const r = await fetch(SUPABASE_URL + '/rest/v1/products?select=*', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        const json = await r.json();
+        const ws = XLSX.utils.json_to_sheet(json);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        processData(csv);
     } catch(e) {}
 }
 
