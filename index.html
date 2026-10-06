@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Shinnthantsteven/Chef2Chef-Master-Code/main/logo.png">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -143,6 +144,8 @@
     <div class="menu-label">Preferences</div>
     <div class="menu-item" onclick="toggleTheme();toggleMenu()">🌓 Toggle Visual Theme</div>
     <div class="menu-item" onclick="showUploadScreen();toggleMenu()">📁 Load New File</div>
+    <div class="menu-item" onclick="pushToCloud();toggleMenu()">☁️ Save Loaded File to Cloud</div>
+    <div class="menu-item" onclick="signOut();toggleMenu()">🚪 Sign Out</div>
     <div class="menu-item" onclick="clearCache();toggleMenu()">🗑️ Clear Photo Cache</div>
     <button onclick="toggleMenu()" style="width:100%;padding:15px;margin-top:30px;border-radius:12px;border:none;background:var(--danger);color:#fff;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">CLOSE MENU</button>
 </div>
@@ -154,7 +157,8 @@
     <div class="login-card">
         <h1>MASTER CODE ENGINE</h1>
         <p style="font-size:11px;opacity:.5;font-weight:700">CHEF2CHEF SECURE ACCESS</p>
-        <input type="password" id="passIn" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAuth()">
+        <input type="text" id="emailIn" placeholder="username" autocomplete="username" autocapitalize="none" style="margin-bottom:10px">
+        <input type="password" id="passIn" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAuth()">
         <button class="unlock-btn" onclick="checkAuth()">INITIALIZE SYSTEM</button>
         <p id="err" style="color:var(--danger);font-size:11px;margin-top:15px;font-weight:700"></p>
     </div>
@@ -448,31 +452,84 @@ function debounce(fn,ms){let t;return(...args)=>{clearTimeout(t);t=setTimeout(()
 function toggleMenu(){document.getElementById('sideMenu').classList.toggle('active');const o=document.getElementById('overlay');o.style.display=o.style.display==='block'?'none':'block';}
 function toggleTheme(){const doc=document.documentElement;const next=doc.getAttribute('data-theme')==='light'?'dark':'light';doc.setAttribute('data-theme',next);document.getElementById('navToggle').innerText=next==='light'?'☀️':'🌙';}
 
-// SHA-256 hash of the access code — the plain code itself is never stored
-// in this file, only the scrambled hash. This raises the bar above a
-// plaintext check, but note: no purely client-side check on a static site
-// can be made fully secure (anyone can read this JS). This just avoids
-// the code sitting in the open.
-const ACCESS_HASH = 'b08cf8e9c8ea951838d7c6c29d255c46f09f441f230de1ed24e49d2405bcde7d';
-
-async function _sha256Hex(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+/* ═══════════════════════════════════════════
+   SUPABASE — private cloud database
+   The anon key is PUBLIC by design. Data is protected by login +
+   Row Level Security (see supabase_setup.sql). NEVER put the
+   service_role key in this file.
+═══════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://tzeiuogzqqicldebvqrz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Vo_nV-UJ0P3vBS7ZgTDH0g_JW_S9lFy';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function checkAuth() {
-    const val  = document.getElementById('passIn').value;
-    const hash = await _sha256Hex(val);
-    if (hash === ACCESS_HASH) {
-        document.getElementById('knife').classList.add('knife-slice');
-        setTimeout(() => {
-            document.getElementById('loginScreen').style.display = 'none';
-            loadImageMap();
-            showUploadScreen();
-        }, 400);
-    } else {
-        document.getElementById('err').innerText = 'ACCESS DENIED: INCORRECT CODE';
+    const typed = document.getElementById('emailIn').value.trim().toLowerCase();
+    // Staff type a short username; we add a hidden ending. Full emails still work (admin).
+    const email = typed.includes('@') ? typed : typed + '@example.com';
+    const password = document.getElementById('passIn').value;
+    const err = document.getElementById('err');
+    err.innerText = 'SIGNING IN…';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { err.innerText = 'ACCESS DENIED: ' + error.message.toUpperCase(); return; }
+    err.innerText = '';
+    document.getElementById('knife').classList.add('knife-slice');
+    setTimeout(startApp, 400);
+}
+
+async function startApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    loadImageMap();
+    try {
+        const n = await loadFromCloud();
+        if (!n) showUploadScreen();   // empty cloud → upload a file first
+    } catch (e) {
+        console.error(e);
+        alert('Could not load from cloud: ' + e.message);
+        showUploadScreen();
     }
+}
+
+async function signOut() { await sb.auth.signOut(); location.reload(); }
+
+// Remembered session (Supabase stores it in the browser) → skip login screen
+sb.auth.getSession().then(({ data }) => { if (data.session) startApp(); });
+
+function setDb(rows) {
+    db = rows; totalLoaded = db.length; filteredDb = db;
+    renderOffset = 0; renderPage(true); updateCount();
+}
+
+// Supabase returns max 1000 rows per request, so read in pages
+async function loadFromCloud() {
+    let all = [], from = 0; const step = 1000;
+    while (true) {
+        const { data, error } = await sb.from('items').select('*').order('item').range(from, from + step - 1);
+        if (error) throw error;
+        all = all.concat(data);
+        if (data.length < step) break;
+        from += step;
+    }
+    setDb(all.map(r => ({ id: r.item, desc: r.description, cost: r.cost, um: r.um, pack: r.pack,
+        cat: r.cat, state: r.state, sup: r.supplier, brand: r.brand, origin: r.origin, manu: r.manu })));
+    return all.length;
+}
+
+// Admin only: upload the currently loaded file into the cloud table
+async function pushToCloud() {
+    if (!db.length) { alert('Load a CSV/Excel file first (📁), then save it to the cloud.'); return; }
+    if (!confirm(`Save ${db.length.toLocaleString()} items to the cloud? Items missing from this file will be removed.`)) return;
+    const ts = new Date().toISOString();
+    const byId = new Map();
+    db.forEach(r => { if (r.id) byId.set(r.id, { item: r.id, description: r.desc, cost: r.cost, um: r.um, pack: r.pack,
+        cat: r.cat, state: r.state, supplier: r.sup, brand: r.brand, origin: r.origin, manu: r.manu, synced_at: ts }); });
+    const rows = [...byId.values()];
+    for (let i = 0; i < rows.length; i += 1000) {
+        const { error } = await sb.from('items').upsert(rows.slice(i, i + 1000));
+        if (error) { alert('Save failed: ' + error.message); return; }
+    }
+    const { error } = await sb.from('items').delete().lt('synced_at', ts);
+    if (error) { alert('Cleanup failed: ' + error.message); return; }
+    alert(`Saved ${rows.length.toLocaleString()} items to the cloud ✔`);
 }
 
 /* ── Upload screen ── */
