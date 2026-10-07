@@ -685,5 +685,6 @@ function buildRow(r){
 function handlePhotoClick(e,wrap){e.stopPropagation();const img=wrap.querySelector('.prod-photo-img');if(img&&img.classList.contains('visible'))openLightbox(img.src,wrap.dataset.desc||'');}
 function handleQuickCopy(e){if(e.target.closest('.prod-photo-wrap'))return;const cell=e.target.closest('td');if(!cell)return;navigator.clipboard.writeText(cell.innerText).then(()=>{const t=document.getElementById('toast');t.style.display='block';if(navigator.vibrate)navigator.vibrate(50);setTimeout(()=>t.style.display='none',600);});}
 </script>
+    <script src="mobile.js"></script>   
 </body>
 </html>
