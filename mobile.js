@@ -25,11 +25,14 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
 body{display:flex;flex-direction:column}
 .top-nav{flex-shrink:0;background:var(--bg-color);padding:calc(10px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 10px calc(14px + env(safe-area-inset-left,0px))}.logo-text{font-size:16px;gap:10px}.logo-wrap{width:34px;height:34px}
 .top-nav>div:last-child>div{display:none}
-.content-container{flex:1 1 0;min-height:0;height:auto;padding:0 0 130px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+.content-container{flex:1 1 0;min-height:0;height:auto;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;padding:0 0 130px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
 mask-image:linear-gradient(to bottom,#000 calc(100% - 150px),rgba(0,0,0,.45) calc(100% - 88px),rgba(0,0,0,.2) 100%);
 -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 150px),rgba(0,0,0,.45) calc(100% - 88px),rgba(0,0,0,.2) 100%)}
 body.kb .content-container{mask-image:none;-webkit-mask-image:none}
-table,tbody,tr{display:block;width:100%}
+table,tbody,tr{display:block;width:100%;max-width:100%}
+table{table-layout:auto;overflow:hidden}
+.content-container *{min-width:0}
+.content-container .chip{min-width:44px}
 thead{display:block;position:sticky;top:0;z-index:50;background:#0d1829;border-bottom:1px solid var(--glass-edge)}
 [data-theme="light"] thead{background:#334155}
 thead tr{display:grid;grid-template-columns:minmax(0,1fr) 64px;padding:0 14px}
