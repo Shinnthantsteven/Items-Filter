@@ -142,6 +142,7 @@
 <div id="sideMenu">
     <h2 style="margin-left:15px;font-size:18px;letter-spacing:-.5px">SYSTEM MENU</h2>
     <div class="menu-label">Preferences</div>
+    <div class="menu-item" onclick="openInvoiceScanner();toggleMenu()">📄 Invoice Scanner</div>
     <div class="menu-item" onclick="toggleTheme();toggleMenu()">🌓 Toggle Visual Theme</div>
     <div class="menu-item" onclick="showUploadScreen();toggleMenu()">📁 Load New File</div>
     <div class="menu-item" onclick="pushToCloud();toggleMenu()">☁️ Save Loaded File to Cloud</div>
@@ -509,7 +510,7 @@ async function loadFromCloud() {
         if (data.length < step) break;
         from += step;
     }
-    setDb(all.map(r => ({ id: r.item, desc: r.description, cost: r.cost, um: r.um, pack: r.pack,
+    setDb(all.map(r => ({ id: r.item, desc: r.description, cost: r.cost, um: normalizeUom(r.um), pack: r.pack,
         cat: r.cat, state: r.state, sup: r.supplier, brand: r.brand, origin: r.origin, manu: r.manu })));
     return all.length;
 }
@@ -579,6 +580,21 @@ function loadFile(file) {
 
 function clean(s){return String(s||'').replace(/[^\x20-\x7E]/g,'').trim();}
 
+/* Clean UOM: "Other by the Packet" -> "Pkt", "Weight by the kilogram" -> "Kg", "Bag - 10 Kg" -> "Bag (10 Kg)" */
+function normalizeUom(raw){
+    let s=clean(raw);
+    if(!s) return '';
+    s=s.replace(/^(other|count|weight)\s+by\s+the\s+/i,'').replace(/^count\s+in\s+/i,'').trim();
+    const m=s.match(/^([A-Za-z]+)\s*-\s*(.+)$/);
+    let size=''; if(m){ s=m[1]; size=m[2].trim(); }
+    const MAP={kg:'Kg',kgs:'Kg',kilogram:'Kg',kilograms:'Kg',piece:'Pc',pieces:'Pc',pc:'Pc',pcs:'Pc',each:'Pc',
+        packet:'Pkt',pkt:'Pkt',liter:'Ltr',litre:'Ltr',ltr:'Ltr',set:'Set',case:'Case'};
+    const k=s.toLowerCase().split(' (')[0].trim();
+    let out=MAP[k]||(k.charAt(0).toUpperCase()+k.slice(1));
+    const paren=s.match(/\(.*\)/); if(paren&&!size) out+=' '+paren[0];
+    return size?`${out} (${size})`:out;
+}
+
 function processData(data, isCSV) {
     try {
         let raw;
@@ -593,7 +609,7 @@ function processData(data, isCSV) {
             id:    clean(r['Item']),
             desc:  clean(r['Description']),
             cost:  clean(r['Cost']).toLowerCase().replace(/aed/g,'').trim(),
-            um:    clean(r['Base U/M']||r['U/M']).split(' (')[0],
+            um:    normalizeUom(r['U/M Set']||r['Base U/M']||r['U/M']),
             pack:  clean(r['Case Packing']||r['Case Pack']),
             cat:   clean(r['Cat 2']),
             state: clean(r['State']),
@@ -675,7 +691,7 @@ function buildRow(r){
         </div>
       </td>
       <td style="color:var(--brand);font-weight:800;font-size:15px">${highlight(r.cost)}</td>
-      <td style="font-weight:700">${highlight(r.um)}</td>
+      <td style="font-weight:700">${r.um?highlight(r.um):'<span style="color:var(--danger);font-size:11px">NO UOM</span>'}</td>
       <td><span class="pack-value">${highlight(r.pack)}</span></td>
       <td>${r.brand?`<span class="brand-pill">${highlight(r.brand)}</span>`:''}</td>
       <td class="sup-cell">${highlight(r.sup)}</td>
@@ -685,6 +701,7 @@ function buildRow(r){
 function handlePhotoClick(e,wrap){e.stopPropagation();const img=wrap.querySelector('.prod-photo-img');if(img&&img.classList.contains('visible'))openLightbox(img.src,wrap.dataset.desc||'');}
 function handleQuickCopy(e){if(e.target.closest('.prod-photo-wrap'))return;const cell=e.target.closest('td');if(!cell)return;navigator.clipboard.writeText(cell.innerText).then(()=>{const t=document.getElementById('toast');t.style.display='block';if(navigator.vibrate)navigator.vibrate(50);setTimeout(()=>t.style.display='none',600);});}
 </script>
+    <script src="invoice-scanner.js"></script>
     <script src="mobile.js"></script>   
 </body>
 </html>
