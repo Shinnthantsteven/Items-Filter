@@ -18,53 +18,85 @@
   function build() {
     if ($('invModal')) return;
     const st = document.createElement('style');
-    st.textContent = `#invFab{position:fixed;left:16px;bottom:96px;z-index:900;padding:12px 16px;border:none;border-radius:50px;background:var(--brand);color:#fff;font:800 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)}
-#invModal{position:fixed;inset:0;z-index:6000;background:var(--bg-color);display:none;flex-direction:column;overflow:hidden}
+    st.textContent = `
+#invModal{position:fixed;inset:0;z-index:6000;background:var(--bg-color);display:none;flex-direction:column;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--text)}
 #invModal.open{display:flex}
-#invModal header{display:flex;gap:10px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--glass-edge)}
-#invModal header h2{margin:0;font-size:18px;flex:1}
-#invModal .bar{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px;align-items:center}
-#invModal .bar input[type=text]{padding:10px 12px;border-radius:10px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);font-family:inherit}
-#invModal button.b{padding:10px 16px;border-radius:10px;border:none;background:var(--brand);color:#fff;font:800 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
-#invModal button.g{background:rgba(255,255,255,.08);color:var(--text)}
-#invBody{flex:1;overflow:auto;padding:0 20px 20px}
-#invBody table{width:100%;border-collapse:collapse;font-size:13px}
-#invBody th,#invBody td{padding:8px 10px;border-bottom:1px solid var(--glass-edge);text-align:left;vertical-align:top}
-#invBody th{position:sticky;top:0;background:var(--card-bg)}
-#invBody select{max-width:360px;width:100%;padding:6px;border-radius:8px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text)}
-#invBody table{table-layout:auto;min-width:1050px}
-#invBody thead tr th:nth-child(n){width:auto;white-space:nowrap;top:0;padding:12px 10px}
-#invBody td{overflow:visible;text-overflow:clip;white-space:normal;cursor:pointer;padding:9px 10px}
-#invBody td:nth-child(2){white-space:nowrap;color:var(--brand);font-size:14px}
-#invBody td:nth-child(3){min-width:300px;cursor:default}
-#invBody tr:hover td{background:rgba(255,255,255,.04)}
-#invBody select{max-width:none;min-width:290px}
-.cf-h{color:#10b981}.cf-m{color:#fbbf24}.cf-l{color:#ef4444}`;
+#invModal *{box-sizing:border-box}
+#invModal{--iv-muted:#94a3b8;--iv-soft:rgba(255,255,255,.07);--iv-warn:#fbbf24;--iv-ok:#10b981}
+[data-theme="light"] #invModal{--iv-muted:#475569;--iv-soft:rgba(15,23,42,.06);--iv-warn:#b45309;--iv-ok:#047857}
+[data-theme="light"] .iv-code{background:rgba(5,150,105,.12);color:#047857}
+.iv-top{display:flex;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 12px;border-bottom:1px solid var(--glass-edge)}
+.iv-top h2{margin:0;font-size:18px;font-weight:800;flex:1;letter-spacing:-.2px}
+.iv-x{width:38px;height:38px;border-radius:50%;border:none;background:var(--iv-soft);color:var(--text);font-size:18px;cursor:pointer}
+.iv-scroll{flex:1;overflow:auto;padding:16px 20px calc(96px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.iv-drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;border:1.5px dashed var(--glass-edge);border-radius:20px;background:var(--iv-soft);cursor:pointer;text-align:center;transition:.2s}
+.iv-drop.on{border-color:var(--brand);background:rgba(16,185,129,.08)}
+.iv-drop b{font-size:15px}.iv-drop small{color:var(--iv-muted);font-size:12px;word-break:break-all}
+.iv-ctl{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap}
+.iv-ctl select{flex:1;min-width:200px;padding:13px 14px;border-radius:14px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);font:600 14px inherit}
+.iv-go{padding:13px 26px;border:none;border-radius:14px;background:var(--brand);color:#fff;font:800 15px inherit;cursor:pointer}
+.iv-sum{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.iv-chip{padding:7px 12px;border-radius:50px;background:var(--iv-soft);font-size:12px;font-weight:700}
+.iv-chip.g{color:var(--iv-ok)}.iv-chip.a{color:var(--iv-warn)}
+.iv-paste summary{cursor:pointer;font-size:12px;color:var(--iv-muted);margin:4px 0 8px}
+.iv-paste textarea{width:100%;border-radius:14px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);padding:12px}
+.iv-bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg-color);border-top:1px solid var(--glass-edge)}
+.iv-bar button{flex:1;padding:14px;border-radius:14px;border:none;font:800 14px inherit;cursor:pointer;background:var(--iv-soft);color:var(--text)}
+.iv-bar button.p{background:var(--brand);color:#fff}
+.iv-st{font-size:12px;color:var(--iv-muted);margin:2px 2px 10px;min-height:16px}
+/* phone cards */
+.iv-card{background:var(--card-bg,#0d1829);border:1px solid var(--glass-edge);border-radius:20px;padding:14px 16px;margin-bottom:10px}
+.iv-r1{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.iv-code{font:800 17px ui-monospace,monospace;color:var(--brand);background:rgba(16,185,129,.12);padding:6px 12px;border-radius:12px;cursor:pointer}
+.iv-code.none{color:#dc2626;background:rgba(239,68,68,.12)}
+.iv-cost{font-weight:800;font-size:20px;cursor:pointer}.iv-cost small{font-size:11px;color:var(--iv-muted);font-weight:600}
+.iv-desc{margin:10px 0 4px;font-weight:700;font-size:15px;line-height:1.3;cursor:pointer}
+.iv-meta{font-size:12px;color:var(--iv-muted);line-height:1.5}
+.iv-warn{color:var(--iv-warn);font-weight:700}.iv-ok{color:var(--iv-ok);font-weight:700}
+.iv-chg{display:inline-block;margin-top:8px;font-size:12px;color:var(--iv-muted);text-decoration:underline;cursor:pointer}
+.iv-card select{display:none;width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text)}
+.iv-card.edit select{display:block}
+/* desktop table */
+.iv-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
+.iv-tbl th{text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--iv-muted);padding:10px;border-bottom:1px solid var(--glass-edge);white-space:nowrap}
+.iv-tbl td{padding:10px;border-bottom:1px solid var(--glass-edge);vertical-align:middle}
+.iv-tbl tr:hover td{background:var(--iv-soft)}
+.iv-tbl select{min-width:300px;padding:8px;border-radius:10px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text)}
+@media(min-width:900px){.iv-cards{display:none}}
+@media(max-width:899px){.iv-tblwrap{display:none}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
-    m.innerHTML = `<header><h2>📄 Invoice Scanner</h2><button class="b g" onclick="document.getElementById('invModal').classList.remove('open')">✕ Close</button></header>
-<div class="bar">
-  <input type="file" id="invFile" accept=".pdf,image/*" multiple title="You can select several photos (e.g. page 1 and page 2)">
-  <select id="invPreset" style="padding:10px;border-radius:10px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text)"><option value="barakat">Barakat (BkVgCh / BkFrCh)</option><option value="ag">AG Vegetables (VgCh / FrCh)</option><option value="any">Any supplier</option></select>
+    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner</h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
+<div class="iv-scroll">
+  <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
+    <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
+  <div class="iv-ctl">
+    <select id="invPreset"><option value="barakat">Barakat (BkVgCh / BkFrCh)</option><option value="ag">AG Vegetables (VgCh / FrCh)</option><option value="any">Any supplier</option></select>
+    <button class="iv-go" id="invRun">Scan &amp; Match</button>
+  </div>
   <input type="hidden" id="invSup" value="Barakat"><input type="hidden" id="invPre" value="BkVg,BkFr">
-  <button class="b" id="invRun">Scan &amp; Match</button>
-  <button class="b g" id="invXls">⬇ Excel</button>
-  <button class="b g" id="invCopy">Copy</button>
-  <span id="invStatus" style="font-size:12px;color:#94a3b8"></span>
+  <details class="iv-paste"><summary>Can't read the file? Paste invoice text instead</summary><textarea id="invPaste" rows="5" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
+  <div class="iv-st" id="invStatus"></div>
+  <div id="invBody"></div>
 </div>
-<details class="bar" style="display:block"><summary style="cursor:pointer;font-size:12px;color:#94a3b8">No luck reading the file? Paste invoice text here instead</summary>
-<textarea id="invPaste" rows="5" style="width:100%;margin-top:8px;border-radius:10px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);padding:10px" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
-<div id="invBody"></div>`;
+<div class="iv-bar"><button class="p" id="invXls">⬇ Excel</button><button id="invCopy">Copy all</button></div>`;
     document.body.appendChild(m);
+    const drop = $('invDrop'), inp = $('invFile');
+    inp.onchange = () => { $('invFiles').textContent = [...inp.files].map(f => f.name).join(', ') || 'PDF or photo — you can pick several pages'; };
+    ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); }));
+    drop.addEventListener('drop', e => { inp.files = e.dataTransfer.files; inp.onchange(); });
     $('invPreset').onchange = () => { const v = $('invPreset').value, P = { barakat: ['Barakat', 'BkVg,BkFr'], ag: ['AG Veg', 'VgCh,FrCh'], any: ['', ''] }[v]; $('invSup').value = P[0]; $('invPre').value = P[1]; if (rows.length) { match(); render(); } };
-    $('invBody').addEventListener('click', e => {     // click any cell (e.g. the code) to copy it, like the item list
-      const td = e.target.closest('td'); if (!td || e.target.closest('select')) return;
-      const t = td.innerText.trim(); if (!t) return;
+    $('invBody').addEventListener('click', e => {
+      if (e.target.closest('select')) return;
+      const chg = e.target.closest('.iv-chg'); if (chg) { chg.closest('.iv-card').classList.toggle('edit'); return; }
+      const el = e.target.closest('td,[data-copy]'); if (!el) return;
+      const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t) return;
       navigator.clipboard.writeText(t).then(() => { const o = $('toast'); if (o) { o.style.display = 'block'; setTimeout(() => o.style.display = 'none', 600); } status('Copied: ' + t); });
     });
     $('invRun').onclick = run; $('invXls').onclick = exportXls; $('invCopy').onclick = copyTable;
   }
-  window.openInvoiceScanner = function () { build(); $('invModal').classList.add('open'); if (!db.length) status('Load the item list first (📁 / cloud).'); };
+  window.openInvoiceScanner = function () { build(); $('invModal').classList.add('open'); if (!db.length) status('Load the item list first.'); };
   document.addEventListener('DOMContentLoaded', build);
   const status = t => { $('invStatus').textContent = t; };
 
@@ -153,19 +185,6 @@
     return pool.map(r => { let s = score(t, r._t || (r._t = tok(r.desc))); const c = parseFloat(r.cost);
       if (s > 0 && price && c && Math.abs(c - price) / price <= 0.1) s += 0.03; if (s > 0 && unit && uomOk(r, unit)) s += 0.08; return { r, s }; }).filter(x => x.s > 0.2).sort((a, b) => b.s - a.s).slice(0, 6);
   }
-  /* OCR often drops decimal points (35.00 -> 3500). Repair using qty x cost = amount, and a size check against our system cost. */
-  function repairNums(x, c) {
-    const tol = (a, b) => Math.abs(a - b) <= 0.02 + Math.abs(b) * 0.01;
-    if (!(x.qty * x.price > 0 && tol(x.qty * x.price, x.amount))) {
-      const D = [1, 10, 100], combos = [];
-      D.forEach(q => D.forEach(p => D.forEach(a => combos.push([q, p, a]))));
-      combos.sort((u, v) => (u[0] + u[1] + u[2]) - (v[0] + v[1] + v[2]));
-      const hit = combos.find(([q, p, a]) => tol((x.qty / q) * (x.price / p), x.amount / a));
-      if (hit && (hit[0] + hit[1] + hit[2]) > 3) { x.qty /= hit[0]; x.price /= hit[1]; x.amount /= hit[2]; x.fixed = true; }
-    }
-    const cost = c ? parseFloat(c.r.cost) : NaN;
-    if (cost > 0 && x.price >= 100 && x.price / cost >= 50 && x.price / cost <= 200) { x.price /= 100; x.amount /= 100; x.fixed = true; }
-  }
   function match() {
     const sup = $('invSup').value.trim().toLowerCase(), pre = $('invPre').value.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
     const pool = db.filter(r => (!sup || (r.sup || '').toLowerCase().includes(sup)) && (!pre.length || pre.some(p => (r.id || '').toLowerCase().startsWith(p))));
@@ -173,7 +192,6 @@
       let c = candidates(x.desc, pool, x.price, x.unit); x.other = false;
       if (!c.length || c[0].s < 0.5) { const c2 = candidates(x.desc, db, x.price, x.unit); if (c2.length && (!c.length || c2[0].s > c[0].s)) { c = c2; x.other = true; } }
       x.cands = c; x.pick = c.length ? 0 : -1;
-      if (usedOcr) repairNums(x, c[0]);
     });
   }
 
@@ -213,25 +231,37 @@
   }
 
   const fmt = v => (v === '' || v == null || isNaN(v)) ? '' : (Math.round(v * 1000) / 1000).toString();
+  const money = v => isNaN(v) ? '' : (+v).toFixed(2);
   function render() {
     const sum = rows.reduce((a, x) => a + (x.amount || 0), 0);
-    $('invBody').innerHTML = `<table><thead><tr><th>#</th><th>Our code (click to copy)</th><th>Our item (change if wrong)</th><th>Invoice item</th><th>Qty</th><th>Invoice UOM</th><th>Our UOM</th><th>Invoice cost</th><th>System cost</th><th>Check</th><th>Amount</th></tr></thead><tbody>` +
-      rows.map((x, i) => `<tr><td>${i + 1}</td><td id="invCode${i}" style="font-family:monospace;font-weight:700"></td>
-<td><select data-i="${i}">${x.cands.map((c, k) => `<option value="${k}" ${k === x.pick ? 'selected' : ''}>${esc(c.r.desc)}${x.other ? ' (other supplier)' : ''} — ${esc(c.r.id)}</option>`).join('')}<option value="-1" ${x.pick < 0 ? 'selected' : ''}>— no match —</option></select></td>
-<td>${esc(x.desc)}</td><td>${fmt(x.qty)}</td><td>${esc(x.unit)}</td><td id="invUom${i}"></td><td>${fmt(x.price)}</td><td id="invSys${i}"></td><td id="invChk${i}"></td><td>${fmt(x.amount)}</td></tr>`).join('') +
-      `</tbody></table><p style="font-size:12px;color:#94a3b8">Invoice net total: ${sum.toFixed(2)} (compare with the invoice). Check column: ✓ = UOM agrees with our item, otherwise it says what differs.</p>`;
-    $('invBody').querySelectorAll('select').forEach(s => s.onchange = () => { rows[s.dataset.i].pick = +s.value; sys(+s.dataset.i); });
-    rows.forEach((_, i) => sys(i));
+    const opts = (x, i) => `<select data-i="${i}">${x.cands.map((c, k) => `<option value="${k}" ${k === x.pick ? 'selected' : ''}>${esc(c.r.desc)}${x.other ? ' (other supplier)' : ''} — ${esc(c.r.id)}</option>`).join('')}<option value="-1" ${x.pick < 0 ? 'selected' : ''}>— no match —</option></select>`;
+    $('invBody').innerHTML = `<div class="iv-sum" id="invSum"></div>
+<div class="iv-cards">${rows.map((x, i) => `<div class="iv-card" data-i="${i}">
+  <div class="iv-r1"><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span><span class="iv-cost" data-copy="1">${money(x.price)} <small>/ ${esc(x.unit)}</small></span></div>
+  <div class="iv-desc" data-f="desc" data-i="${i}" data-copy="1"></div>
+  <div class="iv-meta">Invoice: ${esc(x.desc)} · ${fmt(x.qty)} ${esc(x.unit)} · ${money(x.amount)}</div>
+  <div class="iv-meta" data-f="chk" data-i="${i}"></div>
+  <span class="iv-chg">Change item</span>${opts(x, i)}</div>`).join('')}</div>
+<div class="iv-tblwrap"><table class="iv-tbl"><thead><tr><th>#</th><th>Our code (click to copy)</th><th>Our item</th><th>Invoice item</th><th>Qty</th><th>Invoice UOM</th><th>Our UOM</th><th>Invoice cost</th><th>Check</th><th>Amount</th></tr></thead><tbody>${rows.map((x, i) => `<tr><td>${i + 1}</td>
+<td data-f="code" data-i="${i}" style="font:800 14px ui-monospace,monospace;color:var(--brand);white-space:nowrap"></td><td>${opts(x, i)}</td><td>${esc(x.desc)}</td><td>${fmt(x.qty)}</td><td>${esc(x.unit)}</td><td data-f="uom" data-i="${i}"></td><td>${money(x.price)}</td><td data-f="chk" data-i="${i}"></td><td>${money(x.amount)}</td></tr>`).join('')}</tbody></table></div>
+<p style="font-size:12px;color:var(--iv-muted)">Invoice net total: ${sum.toFixed(2)} — compare with your invoice. Tap a code, item or cost to copy it.</p>`;
+    $('invBody').querySelectorAll('select').forEach(sel => sel.onchange = () => { rows[sel.dataset.i].pick = +sel.value; sys(+sel.dataset.i); sumUp(); });
+    rows.forEach((_, i) => sys(i)); sumUp();
+  }
+  const issuesOf = x => {
+    const c = x.pick >= 0 ? x.cands[x.pick] : null, out = []; if (!c) return ['no match'];
+    if (c.r.um && !uomOk(c.r, x.unit)) out.push('UOM differs');
+    return out;
+  };
+  function sumUp() {
+    const bad = rows.filter(x => issuesOf(x).length).length;
+    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span><span class="iv-chip g">${rows.length - bad} OK</span>${bad ? `<span class="iv-chip a">${bad} to check</span>` : ''}<span class="iv-chip">Total ${rows.reduce((a, x) => a + (x.amount || 0), 0).toFixed(2)}</span>`;
   }
   function sys(i) {
-    const x = rows[i], c = x.pick >= 0 ? x.cands[x.pick] : null, $$ = k => $(k + i);
-    if (!c) { $$('invCode').textContent = ''; $$('invUom').textContent = ''; $$('invSys').textContent = ''; $$('invChk').innerHTML = '<span class="cf-l">no match</span>'; return; }
-    const cost = parseFloat(c.r.cost), issues = [];
-    $$('invCode').textContent = c.r.id; $$('invUom').textContent = c.r.um || '—'; $$('invSys').textContent = isNaN(cost) ? '' : fmt(cost);
-    if (x.fixed) issues.push('decimal point fixed — check');
-    if (!c.r.um) issues.push('item has no UOM'); else if (!uomOk(c.r, x.unit)) issues.push('UOM differs');
-    if (x.amount && Math.abs(x.qty * x.price - x.amount) > 0.05 + x.amount * 0.01) issues.push('qty×cost ≠ amount');
-    $$('invChk').innerHTML = issues.length ? `<span class="cf-m">⚠ ${issues.join(', ')}</span>` : '<span class="cf-h">✓</span>';
+    const x = rows[i], c = x.pick >= 0 ? x.cands[x.pick] : null, iss = issuesOf(x);
+    const set = (f, html, cls) => $('invBody').querySelectorAll(`[data-f="${f}"][data-i="${i}"]`).forEach(el => { el.innerHTML = html; if (cls !== undefined) el.classList.toggle('none', cls); });
+    set('code', c ? esc(c.r.id) : 'No match', !c); set('desc', c ? esc(c.r.desc) : '—'); set('uom', c ? esc(c.r.um || '—') : '');
+    set('chk', iss.length ? `<span class="iv-warn">⚠ ${iss.join(', ')}</span>` : '<span class="iv-ok">✓ OK</span>');
   }
   const out = () => rows.map((x, i) => { const c = x.pick >= 0 ? x.cands[x.pick].r : null;
     return { '#': i + 1, 'Invoice No': invNo, 'Our Code': c ? c.id : '', 'Our Item': c ? c.desc : '(NO MATCH)', 'Invoice Item': x.desc, Qty: x.qty, 'Invoice UOM': x.unit, 'Our UOM': c ? c.um : '', 'Invoice Cost': x.price, 'System Cost': c ? c.cost : '', Amount: x.amount }; });
