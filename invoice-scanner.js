@@ -88,15 +88,14 @@
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
     const d = g.getImageData(0, 0, c.width, c.height), px = d.data, hist = new Array(256).fill(0);
     for (let i = 0; i < px.length; i += 4) { const y = (px[i] * .299 + px[i + 1] * .587 + px[i + 2] * .114) | 0; px[i] = y; hist[y]++; }
-    let tot = c.width * c.height, sum = 0; hist.forEach((n, v) => sum += v * n);       // Otsu threshold
-    let sb = 0, wb = 0, mx = 0, th = 128;
-    for (let t = 0; t < 256; t++) { wb += hist[t]; if (!wb) continue; const wf = tot - wb; if (!wf) break; sb += t * hist[t]; const mb = sb / wb, mf = (sum - sb) / wf, v = wb * wf * (mb - mf) ** 2; if (v > mx) { mx = v; th = t; } }
-    for (let i = 0; i < px.length; i += 4) { const v = px[i] > th ? 255 : 0; px[i] = px[i + 1] = px[i + 2] = v; }
+    const tot = c.width * c.height; let lo = 0, hi = 255, acc = 0;                      // stretch contrast between 1% and 99%
+    while (lo < 254 && (acc += hist[lo]) < tot * .01) lo++; acc = 0; while (hi > lo + 1 && (acc += hist[hi]) < tot * .01) hi--;
+    for (let i = 0; i < px.length; i += 4) { const v = Math.max(0, Math.min(255, (px[i] - lo) * 255 / (hi - lo))); px[i] = px[i + 1] = px[i + 2] = v; }
     g.putImageData(d, 0, 0); return c;
   }
-  let worker = null;
+  let worker = null, usedOcr = false;
   async function ocrLines(imgSrc) {
-    await load(TESS); status('Reading image (OCR) — first time takes a bit…');
+    usedOcr = true; await load(TESS); status('Reading image (OCR) — first time takes a bit…');
     if (!worker) { worker = await Tesseract.createWorker('eng'); await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); }
     const { data } = await worker.recognize(await prep(imgSrc)); return data.text.split('\n');
   }
@@ -152,7 +151,20 @@
   function candidates(desc, pool, price, unit) {
     const t = tok(desc);
     return pool.map(r => { let s = score(t, r._t || (r._t = tok(r.desc))); const c = parseFloat(r.cost);
-      if (s > 0 && price && c && Math.abs(c - price) / price <= 0.1) s += 0.1; if (s > 0 && unit && uomOk(r, unit)) s += 0.08; return { r, s }; }).filter(x => x.s > 0.2).sort((a, b) => b.s - a.s).slice(0, 6);
+      if (s > 0 && price && c && Math.abs(c - price) / price <= 0.1) s += 0.03; if (s > 0 && unit && uomOk(r, unit)) s += 0.08; return { r, s }; }).filter(x => x.s > 0.2).sort((a, b) => b.s - a.s).slice(0, 6);
+  }
+  /* OCR often drops decimal points (35.00 -> 3500). Repair using qty x cost = amount, and a size check against our system cost. */
+  function repairNums(x, c) {
+    const tol = (a, b) => Math.abs(a - b) <= 0.02 + Math.abs(b) * 0.01;
+    if (!(x.qty * x.price > 0 && tol(x.qty * x.price, x.amount))) {
+      const D = [1, 10, 100], combos = [];
+      D.forEach(q => D.forEach(p => D.forEach(a => combos.push([q, p, a]))));
+      combos.sort((u, v) => (u[0] + u[1] + u[2]) - (v[0] + v[1] + v[2]));
+      const hit = combos.find(([q, p, a]) => tol((x.qty / q) * (x.price / p), x.amount / a));
+      if (hit && (hit[0] + hit[1] + hit[2]) > 3) { x.qty /= hit[0]; x.price /= hit[1]; x.amount /= hit[2]; x.fixed = true; }
+    }
+    const cost = c ? parseFloat(c.r.cost) : NaN;
+    if (cost > 0 && x.price >= 100 && x.price / cost >= 50 && x.price / cost <= 200) { x.price /= 100; x.amount /= 100; x.fixed = true; }
   }
   function match() {
     const sup = $('invSup').value.trim().toLowerCase(), pre = $('invPre').value.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -161,6 +173,7 @@
       let c = candidates(x.desc, pool, x.price, x.unit); x.other = false;
       if (!c.length || c[0].s < 0.5) { const c2 = candidates(x.desc, db, x.price, x.unit); if (c2.length && (!c.length || c2[0].s > c[0].s)) { c = c2; x.other = true; } }
       x.cands = c; x.pick = c.length ? 0 : -1;
+      if (usedOcr) repairNums(x, c[0]);
     });
   }
 
@@ -179,6 +192,7 @@
   async function run() {
     if (!db.length) return status('Load the item list first.');
     try {
+      usedOcr = false;
       const files = [...$('invFile').files], pasted = $('invPaste').value.trim();
       let lines = [];
       if (pasted) lines = pasted.split('\n');
@@ -205,7 +219,7 @@
       rows.map((x, i) => `<tr><td>${i + 1}</td><td id="invCode${i}" style="font-family:monospace;font-weight:700"></td>
 <td><select data-i="${i}">${x.cands.map((c, k) => `<option value="${k}" ${k === x.pick ? 'selected' : ''}>${esc(c.r.desc)}${x.other ? ' (other supplier)' : ''} — ${esc(c.r.id)}</option>`).join('')}<option value="-1" ${x.pick < 0 ? 'selected' : ''}>— no match —</option></select></td>
 <td>${esc(x.desc)}</td><td>${fmt(x.qty)}</td><td>${esc(x.unit)}</td><td id="invUom${i}"></td><td>${fmt(x.price)}</td><td id="invSys${i}"></td><td id="invChk${i}"></td><td>${fmt(x.amount)}</td></tr>`).join('') +
-      `</tbody></table><p style="font-size:12px;color:#94a3b8">Invoice net total: ${sum.toFixed(2)} (compare with the invoice). Check column: ✓ = UOM and cost agree with our system, otherwise it says what differs.</p>`;
+      `</tbody></table><p style="font-size:12px;color:#94a3b8">Invoice net total: ${sum.toFixed(2)} (compare with the invoice). Check column: ✓ = UOM agrees with our item, otherwise it says what differs.</p>`;
     $('invBody').querySelectorAll('select').forEach(s => s.onchange = () => { rows[s.dataset.i].pick = +s.value; sys(+s.dataset.i); });
     rows.forEach((_, i) => sys(i));
   }
@@ -214,8 +228,8 @@
     if (!c) { $$('invCode').textContent = ''; $$('invUom').textContent = ''; $$('invSys').textContent = ''; $$('invChk').innerHTML = '<span class="cf-l">no match</span>'; return; }
     const cost = parseFloat(c.r.cost), issues = [];
     $$('invCode').textContent = c.r.id; $$('invUom').textContent = c.r.um || '—'; $$('invSys').textContent = isNaN(cost) ? '' : fmt(cost);
+    if (x.fixed) issues.push('decimal point fixed — check');
     if (!c.r.um) issues.push('item has no UOM'); else if (!uomOk(c.r, x.unit)) issues.push('UOM differs');
-    if (!isNaN(cost) && cost > 0) { const d = (x.price - cost) / cost * 100; if (Math.abs(d) > 2) issues.push('cost ' + (d > 0 ? '+' : '') + d.toFixed(0) + '%'); }
     if (x.amount && Math.abs(x.qty * x.price - x.amount) > 0.05 + x.amount * 0.01) issues.push('qty×cost ≠ amount');
     $$('invChk').innerHTML = issues.length ? `<span class="cf-m">⚠ ${issues.join(', ')}</span>` : '<span class="cf-h">✓</span>';
   }
