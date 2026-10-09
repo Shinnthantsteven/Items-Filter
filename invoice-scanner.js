@@ -32,6 +32,13 @@
 #invBody th,#invBody td{padding:8px 10px;border-bottom:1px solid var(--glass-edge);text-align:left;vertical-align:top}
 #invBody th{position:sticky;top:0;background:var(--card-bg)}
 #invBody select{max-width:360px;width:100%;padding:6px;border-radius:8px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text)}
+#invBody table{table-layout:auto;min-width:1050px}
+#invBody thead tr th:nth-child(n){width:auto;white-space:nowrap;top:0;padding:12px 10px}
+#invBody td{overflow:visible;text-overflow:clip;white-space:normal;cursor:pointer;padding:9px 10px}
+#invBody td:nth-child(2){white-space:nowrap;color:var(--brand);font-size:14px}
+#invBody td:nth-child(3){min-width:300px;cursor:default}
+#invBody tr:hover td{background:rgba(255,255,255,.04)}
+#invBody select{max-width:none;min-width:290px}
 .cf-h{color:#10b981}.cf-m{color:#fbbf24}.cf-l{color:#ef4444}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
@@ -50,6 +57,11 @@
 <div id="invBody"></div>`;
     document.body.appendChild(m);
     $('invPreset').onchange = () => { const v = $('invPreset').value, P = { barakat: ['Barakat', 'BkVg,BkFr'], ag: ['AG Veg', 'VgCh,FrCh'], any: ['', ''] }[v]; $('invSup').value = P[0]; $('invPre').value = P[1]; if (rows.length) { match(); render(); } };
+    $('invBody').addEventListener('click', e => {     // click any cell (e.g. the code) to copy it, like the item list
+      const td = e.target.closest('td'); if (!td || e.target.closest('select')) return;
+      const t = td.innerText.trim(); if (!t) return;
+      navigator.clipboard.writeText(t).then(() => { const o = $('toast'); if (o) { o.style.display = 'block'; setTimeout(() => o.style.display = 'none', 600); } status('Copied: ' + t); });
+    });
     $('invRun').onclick = run; $('invXls').onclick = exportXls; $('invCopy').onclick = copyTable;
   }
   window.openInvoiceScanner = function () { build(); $('invModal').classList.add('open'); if (!db.length) status('Load the item list first (📁 / cloud).'); };
@@ -189,7 +201,7 @@
   const fmt = v => (v === '' || v == null || isNaN(v)) ? '' : (Math.round(v * 1000) / 1000).toString();
   function render() {
     const sum = rows.reduce((a, x) => a + (x.amount || 0), 0);
-    $('invBody').innerHTML = `<table><thead><tr><th>#</th><th>Our code</th><th>Our item (change if wrong)</th><th>Invoice item</th><th>Qty</th><th>Invoice UOM</th><th>Our UOM</th><th>Invoice cost</th><th>System cost</th><th>Check</th><th>Amount</th></tr></thead><tbody>` +
+    $('invBody').innerHTML = `<table><thead><tr><th>#</th><th>Our code (click to copy)</th><th>Our item (change if wrong)</th><th>Invoice item</th><th>Qty</th><th>Invoice UOM</th><th>Our UOM</th><th>Invoice cost</th><th>System cost</th><th>Check</th><th>Amount</th></tr></thead><tbody>` +
       rows.map((x, i) => `<tr><td>${i + 1}</td><td id="invCode${i}" style="font-family:monospace;font-weight:700"></td>
 <td><select data-i="${i}">${x.cands.map((c, k) => `<option value="${k}" ${k === x.pick ? 'selected' : ''}>${esc(c.r.desc)}${x.other ? ' (other supplier)' : ''} — ${esc(c.r.id)}</option>`).join('')}<option value="-1" ${x.pick < 0 ? 'selected' : ''}>— no match —</option></select></td>
 <td>${esc(x.desc)}</td><td>${fmt(x.qty)}</td><td>${esc(x.unit)}</td><td id="invUom${i}"></td><td>${fmt(x.price)}</td><td id="invSys${i}"></td><td id="invChk${i}"></td><td>${fmt(x.amount)}</td></tr>`).join('') +
