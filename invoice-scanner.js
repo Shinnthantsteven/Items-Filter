@@ -56,6 +56,8 @@
       if (isNaN(v) && !qty && /^\d{3,6}00$/.test(u)) v = parseInt(u, 10) / 100;
       if (v > 0 && (!out.has(v) || out.get(v) > c)) out.set(v, c);
     }
+    /* quantities are always printed with 2 decimals (\"2.00 Kg\"): a bare \"200\" / \"1000\" / \"2200\" is a lost decimal point → also try ÷100, and prefer it */
+    if (qty && /^\d{3,5}$/.test(s)) { const v = parseInt(s, 10) / 100; if (v >= 0.05) { out.set(v, 0); [...out.keys()].forEach(k => { if (k !== v && Number.isInteger(k) && k >= 100) out.set(k, (out.get(k) || 0) + 1.5); }); } }
     return out.size ? [...out].map(([v, c]) => ({ v, c })).sort((x, y) => x.c - y.c) : null;
   }
   const baseV = g => g[0].v;
@@ -553,6 +555,7 @@
       if (!rows.length) return status('Could not find item lines. Try the ✨ Enhance preview, a sharper photo, the AI reader, or paste the invoice text.');
       recon = reconcile(rows, parts.flatMap(p => p.foot)); window._invRaw = parts.flatMap(p => p.res.map(r => r.raw));
       match(); render(); status(`${rows.length} lines found${invNo ? ' — ' + invNo : ''}`);
+      if (recon && recon.state !== 'ok' && !aiKey()) status(`${rows.length} lines found — numbers do not add up to the invoice total. This scan is too faint for the built-in reader: turn on the 🤖 AI reader (free key) and scan again.`);
     } catch (e) { console.error(e); status('Error: ' + e.message); }
     finally { btn.disabled = false; }
   }
