@@ -66,8 +66,8 @@
       const am = new Map(); ag.forEach(a => { const k = Math.round(a.v * 100); if (!am.has(k) || am.get(k).c > a.c) am.set(k, a); });
       pg.forEach(p => {
         cq.forEach(qg => qg.forEach(q => { const t = q.v * p.v;
-          for (const d of [-1, 0, 1]) { const a = am.get(Math.round(t * 100) + d); if (a && a.v >= p.v && Math.abs(t - a.v) <= .011) put({ qty: q.v, price: p.v, amount: a.v, ok: true, s: 100 - 2 * (q.c + p.c + a.c) - i * .1 }); }
-          ag.forEach(a => { if (!q.c && !p.c && !a.c && a.v >= p.v && Math.abs(t - a.v) <= tolA(a.v)) put({ qty: q.v, price: p.v, amount: a.v, ok: true, s: 99 - i * .1 }); });
+          for (const d of [-1, 0, 1]) { const a = am.get(Math.round(t * 100) + d); if (a && (a.v >= p.v || q.v < 1) && Math.abs(t - a.v) <= .011) put({ qty: q.v, price: p.v, amount: a.v, ok: true, s: 100 - 2 * (q.c + p.c + a.c) - i * .1 }); }
+          ag.forEach(a => { if (!q.c && !p.c && !a.c && (a.v >= p.v || q.v < 1) && Math.abs(t - a.v) <= tolA(a.v)) put({ qty: q.v, price: p.v, amount: a.v, ok: true, s: 99 - i * .1 }); });
         }));
         if (!cq.length) ag.forEach(a => { if (a.v < p.v) return; const q = a.v / p.v; if (niceQ(q)) put({ qty: Math.round(q * 1000) / 1000, price: p.v, amount: a.v, ok: true, s: 70 - 2 * (p.c + a.c) - i * .1 }); });   // qty unreadable → work it out
       });
@@ -334,50 +334,98 @@
 
   /* ══════════════ READERS ══════════════ */
   let worker = null;
-  async function ocrOnce(canvas, psm) {
+  /* one OCR pass: text lines (wide gaps kept) + line boxes (used only to find where the table is) */
+  async function ocrFull(canvas, psm) {
     if (!worker) { worker = await Tesseract.createWorker('eng'); }
     await worker.setParameters({ tessedit_pageseg_mode: String(psm), preserve_interword_spaces: '1', user_defined_dpi: '300' });
-    const { data } = await worker.recognize(canvas); return data.text.split('\n');
+    const { data } = await worker.recognize(canvas);
+    return { lines: data.text.split('\n'), boxes: (data.lines || []).map(l => ({ text: String(l.text || ''), y0: l.bbox ? l.bbox.y0 : null, y1: l.bbox ? l.bbox.y1 : null })) };
   }
-  /* Several passes on differently cleaned copies; each pass fills the gaps / repairs the numbers of the others. */
-  async function ocrPage(src, label) {
-    status(label + ': cleaning the image…'); const v = await enhanceVariants(src);
-    const plan = [['soft', 6], ['bin', 6], ['soft', 4], ['plain', 6]]; let best = null;
-    for (let n = 0; n < plan.length; n++) {
+  const ocrOnce = async (canvas, psm) => (await ocrFull(canvas, psm)).lines;
+  const cropTo = (c, x0, y0, x1, y1) => { const o = mk(Math.max(1, x1 - x0), Math.max(1, y1 - y0)); o.getContext('2d').drawImage(c, x0, y0, x1 - x0, y1 - y0, 0, 0, o.width, o.height); return o; };
+  /* Where is the table? Rows are the lines that have a unit (Kg/Pcs…) and 3+ numbers. Take the biggest evenly-spaced block of them
+     and cut the page there, so the logo, Arabic header, CO₂ box and address never reach the reader. */
+  function locateTable(boxes, H) {
+    const ys = boxes.filter(b => b.y0 != null && (() => { const t = b.text.trim().split(/\s+/); return t.some(x => TOKU.test(x)) && t.filter(x => /\d/.test(x)).length >= 3; })()).map(b => [b.y0, b.y1]).sort((a, b) => a[0] - b[0]);
+    if (ys.length < 3) return null;
+    const gaps = ys.slice(1).map((y, i) => y[0] - ys[i][0]).sort((a, b) => a - b), g = gaps[gaps.length >> 1] || 40;
+    let runs = [[ys[0]]]; for (let i = 1; i < ys.length; i++) { if (ys[i][0] - ys[i - 1][0] <= g * 4) runs[runs.length - 1].push(ys[i]); else runs.push([ys[i]]); }
+    const run = runs.sort((a, b) => b.length - a.length)[0]; if (run.length < 3) return null;
+    return { y0: Math.max(0, Math.round(run[0][0] - g * 2)), y1: Math.min(H, Math.round(run[run.length - 1][1] + g * 4)), rows: run.length };
+  }
+  /* Find the table, cut the page down to it, then several passes on differently cleaned copies; each pass fills the gaps / repairs the numbers of the others. */
+  async function ocrPage(v, label) {
+    status(label + ': finding the table…');
+    const first = await ocrFull(v.soft, 6), base = parseLines(first.lines), T = locateTable(first.boxes, v.soft.height);
+    let work = v, best = null, from = 0;
+    if (T) { const W = v.soft.width, cut = c => cropTo(c, Math.round(W * .03), T.y0, Math.round(W * .995), T.y1); work = { soft: cut(v.soft), bin: cut(v.bin), plain: cut(v.plain) }; status(`${label}: table found (${T.rows}+ rows) — reading it closely…`); }
+    else { best = base; from = 1; }
+    const plan = [['soft', 6], ['bin', 6], ['soft', 4], ['plain', 6]];
+    for (let n = from; n < plan.length; n++) {
       status(`${label}: reading pass ${n + 1} of ${plan.length}${best ? ' — ' + best.res.length + ' lines so far' : ''}…`);
-      const p = parseLines(await ocrOnce(v[plan[n][0]], plan[n][1])); best = best ? mergeParsed(best, p) : p;
+      const p = parseLines(await ocrOnce(work[plan[n][0]], plan[n][1])); best = best ? mergeParsed(best, p) : p;
       const allOk = best.res.length && best.res.every(r => r.ok);
       if (allOk && (best.res.length >= 4 || n >= 1)) break;
     }
-    return best;
+    return T ? mergeParsed(best, base) : best;   // the full-page pass adds the totals printed under the table + any row the crop missed
   }
-  /* Optional "AI eyes": Google Gemini reads the picture directly (free key from aistudio.google.com). Result is still checked by qty × price = amount. */
+  /* "AI eyes": Google Gemini reads the picture directly (free key from aistudio.google.com). Result is still checked by qty × price = amount. */
   const AIK = 'ivGeminiKey', AIM = 'ivGeminiModel';
   const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };
-  async function aiRead(canvas) {
-    const key = aiKey(); if (!key) return null;
-    const model = (() => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } })();
-    const small = mk(Math.min(2000, canvas.width), Math.round(canvas.height * Math.min(2000, canvas.width) / canvas.width)); small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
-    const b64 = small.toDataURL('image/jpeg', .85).split(',')[1];
-    const prompt = 'This is a supplier invoice for fresh fruit and vegetables (may be faint photocopy). Return every product line in order. For each: item_no (supplier item number, string), description (product name only), qty (number), unit (Kg, Pcs, Box…), price (unit price number), amount (line total number). Also return invoice_no and subtotal (sum of lines before VAT, number or null). Read numbers exactly; do not invent lines.';
-    const body = { contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json',
-      responseSchema: { type: 'OBJECT', properties: { invoice_no: { type: 'STRING' }, subtotal: { type: 'NUMBER' }, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING' }, description: { type: 'STRING' }, qty: { type: 'NUMBER' }, unit: { type: 'STRING' }, price: { type: 'NUMBER' }, amount: { type: 'NUMBER' } }, required: ['description', 'qty', 'price', 'amount'] } } }, required: ['lines'] } } };
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) throw new Error('AI reader: ' + (await r.text()).slice(0, 160));
-    const j = JSON.parse(((await r.json()).candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '{}');
-    const res = (j.lines || []).filter(l => /[a-z]{3}/i.test(l.description || '')).map(l => {
-      const s = solve([+l.qty].filter(v => v > 0).map(G), [+l.price, +l.amount].filter(v => v > 0).map(G)) || { qty: +l.qty || 1, price: +l.price || 0, amount: +l.amount || 0, ok: false };
-      const d = String(l.description).trim(); return { desc: d, descs: [d], itemNo: String(l.item_no || '').replace(/\D/g, ''), qty: s.qty, unit: unitName(l.unit || 'kg'), price: s.price, amount: s.amount, ok: s.ok, cq: [G(+l.qty)], cn: [G(+l.price), G(+l.amount)], raw: '(AI) ' + d, ai: true };
-    });
-    return { res, no: j.invoice_no || '', foot: j.subtotal > 0 ? [+j.subtotal] : [] };
+  const aiModel = () => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } };
+  const AI_NUM = { type: 'NUMBER', nullable: true };
+  const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
+  const aiPrompt = (k, n) => 'This image is part ' + k + ' of ' + n + ' of a supplier invoice page for fresh fruit and vegetables (may be a faint photocopy). The parts overlap a little, so a line can appear twice - that is fine. ' +
+    'Return every product line you can see, in order, and nothing else (ignore logos, addresses, headings, footers, phone numbers). For each: item_no (supplier item number, string), description (product name only), qty (number), unit (Kg, Pcs, Box…), price (unit price), amount (line total before VAT). ' +
+    'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
+    'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. Read numbers exactly; do not invent lines.';
+  async function aiCall(canvas, k, n) {
+    const key = aiKey(), model = aiModel(), b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
+    const body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
+    for (let t = 0; ; t++) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
+      if (!r.ok) throw new Error('AI reader: ' + (await r.text()).slice(0, 160));
+      return JSON.parse(((await r.json()).candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '{}');
+    }
   }
+  function aiRows(j) {
+    return (j.lines || []).map(l => {
+      const itemNo = String(l.item_no || '').replace(/\D/g, ''), d = String(l.description || '').trim() || (itemNo ? 'Item ' + itemNo : ''); if (!/[a-z]{3}/i.test(d)) return null;
+      const cq = [+l.qty].filter(v => v > 0).map(G), cn = [+l.price, +l.amount].filter(v => v > 0).map(G); if (!cq.length && !cn.length) return null;
+      const s = solve(cq, cn) || { qty: +l.qty || 1, price: +l.price || 0, amount: +l.amount || 0, ok: false };
+      return { desc: d, descs: [d], itemNo, qty: s.qty, unit: unitName(l.unit || 'kg'), price: s.price, amount: s.amount, ok: s.ok, cq, cn, raw: '(AI) ' + d, ai: true };
+    }).filter(Boolean);
+  }
+  /* The page goes to the AI in 2–3 overlapping slices at full resolution (one small picture of the whole page loses thin ink). */
+  async function aiReadTiles(canvas, label) {
+    if (!aiKey()) return null;
+    const W = canvas.width, H = canvas.height, ratio = H / W, n = ratio > 1.2 ? 3 : ratio > .8 ? 2 : 1, step = Math.ceil(H / n), ov = Math.round(H * .06);
+    const res = [], foot = []; let no = '';
+    for (let k = 0; k < n; k++) {
+      status(`${label}: AI reader is looking at part ${k + 1} of ${n}…`);
+      const y0 = Math.max(0, k * step - (k ? ov : 0)), y1 = Math.min(H, (k + 1) * step + (k < n - 1 ? ov : 0));
+      const j = await aiCall(n === 1 ? canvas : cropTo(canvas, 0, y0, W, y1), k + 1, n);
+      const key = r => (r.itemNo || r.desc.toLowerCase()) + '|' + r.amount, tail = res.slice(-10).map(key);
+      aiRows(j).forEach(r => { const i = tail.indexOf(key(r)); if (i >= 0) tail[i] = null; else res.push(r); });   // a line seen in two overlapping slices is kept once
+      if (!no && j.invoice_no) no = String(j.invoice_no); if (j.subtotal > 0) foot.push(+j.subtotal);
+    }
+    return { res, no, foot };
+  }
+  /* AI first; the built-in OCR only runs when the AI result does not add up (or there is no key). */
   async function readPage(src, label) {
-    const ocr = await ocrPage(src, label); let ai = null;
-    if (aiKey()) { try { status(label + ': AI reader is checking…'); ai = await aiRead(src instanceof HTMLCanvasElement ? src : (await enhanceVariants(src)).plain); } catch (e) { console.warn(e); status(String(e.message).slice(0, 120)); } }
+    const v = await enhanceVariants(src); let ai = null;
+    if (aiKey()) { try { ai = await aiReadTiles(v.soft, label); } catch (e) { console.warn(e); status(String(e.message).slice(0, 120)); } }
+    if (ai && ai.res.length) {
+      const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), sure = ai.res.every(r => r.ok) && (!ai.foot.length || ai.foot.some(f => Math.abs(f - sum) <= .06));
+      if (sure) return ai;
+    }
+    await load(TESS); const ocr = await ocrPage(v, label);
     return ai && ai.res.length ? mergeParsed(ai, ocr) : ocr;   // AI lines first (best names), OCR repairs / adds
   }
   const status = t => { const s = $('invStatus'); if (s) s.textContent = t; };
   window._invEnh = enhanceVariants;   // exposed for testing
+  window._invT = { locateTable, aiRows, aiReadTiles, mergeParsed, reconcile, parseLines };
 
   /* ══════════════ UI ══════════════ */
   function build() {
@@ -446,8 +494,8 @@
   </div>
   <input type="hidden" id="invSup" value="Barakat"><input type="hidden" id="invPre" value="BkVg,BkFr">
   <details class="iv-enh" id="invEnh"><summary>Enhanced document (what the reader sees)</summary><div id="invEnhOut" class="iv-pv"></div></details>
-  <details class="iv-ai"><summary>🤖 Optional AI reader (free) — reads very faint invoices</summary>
-    <p>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, paste it here. It stays only in this browser. The invoice picture is sent to Google when it is on. Leave empty to use the built-in reader only.</p>
+  <details class="iv-ai" ${aiKey() ? '' : 'open'}><summary>🤖 AI reader (free, recommended) — reads faint scans and photocopies</summary>
+    <p>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, paste it here. It stays only in this browser. The invoice picture is sent to Google when it is on. It reads first; the built-in reader only steps in when the numbers do not add up. Leave empty to use the built-in reader only.</p>
     <input id="invAiKey" type="password" placeholder="Gemini API key (optional)" autocomplete="off"></details>
   <details class="iv-paste"><summary>Can't read the file? Paste invoice text instead</summary><textarea id="invPaste" rows="5" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
   <div class="iv-st" id="invStatus"></div>
@@ -497,8 +545,8 @@
         if (/\.pdf$/i.test(f.name)) {
           const buf = await f.arrayBuffer(), p = parseLines(await pdfLines(buf.slice(0)));
           if (p.res.length) parts.push(p);
-          else { await load(TESS); const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) parts.push(await readPage(pages[i], `${f.name} p${i + 1}`)); }
-        } else { await load(TESS); parts.push(await readPage(URL.createObjectURL(f), f.name)); }
+          else { const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) parts.push(await readPage(pages[i], `${f.name} p${i + 1}`)); }
+        } else { parts.push(await readPage(URL.createObjectURL(f), f.name)); }
       }
       if (worker) { worker.terminate(); worker = null; }
       rows = parts.flatMap(p => p.res); invNo = (parts.find(p => p.no) || {}).no || '';
