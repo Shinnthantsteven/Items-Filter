@@ -1,4 +1,4 @@
-/* Invoice Scanner v3 — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
+/* Invoice Scanner v4 — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
    Uses globals from index.html: db (items), imageMap, openLightbox, XLSX. Libraries load only when first used.
    Pipeline:  document enhancer (deskew · flatten shadows · 2 cleaned versions) → several OCR passes →
               line reader that repairs OCR digits using qty × price = amount → passes are merged line by line →
@@ -7,7 +7,7 @@
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
   const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js';
-  let rows = [], invNo = '', recon = null;
+  let rows = [], invNo = '', recon = null, missingNo = [];
 
   const load = src => new Promise((ok, no) => {
     if (document.querySelector(`script[src="${src}"]`)) return ok();
@@ -56,8 +56,6 @@
       if (isNaN(v) && !qty && /^\d{3,6}00$/.test(u)) v = parseInt(u, 10) / 100;
       if (v > 0 && (!out.has(v) || out.get(v) > c)) out.set(v, c);
     }
-    /* quantities are always printed with 2 decimals (\"2.00 Kg\"): a bare \"200\" / \"1000\" / \"2200\" is a lost decimal point → also try ÷100, and prefer it */
-    if (qty && /^\d{3,5}$/.test(s)) { const v = parseInt(s, 10) / 100; if (v >= 0.05) { out.set(v, 0); [...out.keys()].forEach(k => { if (k !== v && Number.isInteger(k) && k >= 100) out.set(k, (out.get(k) || 0) + 1.5); }); } }
     return out.size ? [...out].map(([v, c]) => ({ v, c })).sort((x, y) => x.c - y.c) : null;
   }
   const baseV = g => g[0].v;
@@ -119,6 +117,54 @@
     return { desc, descs: [desc], itemNo: no, qty: s.qty, unit: unitName(toks[u].t), price: s.price, amount: s.amount, ok: s.ok, cq, cn };
   }
 
+  /* AG-style row: "<SI no> <DESC> <UNIT> <qty> <price> <disc> <amount> <vat%> <vat> <total>".
+     Three numbers confirm each other (amount = qty × price, vat = 5% of amount, total = amount + vat), so a faint digit can be repaired
+     instead of guessed. We look for the amount that the most other numbers on the line agree with. */
+  const cleanTok = t => String(t).replace(/^[|!\[\](){}]+|[|!\[\](){}.,:;]+$/g, '');
+  /* the printed line number at the start of a row ("31 | JALEPENO…", "[6 BABY CORN") — 0 when there is none */
+  function siOf(left) { const f = String(left).trim().match(/^[\[|!(]*\s*([0-9OoIl]{1,2})(?=\s|\||\]|$)/); if (!f) return 0; const v = parseInt(rep(f[1]), 10); return v > 0 && v < 100 ? v : 0; }
+  function parseVatRow(raw) {
+    const line = raw.replace(/\s+$/, ''); if (line.trim().length < 14 || SKIP.test(line.trim())) return null;
+    const toks = [...line.matchAll(/\S+/g)].map(m => ({ t: m[0], c: cleanTok(m[0]), i: m.index })).filter(x => x.c);
+    if (toks.length < 6) return null;
+    let u = -1; for (let k = 1; k < toks.length - 3; k++) if (TOKU.test(toks[k].c) && !/^\d/.test(toks[k].c) && toks.slice(k + 1).filter(x => numGroup(x.c)).length >= 3) { u = k; break; }
+    if (u < 0) { const f = toks.findIndex((x, k) => k > 0 && /\d[.,]\d/.test(x.t) && numGroup(x.c)); if (f < 2) return null; u = f - 1; }   // unit unreadable → numbers start at the first decimal number
+    const hasUnit = TOKU.test(toks[u].c);
+    const nums = toks.slice(hasUnit ? u + 1 : u + 1).map((x, k) => ({ k, g: numGroup(x.c, k === 0) || numGroup(x.c) })).filter(x => x.g);
+    if (nums.length < 3) return null;
+    const left = line.slice(0, hasUnit ? toks[u].i : toks[u + 1].i), d = descFrom(left).desc;
+    if (!/[a-z]{3}/i.test(d) || SKIP.test(d)) return null;
+    const si = siOf(left);
+    const vals = []; nums.forEach(n => n.g.forEach(a => vals.push({ k: n.k, v: a.v, c: a.c })));
+    const has = (x, k0, ex) => vals.some(y => y.k !== ex && (k0 == null || y.k > k0) && Math.abs(y.v - x) <= .011);
+    /* possible amounts: every number on the line, plus amounts worked out from the others (total ÷ 1.05, vat × 20, qty × price) —
+       so an amount that is itself too faint to read can still be rebuilt from the numbers around it */
+    const cand = new Map(), r2 = x => Math.round(x * 100) / 100, add = (v, k, c) => { if (!(v >= .05 && v < 1e6)) return; const key = Math.round(v * 100), o = cand.get(key); if (!o || (k != null && o.k == null) || c < o.c) cand.set(key, { v: r2(v), k: k != null ? k : (o ? o.k : null), c: Math.min(c, o ? o.c : 9) }); };
+    vals.forEach(x => { add(x.v, x.k, x.c); add(x.v / 1.05, null, x.c + .6); add(x.v * 20, null, x.c + .8); });
+    vals.forEach(p => vals.forEach(q => { if (q.k < p.k && q.v >= .05 && q.v <= 5000 && p.v >= .1) add(q.v * p.v, null, q.c + p.c + .5); }));
+    let best = null;
+    cand.forEach(a => {
+      const vat = r2(a.v * .05 + 1e-9), tot = r2(a.v + vat), after = a.k;
+      const sv = has(vat, after, a.k) ? 2 : 0, st = has(tot, after, a.k) ? 2 : 0;
+      let qp = null;
+      vals.forEach(p => { if ((after != null && p.k >= after) || p.v < .1) return; vals.forEach(q => {
+        if (q.k >= p.k || q.v < .05 || q.v > 5000) return;
+        if (Math.abs(q.v * p.v - a.v) <= .011 && (!qp || q.c + p.c < qp.cost || (q.c + p.c === qp.cost && q.k < qp.q.k))) qp = { q, p, cost: q.c + p.c };
+      }); });
+      const s = sv + st + (qp ? 3 : 0) + (a.k != null ? .4 : 0) - 1.5 * a.c - (qp ? qp.cost : 0) + (sv && st ? .5 : 0);
+      if (!best || s > best.s + 1e-9 || (Math.abs(s - best.s) < 1e-9 && a.k != null && (best.a.k == null || a.k < best.a.k))) best = { s, a, qp, sv, st };
+    });
+    if (!best || best.s < 2 || !(best.sv || best.st)) return null;   // no vat / total agreeing → not this layout; leave the line to the other readers
+    const a = best.a.v; let q, p, ok = best.s >= 4;
+    if (best.qp) { q = best.qp.q.v; p = best.qp.p.v; }
+    else {   // amount is confirmed by vat/total only → work qty or price out from the numbers before it
+      const lim = best.a.k == null ? 99 : best.a.k, before = vals.filter(x => x.k < lim && x.v > 0 && x.v !== 5), first = before.find(x => x.k === 0);
+      if (first && niceP(a / first.v)) { q = first.v; p = Math.round(a / q * 1000) / 1000; }
+      else { const pr = before.filter(x => x.k > 0).find(x => niceQ(a / x.v)); if (pr) { p = pr.v; q = Math.round(a / p * 1000) / 1000; } else { q = first ? first.v : 1; p = Math.round(a / q * 100) / 100; ok = false; } }
+    }
+    return { desc: d, descs: [d], itemNo: '', si, qty: q, unit: hasUnit ? unitName(toks[u].c) : 'Kg', price: p, amount: a, ok, cq: [G(q)], cn: [G(p), G(a)], vat: true };
+  }
+
   /* clean text (PDF text layer): "<no> <desc> <date> <qty> <unit> <price> <amount>"  or  "<desc> <unit> <qty> <price> <amount>" */
   const NUM = '\\d[\\d,]*\\.\\d{1,4}';
   const ROW = new RegExp(`^(.*?)\\s+(${NUM})\\s+(\\S+)\\s+(${NUM})\\s+(${NUM})\\s*$`);
@@ -148,9 +194,13 @@
       const l = rawLine.replace(/\s+/g, ' ').trim();
       const n = l.match(/\b\d{3,4}-SO-\d+\b/i); if (n && !no) no = n[0];
       let r = parseClean(l);
-      if (!r || !r.ok) { const t = parseTolerant(rawLine); if (t && (!r || t.ok)) r = t; }
-      if (r) { r.raw = rawLine.trim(); res.push(r); last = li; }
+      if (!r || !r.ok) { const v = parseVatRow(rawLine); if (v) r = v; }   // AG layout (amount / vat / total cross-check) first
+      if (!r) { const t = parseTolerant(rawLine); if (t) r = t; } else if (!r.ok && !r.vat) { const t = parseTolerant(rawLine); if (t && t.ok) r = t; }
+      if (r) { r.raw = rawLine.trim(); if (!r.si) r.si = siOf(rawLine); res.push(r); last = li; }
     });
+    /* on an AG-style page, a line that is not in the row layout (no SI number, no vat columns) is a stray header / address line, not an item */
+    const nv = res.filter(r => r.vat).length;
+    if (nv >= 3 && nv >= res.length * .5) { for (let i = res.length - 1; i >= 0; i--) if (!res[i].vat && !res[i].ok) res.splice(i, 1); }
     const foot = []; lines.slice(last + 1).forEach(l => l.split(/\s+/).forEach(t => { const v = fixNum(t); if (v >= 50) foot.push(v); }));
     return { res, no, foot };
   }
@@ -159,15 +209,16 @@
   /* ── merging several OCR passes of the same page, line by line ── */
   const tri = s => { s = ' ' + String(s).toLowerCase().replace(/[^a-z]/g, '') + ' '; const m = new Map(); for (let i = 0; i < s.length - 2; i++) m.set(s.substr(i, 3), (m.get(s.substr(i, 3)) || 0) + 1); return m; };
   const triSim = (a, b) => { const A = tri(a), B = tri(b); let i = 0, na = 0, nb = 0; A.forEach(v => na += v); B.forEach(v => nb += v); A.forEach((v, k) => i += Math.min(v, B.get(k) || 0)); return na + nb ? 2 * i / (na + nb) : 0; };
-  const rowSim = (a, b) => (a.itemNo && a.itemNo === b.itemNo) ? 1 : Math.min(1, triSim(a.desc, b.desc) + (Math.abs(a.amount - b.amount) < .05 ? .3 : 0));
+  const rowSim = (a, b) => (a.itemNo && a.itemNo === b.itemNo) ? 1 : (a.si && a.si === b.si && (triSim(a.desc, b.desc) > .3 || Math.abs(a.amount - b.amount) < .05)) ? 1 : (a.ok && b.ok && a.qty === b.qty && a.price === b.price && Math.abs(a.amount - b.amount) < .005) ? 1 : Math.min(1, triSim(a.desc, b.desc) + (Math.abs(a.amount - b.amount) < .05 ? .3 : 0));
   const uniq = a => [...new Set(a)];
   function mergeParsed(a, b) {
     const res = a.res.map(r => ({ ...r, descs: [...r.descs] })); let last = -1;
     b.res.forEach(r => {
       let k = -1, bs = 0; for (let i = last + 1; i < res.length; i++) { const s = rowSim(res[i], r); if (s > bs) { bs = s; k = i; } }
       if (bs >= .6) {
-        last = k; const x = res[k]; x.descs = uniq([...x.descs, ...r.descs]);
-        if (!x.ok) { const cq = [...x.cq, ...r.cq], cn = [...x.cn, ...r.cn], m = solve(cq, cn, true);
+        last = k; const x = res[k]; if (!x.si && r.si) x.si = r.si; if (alphaSeg(r.desc) && (triSim(x.desc, r.desc) > .25 || !alphaSeg(x.desc))) x.descs = uniq([...x.descs, ...r.descs]); if (!alphaSeg(x.desc) && alphaSeg(r.desc)) { x.desc = r.desc; }
+        if (!x.ok && r.ok && r.vat) Object.assign(x, { qty: r.qty, price: r.price, amount: r.amount, ok: true, cq: r.cq, cn: r.cn, unit: r.unit || x.unit });
+        else if (!x.ok) { const cq = [...x.cq, ...r.cq], cn = [...x.cn, ...r.cn], m = solve(cq, cn, true);
           if (m && (m.ok || r.ok)) Object.assign(x, { qty: m.qty, price: m.price, amount: m.amount, ok: m.ok, cq, cn }); }
       } else if (r.ok) { res.splice(last + 1, 0, { ...r }); last++; }
     });
@@ -184,6 +235,26 @@
           if (niceQ(need / x.price)) x.qty = Math.round(need / x.price * 1000) / 1000; else x.price = Math.round(p * 100) / 100; x.amount = need; x.ok = true; return { sum: rest + need, hit: f, state: 'fixed' }; } } } }
     const near = foot.length ? foot.reduce((a, b) => Math.abs(b - sum) < Math.abs(a - sum) ? b : a) : null;
     return { sum, hit: near, state: foot.length ? 'diff' : 'none' };
+  }
+
+  /* Pages of one invoice can come in any order (AG prints "page 2 of 2" first). Put them in order of their printed line numbers. */
+  function orderParts(parts) {
+    const mn = p => { const v = p.res.map(r => r.si).filter(x => x > 0); return v.length ? Math.min(...v) : null; };
+    const m = parts.map(mn); if (parts.length < 2 || m.some(x => x == null)) return parts;
+    return parts.map((p, i) => [p, m[i], i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]);
+  }
+  /* The printed line numbers run 1,2,3…  A number the reader got wrong is replaced by "previous + 1"; a jump in the numbers means a line was not read. */
+  function fixSeq(rows) {
+    const withSi = rows.filter(r => r.si > 0).length, missing = [];
+    if (rows.length < 4 || withSi < rows.length * .6) return missing;
+    let prev = 0;
+    rows.forEach(r => {
+      if (r.si === 1 && prev > 3) prev = 0;   // a new invoice starts
+      if (!(r.si > prev && r.si <= prev + 3)) r.si = prev + 1;
+      for (let k = prev + 1; k < r.si; k++) missing.push(k);
+      prev = r.si;
+    });
+    return missing;
   }
 
   /* ══════════════ ENGINE 2 — choosing our item ══════════════ */
@@ -265,7 +336,7 @@
   }
   /* The unit we show is always OUR item's unit. The invoice unit is only kept when it is a real unit and the item has none. */
   const uomOf = x => { const c = x.pick >= 0 ? x.cands[x.pick].r : null; if (c && c.um) return c.um; return KNOWN.test(String(x.unit)) ? invUom(x.unit) : 'Kg'; };
-  window._invEngine = { parseLines, solve, mergeParsed, reconcile, candidates, setRows: r => { rows = r; }, match, tok, fixNum, qtyNum, wed };
+  window._invEngine = { render: () => render(), parseLines, solve, mergeParsed, reconcile, candidates, setRows: r => { rows = r; }, match, tok, fixNum, qtyNum, wed };
 
   /* ══════════════ DOCUMENT ENHANCER ══════════════ */
   const loadImg = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('Could not open image')); i.src = src; });
@@ -318,7 +389,7 @@
     await load(PDFJS); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
     const pdf = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise, imgs = [];
     for (let p = 1; p <= pdf.numPages; p++) {
-      const pg = await pdf.getPage(p), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: Math.min(5, (width || 2600) / v1.width) }), c = mk(vp.width, vp.height), g = c.getContext('2d');
+      const pg = await pdf.getPage(p), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: Math.min(5, (width || 3300) / v1.width) }), c = mk(vp.width, vp.height), g = c.getContext('2d');
       g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); await pg.render({ canvasContext: g, viewport: vp }).promise; imgs.push(c);
     }
     return imgs;
@@ -358,16 +429,23 @@
   /* Find the table, cut the page down to it, then several passes on differently cleaned copies; each pass fills the gaps / repairs the numbers of the others. */
   async function ocrPage(v, label) {
     status(label + ': finding the table…');
-    const first = await ocrFull(v.soft, 6), base = parseLines(first.lines), T = locateTable(first.boxes, v.soft.height);
+    /* The first pass reads the page as scanned (just straightened + enlarged): on thin, faint print the heavy clean-up versions can erase
+       digits, so they come after, as extra opinions that fill the gaps of the first. */
+    const first = await ocrFull(v.plain, 6), base = parseLines(first.lines), T = locateTable(first.boxes, v.plain.height);
     let work = v, best = null, from = 0;
-    if (T) { const W = v.soft.width, cut = c => cropTo(c, Math.round(W * .03), T.y0, Math.round(W * .995), T.y1); work = { soft: cut(v.soft), bin: cut(v.bin), plain: cut(v.plain) }; status(`${label}: table found (${T.rows}+ rows) — reading it closely…`); }
+    if (T) { const W = v.plain.width, cut = c => cropTo(c, Math.round(W * .03), T.y0, Math.round(W * .995), T.y1); work = { soft: cut(v.soft), bin: cut(v.bin), plain: cut(v.plain) }; status(`${label}: table found (${T.rows}+ rows) — reading it closely…`); }
     else { best = base; from = 1; }
-    const plan = [['soft', 6], ['bin', 6], ['soft', 4], ['plain', 6]];
+    const plan = [['plain', 6], ['soft', 6], ['bin', 6], ['plain', 4], ['soft', 4]];
+    const good = b => {   // every line adds up, the line numbers have no gaps, and (if the page prints one) the total matches
+      if (!b || !b.res.length || !b.res.every(r => r.ok)) return false;
+      const si = b.res.map(r => r.si).filter(x => x > 0); if (si.length > 2 && si.some((x, i) => i && x - si[i - 1] > 1)) return false;
+      const foot = uniq([...b.foot, ...base.foot]), sum = b.res.reduce((t, r) => t + (r.amount || 0), 0);
+      return !foot.length || foot.some(f => Math.abs(f - sum) <= .06) || !foot.some(f => f > sum * .8 && f < sum * 1.3);
+    };
     for (let n = from; n < plan.length; n++) {
       status(`${label}: reading pass ${n + 1} of ${plan.length}${best ? ' — ' + best.res.length + ' lines so far' : ''}…`);
       const p = parseLines(await ocrOnce(work[plan[n][0]], plan[n][1])); best = best ? mergeParsed(best, p) : p;
-      const allOk = best.res.length && best.res.every(r => r.ok);
-      if (allOk && (best.res.length >= 4 || n >= 1)) break;
+      if (good(best) && (best.res.length >= 4 || n >= 1)) break;
     }
     return T ? mergeParsed(best, base) : best;   // the full-page pass adds the totals printed under the table + any row the crop missed
   }
@@ -378,6 +456,7 @@
   const AI_NUM = { type: 'NUMBER', nullable: true };
   const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
   const aiPrompt = (k, n) => 'This image is part ' + k + ' of ' + n + ' of a supplier invoice page for fresh fruit and vegetables (may be a faint photocopy). The parts overlap a little, so a line can appear twice - that is fine. ' +
+    'Typical layouts: Barakat = Item number, Description, Ship date, Quantity, Unit, Sales price, Discount, Discount percent, Amount, Print code (5%); AG = SI no, Description, Unit, Qty, Price, Disc, Amount, VAT%, VAT, Total. The rows are small and faint: look at each digit carefully, and remember qty x price = amount. ' +
     'Return every product line you can see, in order, and nothing else (ignore logos, addresses, headings, footers, phone numbers). For each: item_no (supplier item number, string), description (product name only), qty (number), unit (Kg, Pcs, Box…), price (unit price), amount (line total before VAT). ' +
     'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
     'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. Read numbers exactly; do not invent lines.';
@@ -427,7 +506,7 @@
   }
   const status = t => { const s = $('invStatus'); if (s) s.textContent = t; };
   window._invEnh = enhanceVariants;   // exposed for testing
-  window._invT = { locateTable, aiRows, aiReadTiles, mergeParsed, reconcile, parseLines };
+  window._invT = { orderParts, fixSeq, parseVatRow, locateTable, aiRows, aiReadTiles, mergeParsed, reconcile, parseLines };
 
   /* ══════════════ UI ══════════════ */
   function build() {
@@ -515,6 +594,7 @@
     $('invBody').addEventListener('click', e => {
       if (e.target.closest('select,input')) return;
       const ph = e.target.closest('.iv-ph[data-full]'); if (ph) { if (typeof openLightbox === 'function') openLightbox(ph.dataset.full, ph.dataset.label || '', ph.dataset.code || ''); return; }
+      const del = e.target.closest('.iv-del'); if (del) { const i = +del.closest('[data-i]').dataset.i; rows.splice(i, 1); recon = recon && { ...recon }; render(); status('Line removed.'); return; }
       const chg = e.target.closest('.iv-chg'); if (chg) { chg.closest('.iv-card,tr').classList.toggle('edit'); return; }
       const el = e.target.closest('[data-copy]'); if (!el) return;
       const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t) return;
@@ -543,19 +623,19 @@
       if (pasted) parts.push(parseLines(pasted.split('\n')));
       else if (!files.length) return status('Choose a PDF or image first (you can pick several photos).');
       else for (const f of files) {
-        status('Reading ' + f.name + '…');
+        status('Reading ' + f.name + '…'); const mine = [];
         if (/\.pdf$/i.test(f.name)) {
           const buf = await f.arrayBuffer(), p = parseLines(await pdfLines(buf.slice(0)));
-          if (p.res.length) parts.push(p);
-          else { const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) parts.push(await readPage(pages[i], `${f.name} p${i + 1}`)); }
-        } else { parts.push(await readPage(URL.createObjectURL(f), f.name)); }
+          if (p.res.length) mine.push(p);
+          else { const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) mine.push(await readPage(pages[i], `${f.name} p${i + 1}`)); }
+        } else { mine.push(await readPage(URL.createObjectURL(f), f.name)); }
+        parts.push(...orderParts(mine));
       }
       if (worker) { worker.terminate(); worker = null; }
-      rows = parts.flatMap(p => p.res); invNo = (parts.find(p => p.no) || {}).no || '';
+      rows = parts.flatMap(p => p.res); missingNo = fixSeq(rows); invNo = (parts.find(p => p.no) || {}).no || '';
       if (!rows.length) return status('Could not find item lines. Try the ✨ Enhance preview, a sharper photo, the AI reader, or paste the invoice text.');
       recon = reconcile(rows, parts.flatMap(p => p.foot)); window._invRaw = parts.flatMap(p => p.res.map(r => r.raw));
-      match(); render(); status(`${rows.length} lines found${invNo ? ' — ' + invNo : ''}`);
-      if (recon && recon.state !== 'ok' && !aiKey()) status(`${rows.length} lines found — numbers do not add up to the invoice total. This scan is too faint for the built-in reader: turn on the 🤖 AI reader (free key) and scan again.`);
+      match(); render(); status(`${rows.length} lines found${invNo ? ' — ' + invNo : ''}${missingNo.length ? ' — line ' + missingNo.join(', ') + ' not read' : ''}`);
     } catch (e) { console.error(e); status('Error: ' + e.message); }
     finally { btn.disabled = false; }
   }
@@ -571,13 +651,14 @@
   <div class="iv-c1"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><div class="iv-sub">Invoice: ${esc(x.desc)}</div></div></div>
   <div class="iv-c2"><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span><span class="iv-uom" data-f="uom" data-i="${i}"></span><span class="iv-cost" data-f="price" data-i="${i}" data-copy="1"></span></div>
   <div class="iv-sub"><span data-f="qty" data-i="${i}"></span> qty · amount <span class="amt" data-f="amount" data-i="${i}"></span></div>
-  <span class="iv-chg">Change item / edit</span>${picker(i)}</div>`).join('')}</div>
+  <span class="iv-chg">Change item / edit</span> <span class="iv-chg iv-del">Remove line</span>${picker(i)}</div>`).join('')}</div>
 <div class="iv-tblwrap"><table class="iv-tbl"><thead><tr><th>#</th><th>Our item</th><th>Code</th><th>Invoice item</th><th class="r">Qty</th><th>UOM</th><th class="r">Cost</th><th class="r">Amount</th></tr></thead><tbody>${rows.map((x, i) => `<tr data-i="${i}"><td>${i + 1}</td>
-<td><div class="it"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><span class="iv-chg">Change / edit</span>${picker(i)}</div></div></td>
+<td><div class="it"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><span class="iv-chg">Change / edit</span> <span class="iv-chg iv-del">Remove</span>${picker(i)}</div></div></td>
 <td><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span></td><td>${esc(x.desc)}</td><td class="r" data-f="qty" data-i="${i}"></td><td><span class="iv-uom" data-f="uom" data-i="${i}"></span></td><td class="r" data-f="price" data-i="${i}" data-copy="1"></td><td class="r amt" data-f="amount" data-i="${i}"></td></tr>`).join('')}</tbody></table></div>
-<p class="iv-sub">Tap a code, item or cost to copy it. Tap a photo to enlarge.</p>
+<p class="iv-sub"><button class="iv-sec" id="invAdd" style="padding:9px 16px;font-size:13px">+ Add line</button> Tap a code, item or cost to copy it. Tap a photo to enlarge. A line that is not on the invoice? Press Remove.</p>
 <details class="iv-raw"><summary>What the reader saw (for checking)</summary><pre>${esc((window._invRaw || []).join('\n'))}</pre></details>`;
     $('invBody').querySelectorAll('select').forEach(sel => sel.onchange = () => { const i = +sel.dataset.i; rows[i].pick = +sel.value; if (rows[i].pick >= 0) learn(rows[i], rows[i].cands[rows[i].pick].r.id); sys(i); sumUp(); });
+    $('invAdd').onclick = () => { rows.push({ desc: '', descs: [''], itemNo: '', qty: 1, unit: 'Kg', price: 0, amount: 0, ok: false, cq: [], cn: [], raw: '(added by hand)', cands: [], pick: -1, edit: true }); render(); const t = $('invBody').querySelectorAll('tr[data-i],.iv-card[data-i]'); t.forEach(el => { if (+el.dataset.i === rows.length - 1) el.classList.add('edit'); }); status('Line added at the bottom — search the item, then set qty and cost.'); };
     $('invBody').querySelectorAll('.iv-q').forEach(q => q.oninput = () => search(+q.dataset.i, q.value));
     $('invBody').querySelectorAll('.iv-nums input').forEach(n => n.onchange = () => { const i = +n.dataset.i, v = parseFloat(n.value); if (isNaN(v)) return; rows[i][n.dataset.k] = v;
       const x = rows[i]; if (n.dataset.k !== 'amount') x.amount = Math.round(x.qty * x.price * 100) / 100; sys(i); sumUp(); });
@@ -599,7 +680,7 @@
     const nm = rows.filter(x => x.pick < 0).length, sum = rows.reduce((a, x) => a + (x.amount || 0), 0); let rc = '';
     if (recon) { const hit = recon.hit != null && Math.abs(recon.hit - sum) <= .06;
       rc = hit ? `<span class="iv-chip g">✓ Total matches invoice ${recon.hit.toFixed(2)}</span>` : recon.state === 'diff' || recon.state === 'fixed' ? `<span class="iv-chip a">Invoice shows ${recon.hit.toFixed(2)} — check amber lines</span>` : ''; }
-    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
+    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)${aiKey() ? '' : ' — AI reader would fix these'}</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
   }
   function sys(i) {
     const x = rows[i], c = x.pick >= 0 ? x.cands[x.pick].r : null, B = $('invBody');
