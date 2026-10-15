@@ -456,7 +456,6 @@
   const AI_NUM = { type: 'NUMBER', nullable: true };
   const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
   const aiPrompt = (k, n) => 'This image is part ' + k + ' of ' + n + ' of a supplier invoice page for fresh fruit and vegetables (may be a faint photocopy). The parts overlap a little, so a line can appear twice - that is fine. ' +
-    'Typical layouts: Barakat = Item number, Description, Ship date, Quantity, Unit, Sales price, Discount, Discount percent, Amount, Print code (5%); AG = SI no, Description, Unit, Qty, Price, Disc, Amount, VAT%, VAT, Total. The rows are small and faint: look at each digit carefully, and remember qty x price = amount. ' +
     'Return every product line you can see, in order, and nothing else (ignore logos, addresses, headings, footers, phone numbers). For each: item_no (supplier item number, string), description (product name only), qty (number), unit (Kg, Pcs, Box…), price (unit price), amount (line total before VAT). ' +
     'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
     'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. Read numbers exactly; do not invent lines.';
@@ -537,6 +536,7 @@
 .iv-bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;padding:12px 24px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg-color);border-top:1px solid var(--glass-edge)}
 .iv-bar button{flex:1;max-width:260px;padding:14px;border-radius:14px;border:none;font:800 14px inherit;cursor:pointer;background:var(--iv-soft);color:var(--text)}
 .iv-bar button.p{background:var(--brand);color:#fff}
+.iv-pw{width:56px;height:56px;margin:0}.iv-c1 .iv-pw{width:64px;height:64px;border-radius:14px}.iv-c1 .iv-pw .prod-photo-bg,.iv-c1 .iv-pw .prod-photo-img{border-radius:14px}.iv-c1 .iv-pw .prod-photo-emoji{font-size:28px}
 .iv-ph{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--iv-soft);cursor:zoom-in;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
 .iv-code{font:800 14px ui-monospace,monospace;color:var(--brand);cursor:pointer;white-space:nowrap}.iv-code.none{color:#dc2626}
 .iv-uom{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:rgba(16,185,129,.12);color:var(--iv-ok)}
@@ -689,11 +689,18 @@
     set('qty', fmt(x.qty)); set('price', money(x.price)); set('amount', money(x.amount));
     B.querySelectorAll(`.iv-card[data-i="${i}"],tr[data-i="${i}"]`).forEach(el => el.classList.toggle('warn', bad(x)));
     B.querySelectorAll(`.iv-nums input[data-i="${i}"]`).forEach(n => { if (document.activeElement !== n) n.value = x[n.dataset.k]; });
-    const url = c ? photoOf(c.id) : '';
-    B.querySelectorAll(`[data-f="ph"][data-i="${i}"]`).forEach(el => {
-      if (url) { el.outerHTML = `<img class="iv-ph" data-f="ph" data-i="${i}" src="${esc(url)}" data-full="${esc(url)}" data-label="${esc(c.desc)}" data-code="${esc(c.id)}" loading="lazy" alt="">`; }
-      else { el.className = 'iv-ph'; el.removeAttribute('data-full'); el.textContent = '📦'; }
-    });
+    B.querySelectorAll(`[data-f="ph"][data-i="${i}"]`).forEach(el => setPhoto(el, c));
+  }
+  /* Same photo box as the item list (gradient + emoji while loading, image map first, then the web look-up and the saved cache) */
+  function setPhoto(el, c) {
+    if (!c) { el.className = 'iv-ph'; el.removeAttribute('data-id'); el.onclick = null; el.innerHTML = '📦'; return; }
+    if (el.dataset.id === c.id && el.classList.contains('prod-photo-wrap')) return;   // already showing this item
+    let grad = 'linear-gradient(135deg,#1e293b,#334155)', emoji = '📦', q = c.desc;
+    try { if (typeof getCatStyle === 'function') [grad, emoji] = getCatStyle(c.desc, c.cat, c.brand); if (typeof buildQuery === 'function') q = buildQuery(c); } catch (e) { }
+    el.className = 'prod-photo-wrap iv-pw'; el.dataset.q = q; el.dataset.id = c.id; el.dataset.desc = c.desc; delete el.dataset.obs;
+    el.innerHTML = `<div class="prod-photo-bg" style="background:${grad}"></div><div class="prod-photo-emoji">${emoji}</div><img class="prod-photo-img" src="" alt="${esc(c.desc)}"><div class="photo-spinner"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.12)" stroke-width="2"/><path d="M10 2a8 8 0 0 1 8 8" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"/></svg></div><div class="photo-live-dot"></div>`;
+    el.onclick = e => { if (typeof handlePhotoClick === 'function') handlePhotoClick(e, el); };
+    try { if (typeof rowObserver !== 'undefined') rowObserver.observe(el); } catch (e) { }
   }
   const out = () => rows.map((x, i) => { const c = x.pick >= 0 ? x.cands[x.pick].r : null;
     return { '#': i + 1, 'Invoice No': invNo, 'Our Code': c ? c.id : '', 'Our Item': c ? c.desc : '(NO MATCH)', 'Invoice Item': x.desc, Qty: x.qty, UOM: uomOf(x), 'Invoice Cost': x.price, 'System Cost': c ? c.cost : '', Amount: x.amount }; });
