@@ -7,7 +7,7 @@
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
   const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js';
-  let rows = [], invNo = '', recon = null, missingNo = [];
+  let rows = [], invNo = '', recon = null, missingNo = [], totals = {};
 
   const load = src => new Promise((ok, no) => {
     if (document.querySelector(`script[src="${src}"]`)) return ok();
@@ -454,16 +454,32 @@
   const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };
   const aiModel = () => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } };
   const AI_NUM = { type: 'NUMBER', nullable: true };
-  const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
+  const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, qty_total: AI_NUM, vat: AI_NUM, total: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
   const aiPrompt = (k, n) => 'This image is part ' + k + ' of ' + n + ' of a supplier invoice page for fresh fruit and vegetables (may be a faint photocopy). The parts overlap a little, so a line can appear twice - that is fine. ' +
     'Return every product line you can see, in order, and nothing else (ignore logos, addresses, headings, footers, phone numbers). For each: item_no (supplier item number, string), description (product name only), qty (number), unit (Kg, Pcs, Box…), price (unit price), amount (line total before VAT). ' +
     'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
-    'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. Read numbers exactly; do not invent lines.';
+    'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. ' +
+    'Also read the printed totals when this part shows them: qty_total = the "Quantity" figure in the small tax box under the table (sum of all quantities), vat = "Sales tax amount" / VAT, total = the final "Total" including VAT; otherwise null. Read numbers exactly; do not invent lines.';
+  /* The server function holds the key, so users never paste anything. If it is not deployed yet, a pasted key still works, then the built-in reader. */
+  const proxyUrl = () => { try { return window.INVOICE_READER_URL || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL + '/functions/v1/read-invoice' : ''); } catch (e) { return ''; } };
+  let proxyDead = false;
+  const aiOn = () => !!aiKey() || (!!proxyUrl() && !proxyDead);
+  async function callAI(model, body, key) {
+    if (proxyUrl() && !proxyDead) {
+      try {
+        let tok = ''; try { tok = (await sb.auth.getSession()).data.session.access_token; } catch (e) { }
+        const r = await fetch(proxyUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '', Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) });
+        if (r.ok || r.status === 429 || r.status === 503) return r;
+        proxyDead = true; if (!key) return r;
+      } catch (e) { proxyDead = true; if (!key) throw e; }
+    }
+    return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  }
   async function aiCall(canvas, k, n) {
     const key = aiKey(), model = aiModel(), b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
     const body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
     for (let t = 0; ; t++) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const r = await callAI(model, body, key);
       if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
       if (!r.ok) throw new Error('AI reader: ' + (await r.text()).slice(0, 160));
       return JSON.parse(((await r.json()).candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '{}');
@@ -478,10 +494,10 @@
     }).filter(Boolean);
   }
   /* The page goes to the AI in 2–3 overlapping slices at full resolution (one small picture of the whole page loses thin ink). */
-  async function aiReadTiles(canvas, label) {
-    if (!aiKey()) return null;
-    const W = canvas.width, H = canvas.height, ratio = H / W, n = ratio > 1.2 ? 3 : ratio > .8 ? 2 : 1, step = Math.ceil(H / n), ov = Math.round(H * .06);
-    const res = [], foot = []; let no = '';
+  async function aiReadTiles(canvas, label, opt = {}) {
+    if (!aiOn()) return null;
+    const W = canvas.width, H = canvas.height, ratio = H / W, n = opt.n || (ratio > 1.2 ? 3 : ratio > .8 ? 2 : 1), step = Math.ceil(H / n), ov = Math.round(H * (opt.ov || .06));
+    const res = [], foot = [], tot = {}; let no = '';
     for (let k = 0; k < n; k++) {
       status(`${label}: AI reader is looking at part ${k + 1} of ${n}…`);
       const y0 = Math.max(0, k * step - (k ? ov : 0)), y1 = Math.min(H, (k + 1) * step + (k < n - 1 ? ov : 0));
@@ -489,22 +505,46 @@
       const key = r => (r.itemNo || r.desc.toLowerCase()) + '|' + r.amount, tail = res.slice(-10).map(key);
       aiRows(j).forEach(r => { const i = tail.indexOf(key(r)); if (i >= 0) tail[i] = null; else res.push(r); });   // a line seen in two overlapping slices is kept once
       if (!no && j.invoice_no) no = String(j.invoice_no); if (j.subtotal > 0) foot.push(+j.subtotal);
+      [['sub', j.subtotal], ['qty', j.qty_total], ['vat', j.vat], ['total', j.total]].forEach(([k, v]) => { if (tot[k] == null && +v > 0) tot[k] = +v; });
     }
-    return { res, no, foot };
+    return { res, no, foot, tot, n };
   }
-  /* AI first; the built-in OCR only runs when the AI result does not add up (or there is no key). */
+  /* Does one reading pass every test the invoice itself gives us? (each line qty × cost = amount, Σ amounts = subtotal, Σ qty = printed quantity) */
+  function aiSure(ai) {
+    if (!ai || !ai.res.length || !ai.res.every(r => r.ok)) return false;
+    const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), q = ai.res.reduce((t, x) => t + (x.qty || 0), 0), T = ai.tot || {};
+    if (ai.foot.length && !ai.foot.some(f => Math.abs(f - sum) <= .06)) return false;
+    if (T.qty && Math.abs(T.qty - q) > .06) return false;
+    return true;
+  }
+  /* Two independent AI readings of the same page: per line, keep the reading where qty × cost = amount holds; add lines only the 2nd one saw. */
+  function voteMerge(a, b) {
+    const key = r => r.itemNo || r.desc.toLowerCase().replace(/[^a-z]/g, ''), bk = new Map(b.res.map(r => [key(r), r]));
+    const res = a.res.map(r => { const o = bk.get(key(r)); return o && !r.ok && o.ok ? { ...o, desc: r.desc, descs: r.descs } : r; });
+    const have = new Set(res.map(key));
+    b.res.forEach((r, i) => { if (have.has(key(r)) || !r.itemNo) return; const p = i ? res.findIndex(z => key(z) === key(b.res[i - 1])) : -1; res.splice(p + 1, 0, r); have.add(key(r)); });
+    return { res, no: a.no || b.no, foot: [...a.foot, ...b.foot], tot: { ...b.tot, ...a.tot }, n: a.n };
+  }
+  /* AI first (twice if the numbers do not add up, on differently cleaned copies); the built-in OCR only runs when that still fails (or there is no key). */
   async function readPage(src, label) {
     const v = await enhanceVariants(src); let ai = null;
-    if (aiKey()) { try { ai = await aiReadTiles(v.soft, label); } catch (e) { console.warn(e); status(String(e.message).slice(0, 120)); } }
-    if (ai && ai.res.length) {
-      const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), sure = ai.res.every(r => r.ok) && (!ai.foot.length || ai.foot.some(f => Math.abs(f - sum) <= .06));
-      if (sure) return ai;
+    if (aiOn()) {
+      try {
+        ai = await aiReadTiles(v.soft, label);
+        if (ai.res.length && !aiSure(ai)) {
+          status(label + ': numbers do not add up — taking a second AI look…');
+          const b = await aiReadTiles(v.plain, label, { n: ai.n === 2 ? 3 : 2, ov: .1 }); ai = voteMerge(ai, b);
+        }
+      } catch (e) { console.warn(e); status(String(e.message).slice(0, 120)); }
     }
-    await load(TESS); const ocr = await ocrPage(v, label);
-    return ai && ai.res.length ? mergeParsed(ai, ocr) : ocr;   // AI lines first (best names), OCR repairs / adds
+    if (ai && ai.res.length && aiSure(ai)) return ai;
+    let ocr; try { await load(TESS); ocr = await ocrPage(v, label); } catch (e) { if (ai && ai.res.length) return ai; throw e; }
+    if (!(ai && ai.res.length)) return ocr;
+    const m = mergeParsed(ai, ocr); m.tot = ai.tot; return m;   // AI lines first (best names), OCR repairs / adds
   }
   const status = t => { const s = $('invStatus'); if (s) s.textContent = t; };
   window._invEnh = enhanceVariants;   // exposed for testing
+  window._invCheck = { chkData, autoFix, voteMerge, aiSure, setState: (r, t) => { rows = r; totals = t; } };
   window._invT = { orderParts, fixSeq, parseVatRow, locateTable, aiRows, aiReadTiles, mergeParsed, reconcile, parseLines };
 
   /* ══════════════ UI ══════════════ */
@@ -561,13 +601,21 @@
 .iv-c2 .iv-code{font-size:16px;background:rgba(16,185,129,.12);padding:6px 12px;border-radius:12px}
 .iv-cost{font-weight:800;font-size:18px;cursor:pointer}.iv-card .iv-sub{margin-top:8px}
 .iv-raw pre{white-space:pre-wrap;font:11px ui-monospace,monospace;color:var(--iv-muted);margin:6px 0}
+.iv-prev{margin:10px 0}.iv-prev summary{cursor:pointer;font-weight:800;font-size:13px;padding:6px 0}.iv-prev canvas{width:100%;max-width:640px;height:auto;display:block;border:1px solid var(--glass-edge);border-radius:12px;background:#fff}
+.iv-pvb{display:flex;gap:8px;margin-top:8px}.iv-pvb .iv-sec{padding:9px 16px;font-size:13px}
+.iv-chk{border:1px solid var(--glass-edge);border-radius:16px;padding:12px 14px;margin:10px 0;background:var(--iv-soft)}
+.iv-chk h3{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:.3px}
+.iv-ck{display:grid;grid-template-columns:22px 1fr auto 104px;gap:8px;align-items:center;padding:6px 0;font-size:13px;border-top:1px solid var(--glass-edge)}
+.iv-ck:first-of-type{border-top:none}.iv-ck .ic{font-weight:900;text-align:center}.iv-ck.g .ic{color:var(--iv-ok)}.iv-ck.a .ic{color:var(--iv-warn)}.iv-ck.u .ic{color:var(--iv-muted)}
+.iv-ck b{font-variant-numeric:tabular-nums}.iv-ck input{width:104px;min-width:0;padding:7px 8px;border-radius:9px;border:1px solid var(--glass-edge);background:var(--input-bg);color:var(--text);font:700 14px inherit;text-align:right}
+.iv-chk .iv-sec{margin-top:10px;padding:9px 14px;font-size:13px}.iv-chk small{display:block;margin-top:8px;color:var(--iv-muted);font-size:11px;line-height:1.4}
 @media(max-width:899px){.iv-tblwrap{display:none}.iv-cards{display:block}.iv-scroll{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}.iv-go,.iv-sec{flex:1}.iv-enh canvas{width:100%}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
     m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner</h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
 <div class="iv-scroll"><div class="iv-wrap">
-  <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
-    <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
+  <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">Clean invoice (Excel/CSV) · PDF · photo — several pages ok</small>
+    <input type="file" id="invFile" accept=".pdf,image/*,.xlsx,.xls,.csv" multiple hidden></label>
   <div class="iv-ctl">
     <select id="invPreset"><option value="barakat">Barakat (BkVgCh / BkFrCh)</option><option value="ag">AG Vegetables (VgCh / FrCh)</option><option value="any">Any supplier</option></select>
     <button class="iv-sec" id="invEnhBtn">✨ Enhance preview</button>
@@ -575,17 +623,17 @@
   </div>
   <input type="hidden" id="invSup" value="Barakat"><input type="hidden" id="invPre" value="BkVg,BkFr">
   <details class="iv-enh" id="invEnh"><summary>Enhanced document (what the reader sees)</summary><div id="invEnhOut" class="iv-pv"></div></details>
-  <details class="iv-ai" ${aiKey() ? '' : 'open'}><summary>🤖 AI reader (free, recommended) — reads faint scans and photocopies</summary>
+  <details class="iv-ai"><summary>🤖 Optional: AI reader for photos (needs a free key)</summary>
     <p>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, paste it here. It stays only in this browser. The invoice picture is sent to Google when it is on. It reads first; the built-in reader only steps in when the numbers do not add up. Leave empty to use the built-in reader only.</p>
     <input id="invAiKey" type="password" placeholder="Gemini API key (optional)" autocomplete="off"></details>
   <details class="iv-paste"><summary>Can't read the file? Paste invoice text instead</summary><textarea id="invPaste" rows="5" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
   <div class="iv-st" id="invStatus"></div>
   <div id="invBody"></div>
 </div></div>
-<div class="iv-bar"><button class="p" id="invXls">⬇ Excel</button><button id="invCopy">Copy all</button></div>`;
+<div class="iv-bar"><button class="p" id="invXls">⬇ Excel</button><button id="invClean">Clean invoice</button><button id="invCopy">Copy all</button></div>`;
     document.body.appendChild(m);
     const drop = $('invDrop'), inp = $('invFile');
-    inp.onchange = () => { $('invFiles').textContent = [...inp.files].map(f => f.name).join(', ') || 'PDF or photo — you can pick several pages'; };
+    inp.onchange = () => { $('invFiles').textContent = [...inp.files].map(f => f.name).join(', ') || 'Clean invoice (Excel/CSV) · PDF · photo — several pages ok'; };
     ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); }));
     ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); }));
     drop.addEventListener('drop', e => { inp.files = e.dataTransfer.files; inp.onchange(); });
@@ -600,7 +648,7 @@
       const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t) return;
       navigator.clipboard.writeText(t).then(() => status('Copied: ' + t));
     });
-    $('invRun').onclick = run; $('invXls').onclick = exportXls; $('invCopy').onclick = copyTable; $('invEnhBtn').onclick = previewEnhance;
+    $('invRun').onclick = run; $('invXls').onclick = exportXls; $('invClean').onclick = exportClean; $('invCopy').onclick = copyTable; $('invEnhBtn').onclick = previewEnhance;
   }
   window.openInvoiceScanner = function () { build(); $('invModal').classList.add('open'); if (!db.length) status('Load the item list first.'); };
   document.addEventListener('DOMContentLoaded', build);
@@ -624,7 +672,8 @@
       else if (!files.length) return status('Choose a PDF or image first (you can pick several photos).');
       else for (const f of files) {
         status('Reading ' + f.name + '…'); const mine = [];
-        if (/\.pdf$/i.test(f.name)) {
+        if (/\.(xlsx|xls|csv)$/i.test(f.name)) { mine.push(await readCleanFile(f)); }
+        else if (/\.pdf$/i.test(f.name)) {
           const buf = await f.arrayBuffer(), p = parseLines(await pdfLines(buf.slice(0)));
           if (p.res.length) mine.push(p);
           else { const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) mine.push(await readPage(pages[i], `${f.name} p${i + 1}`)); }
@@ -634,7 +683,8 @@
       if (worker) { worker.terminate(); worker = null; }
       rows = parts.flatMap(p => p.res); missingNo = fixSeq(rows); invNo = (parts.find(p => p.no) || {}).no || '';
       if (!rows.length) return status('Could not find item lines. Try the ✨ Enhance preview, a sharper photo, the AI reader, or paste the invoice text.');
-      recon = reconcile(rows, parts.flatMap(p => p.foot)); window._invRaw = parts.flatMap(p => p.res.map(r => r.raw));
+      recon = reconcile(rows, parts.flatMap(p => p.foot));
+      totals = {}; parts.forEach(p => ['sub', 'qty', 'vat', 'total'].forEach(k => { if (totals[k] == null && p.tot && p.tot[k] > 0) totals[k] = p.tot[k]; })); if (totals.sub == null && recon && recon.hit) totals.sub = recon.hit; window._invRaw = parts.flatMap(p => p.res.map(r => r.raw));
       match(); render(); status(`${rows.length} lines found${invNo ? ' — ' + invNo : ''}${missingNo.length ? ' — line ' + missingNo.join(', ') + ' not read' : ''}`);
     } catch (e) { console.error(e); status('Error: ' + e.message); }
     finally { btn.disabled = false; }
@@ -646,7 +696,8 @@
   const picker = i => `<div class="iv-pick"><select data-i="${i}"></select><input class="iv-q" data-i="${i}" placeholder="Search all items…">
 <div class="iv-nums"><label>Qty<input type="number" step="any" data-k="qty" data-i="${i}"></label><label>Cost<input type="number" step="any" data-k="price" data-i="${i}"></label><label>Amount<input type="number" step="any" data-k="amount" data-i="${i}"></label></div></div>`;
   function render() {
-    $('invBody').innerHTML = `<div class="iv-sum" id="invSum"></div>
+    $('invBody').innerHTML = `<div class="iv-sum" id="invSum"></div><details class="iv-prev" open><summary>🧾 Clean invoice — this is what was read</summary><canvas id="invPrevCv"></canvas><div class="iv-pvb"><button class="iv-sec" id="pvPdf">⬇ PDF</button><button class="iv-sec" id="pvJpg">⬇ JPG</button><button class="iv-sec" id="pvXls">⬇ Excel</button></div></details>
+<div class="iv-chk" id="invChk"></div>
 <div class="iv-cards">${rows.map((x, i) => `<div class="iv-card" data-i="${i}">
   <div class="iv-c1"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><div class="iv-sub">Invoice: ${esc(x.desc)}</div></div></div>
   <div class="iv-c2"><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span><span class="iv-uom" data-f="uom" data-i="${i}"></span><span class="iv-cost" data-f="price" data-i="${i}" data-copy="1"></span></div>
@@ -657,6 +708,7 @@
 <td><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span></td><td>${esc(x.desc)}</td><td class="r" data-f="qty" data-i="${i}"></td><td><span class="iv-uom" data-f="uom" data-i="${i}"></span></td><td class="r" data-f="price" data-i="${i}" data-copy="1"></td><td class="r amt" data-f="amount" data-i="${i}"></td></tr>`).join('')}</tbody></table></div>
 <p class="iv-sub"><button class="iv-sec" id="invAdd" style="padding:9px 16px;font-size:13px">+ Add line</button> Tap a code, item or cost to copy it. Tap a photo to enlarge. A line that is not on the invoice? Press Remove.</p>
 <details class="iv-raw"><summary>What the reader saw (for checking)</summary><pre>${esc((window._invRaw || []).join('\n'))}</pre></details>`;
+    $('pvPdf').onclick = savePdf; $('pvJpg').onclick = saveJpg; $('pvXls').onclick = exportClean;
     $('invBody').querySelectorAll('select').forEach(sel => sel.onchange = () => { const i = +sel.dataset.i; rows[i].pick = +sel.value; if (rows[i].pick >= 0) learn(rows[i], rows[i].cands[rows[i].pick].r.id); sys(i); sumUp(); });
     $('invAdd').onclick = () => { rows.push({ desc: '', descs: [''], itemNo: '', qty: 1, unit: 'Kg', price: 0, amount: 0, ok: false, cq: [], cn: [], raw: '(added by hand)', cands: [], pick: -1, edit: true }); render(); const t = $('invBody').querySelectorAll('tr[data-i],.iv-card[data-i]'); t.forEach(el => { if (+el.dataset.i === rows.length - 1) el.classList.add('edit'); }); status('Line added at the bottom — search the item, then set qty and cost.'); };
     $('invBody').querySelectorAll('.iv-q').forEach(q => q.oninput = () => search(+q.dataset.i, q.value));
@@ -676,11 +728,139 @@
     if (!hit.length) return;
     rows[i].cands = hit.map(r => ({ r, s: 1 })); rows[i].pick = 0; learn(rows[i], hit[0].id); opts(i); sys(i); sumUp();
   }
+  /* ══════════════ NUMBER CHECK — the invoice has to add up ══════════════ */
+  const VAT = .05, r2c = v => Math.round(v * 100) / 100;
+  function chkData() {
+    const sumA = rows.reduce((t, x) => t + (x.amount || 0), 0), sumQ = rows.reduce((t, x) => t + (x.qty || 0), 0), good = rows.filter(x => !bad(x)).length;
+    const sub = totals.sub != null ? totals.sub : sumA, vat = totals.vat != null ? totals.vat : r2c(sub * VAT);
+    const eq = (a, b, t) => b == null ? null : Math.abs(a - b) <= t;
+    return [
+      { k: 'lines', label: 'Every line: qty × cost = amount', calc: `${good} of ${rows.length}`, ok: good === rows.length },
+      { k: 'qty', label: 'Σ quantities = quantity total', calc: r2c(sumQ), ok: eq(sumQ, totals.qty, .06) },
+      { k: 'sub', label: 'Σ amounts = subtotal', calc: r2c(sumA), ok: eq(sumA, totals.sub, .06) },
+      { k: 'vat', label: 'Subtotal × 5% = VAT', calc: r2c(sub * VAT), ok: eq(sub * VAT, totals.vat, .06) },
+      { k: 'total', label: 'Subtotal + VAT = total', calc: r2c(sub + vat), ok: eq(sub + vat, totals.total, .06) }
+    ];
+  }
+  function renderChk() {
+    const el = $('invChk'); if (!el) return; const d = chkData(), bads = rows.filter(bad).length, qtyOff = d[1].ok === false;
+    el.innerHTML = `<h3>✅ Check the numbers</h3>` + d.map(c => `<div class="iv-ck ${c.ok === true ? 'g' : c.ok === false ? 'a' : 'u'}"><span class="ic">${c.ok === true ? '✓' : c.ok === false ? '!' : '•'}</span><span>${c.label}</span><b>${esc(c.calc)}</b>${c.k === 'lines' ? '<span></span>' : `<input type="number" step="any" inputmode="decimal" data-t="${c.k}" placeholder="as printed" value="${totals[c.k] != null ? totals[c.k] : ''}">`}</div>`).join('')
+      + (bads || qtyOff ? `<button class="iv-sec" id="invFix">🔧 ${bads ? `Fix ${bads} doubtful line${bads > 1 ? 's' : ''}` : 'Fix quantity mismatch'} using the totals</button>` : '')
+      + `<small>Type the printed totals from the paper (if they were not read). A green tick means the invoice agrees with itself; amber means look at the amber lines below.</small>`;
+    el.querySelectorAll('input[data-t]').forEach(i => i.onchange = () => { const v = parseFloat(i.value); totals[i.dataset.t] = isNaN(v) ? null : v; renderChk(); });
+    const f = $('invFix'); if (f) f.onclick = autoFix;
+  }
+  /* Repair doubtful lines: of the 3 numbers on a line only one is usually wrong, so try each fix and keep the one that brings the
+     invoice closest to its printed totals (then closest to what we normally pay). */
+  function autoFix() {
+    const clean = (v, d) => v > 0 && v < 5000 && Math.abs(v * d - Math.round(v * d)) < 1e-4;
+    let n = 0;
+    rows.forEach(x => {
+      if (!bad(x)) return;
+      const sumA = rows.reduce((t, y) => t + (y.amount || 0), 0) - (x.amount || 0), sumQ = rows.reduce((t, y) => t + (y.qty || 0), 0) - (x.qty || 0);
+      const c = x.pick >= 0 ? parseFloat(x.cands[x.pick].r.cost) : NaN, o = [];
+      if (x.qty > 0 && x.amount > 0 && clean(x.amount / x.qty, 100)) o.push({ qty: x.qty, price: r2c(x.amount / x.qty), amount: x.amount, t: 0 });
+      if (x.price > 0 && x.amount > 0 && clean(x.amount / x.price, 1000)) o.push({ qty: Math.round(x.amount / x.price * 1000) / 1000, price: x.price, amount: x.amount, t: 1 });
+      if (x.qty > 0 && x.price > 0) o.push({ qty: x.qty, price: x.price, amount: r2c(x.qty * x.price), t: 2 });
+      if (!o.length) return;
+      o.forEach(k => { k.s = k.t * .01 + (totals.sub != null ? Math.abs(sumA + k.amount - totals.sub) : 0) + (totals.qty != null ? 10 * Math.abs(sumQ + k.qty - totals.qty) : 0) + (c > 0 ? 3 * Math.abs(k.price - c) / c : 0); });
+      o.sort((a, b) => a.s - b.s); Object.assign(x, { qty: o[0].qty, price: o[0].price, amount: o[0].amount, ok: true, fixed: true }); n++;
+    });
+    /* lines that add up but whose quantity total is off: one quantity is wrong. Find the single line whose quantity, changed by exactly the
+       missing amount, still gives a clean price - and only accept it when that price is close to what we normally pay. */
+    const sq = rows.reduce((t, y) => t + (y.qty || 0), 0), diff = totals.qty != null ? totals.qty - sq : 0;
+    if (Math.abs(diff) > .06) {
+      const alt = [];
+      rows.forEach(x => { const q = r2c(x.qty + diff); if (!(x.amount > 0) || !(q > 0) || Math.abs(q * 4 - Math.round(q * 4)) > 1e-6 || !clean(x.amount / q, 100)) return;
+        const p = r2c(x.amount / q), c = x.pick >= 0 ? parseFloat(x.cands[x.pick].r.cost) : NaN; alt.push({ x, q, p, d: c > 0 ? Math.abs(p - c) / c : .5 }); });
+      alt.sort((a, b) => a.d - b.d);
+      if (alt.length && (alt[0].d <= .35 || alt.length === 1)) { Object.assign(alt[0].x, { qty: alt[0].q, price: alt[0].p, ok: true, fixed: true }); n++; }
+    }
+    rows.forEach((_, i) => sys(i)); sumUp(); status(n ? `${n} line${n > 1 ? 's' : ''} repaired using the totals — please glance at them.` : 'Nothing could be repaired automatically.');
+  }
+  /* ══════════════ CLEAN INVOICE (Excel / CSV) — the reliable route ══════════════
+     A clean sheet is read exactly (no guessing): Item No · Description · Qty · Unit · Price · Amount, plus optional "Totals" sheet. */
+  const cnum = v => { if (typeof v === 'number') return v; const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g, '')); return isNaN(n) ? null : n; };
+  async function readCleanFile(f) {
+    await load('https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js').catch(() => { });
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    const ls = wb.SheetNames.find(n => /^lines?$|items?|invoice/i.test(n)) || wb.SheetNames[0], raw = XLSX.utils.sheet_to_json(wb.Sheets[ls], { defval: '' });
+    const keyOf = (o, re) => Object.keys(o || {}).find(k => re.test(k.toLowerCase()));
+    const k0 = raw[0] || {}, K = { no: keyOf(k0, /item.*(no|code|num)|^code$|^sku/), d: keyOf(k0, /desc|name|item$/), q: keyOf(k0, /qty|quant/), u: keyOf(k0, /unit|uom/), p: keyOf(k0, /price|cost|rate/), a: keyOf(k0, /amount|total|value/) };
+    if (!K.d || !K.q) throw new Error('This sheet needs columns like Description and Qty (Item No, Unit, Price, Amount are used when present).');
+    const res = raw.map(r => {
+      const d = String(r[K.d] ?? '').trim(), q = cnum(r[K.q]); if (!d || !(q > 0)) return null;
+      let p = K.p ? cnum(r[K.p]) : null, a = K.a ? cnum(r[K.a]) : null; if (p == null && a != null) p = Math.round(a / q * 100) / 100; if (a == null && p != null) a = Math.round(q * p * 100) / 100;
+      const itemNo = K.no ? String(r[K.no]).replace(/\D/g, '') : '';
+      return { desc: d, descs: [d], itemNo, qty: q, unit: unitName(K.u ? String(r[K.u] || 'kg') : 'kg'), price: p || 0, amount: a || 0, ok: Math.abs(q * (p || 0) - (a || 0)) <= tolA(a || 0), cq: [], cn: [], raw: '(clean file) ' + d };
+    }).filter(Boolean);
+    const tot = {}; let no = '';
+    const ts = wb.SheetNames.find(n => /total|check/i.test(n));
+    if (ts) XLSX.utils.sheet_to_json(wb.Sheets[ts], { header: 1, defval: '' }).forEach(r => {
+      const lab = String(r[0] || '').toLowerCase(), v = [r[2], r[1]].map(cnum).find(x => x != null && x > 0);
+      if (/invoice no/.test(lab)) no = String(r[1] || '');
+      else if (/quantity/.test(lab) && v) tot.qty = v; else if (/subtotal/.test(lab) && v) tot.sub = v; else if (/vat|tax/.test(lab) && v) tot.vat = v; else if (/invoice total|^total/.test(lab) && v) tot.total = v;
+    });
+    return { res, no, foot: tot.sub ? [tot.sub] : [], tot };
+  }
+  /* Save what was read (after the checks) as a clean invoice — the same format readCleanFile reads back. */
+  function exportClean() {
+    if (!rows.length) return; const d = chkData(), sumA = rows.reduce((t, x) => t + (x.amount || 0), 0), sumQ = rows.reduce((t, x) => t + (x.qty || 0), 0), sub = totals.sub != null ? totals.sub : sumA;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(x => ({ 'Item No': x.itemNo || '', Description: x.desc, Qty: x.qty, Unit: uomOf(x), Price: x.price, Amount: x.amount }))), 'Lines');
+    const ok = c => c.ok === true ? 'OK' : c.ok === false ? 'CHECK' : '';
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Invoice No', invNo], [], ['', 'Calculated from lines', 'Printed on invoice', 'Match?'],
+      ['Quantity total', Math.round(sumQ * 100) / 100, totals.qty ?? '', ok(d[1])], ['Subtotal (Σ amounts)', Math.round(sumA * 100) / 100, totals.sub ?? '', ok(d[2])],
+      ['VAT 5%', Math.round(sub * VAT * 100) / 100, totals.vat ?? '', ok(d[3])], ['Invoice total', Math.round(sub * (1 + VAT) * 100) / 100, totals.total ?? '', ok(d[4])], ['Lines that add up', d[0].calc, rows.length, ok(d[0])]]), 'Totals & Checks');
+    XLSX.writeFile(wb, `clean-invoice-${invNo || 'invoice'}.xlsx`); status('Clean invoice saved — you can upload this file next time instead of the photo.');
+  }
+  /* ══════════════ CLEAN INVOICE PREVIEW (what you see, download as PDF / JPG / Excel) ══════════════ */
+  function drawInvoice(cv) {
+    const d = chkData(), n = rows.length, W = 1240, RH = 46, top = 330, H = Math.max(1754, top + 60 + n * RH + 420), ctx = cv.getContext('2d');
+    cv.width = W; cv.height = H; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    const sumA = rows.reduce((t, x) => t + (x.amount || 0), 0), sumQ = rows.reduce((t, x) => t + (x.qty || 0), 0), sub = totals.sub != null ? totals.sub : sumA;
+    const vat = totals.vat != null ? totals.vat : Math.round(sub * VAT * 100) / 100, tot = totals.total != null ? totals.total : Math.round((sub + vat) * 100) / 100;
+    const F = (w, s) => ctx.font = `${w} ${s}px Arial, Helvetica, sans-serif`, T = (t, x, y, al, c) => { ctx.textAlign = al || 'left'; ctx.fillStyle = c || '#111'; ctx.fillText(t, x, y); };
+    ctx.fillStyle = '#1F6F54'; ctx.fillRect(0, 0, W, 150);
+    F('700', 44); T(($('invSup').value || 'Supplier') + ' — invoice', 70, 70, 'left', '#fff');
+    F('400', 24); T('Clean copy' + (invNo ? ' of ' + invNo : ''), 70, 112, 'left', '#d7efe6');
+    F('400', 22); T('Checked: ' + (d.every(c => c.ok !== false) ? 'all totals agree' : 'see amber items'), 70, 200, 'left', d.every(c => c.ok !== false) ? '#047857' : '#b45309');
+    T(`${n} lines  ·  ${new Date().toLocaleDateString()}`, W - 70, 200, 'right', '#555');
+    const X = { no: 70, it: 125, ds: 265, q: 790, u: 835, p: 975, a: 1170 };
+    ctx.fillStyle = '#1F6F54'; ctx.fillRect(60, top - 40, W - 120, 50); F('700', 22);
+    T('#', X.no, top - 6, 'left', '#fff'); T('Item No', X.it, top - 6, 'left', '#fff'); T('Description', X.ds, top - 6, 'left', '#fff'); T('Qty', X.q, top - 6, 'right', '#fff'); T('Unit', X.u, top - 6, 'left', '#fff'); T('Price', X.p, top - 6, 'right', '#fff'); T('Amount', X.a, top - 6, 'right', '#fff');
+    rows.forEach((x, i) => {
+      const y = top + 10 + i * RH, b = bad(x); ctx.fillStyle = b ? '#FFF3CD' : i % 2 ? '#F2F6F4' : '#fff'; ctx.fillRect(60, y, W - 120, RH);
+      F('400', 22); let ds = x.desc || ''; while (ds.length > 3 && ctx.measureText(ds).width > X.q - X.ds - 70) ds = ds.slice(0, -2);
+      T(String(i + 1), X.no, y + 31); T(x.itemNo || '', X.it, y + 31, 'left', '#555'); T(ds, X.ds, y + 31); T(fmt(x.qty), X.q, y + 31, 'right'); T(uomOf(x), X.u, y + 31, 'left', '#555'); T((+x.price).toFixed(2), X.p, y + 31, 'right'); F('700', 22); T((+x.amount).toFixed(2), X.a, y + 31, 'right', b ? '#b45309' : '#111');
+    });
+    let y = top + 10 + n * RH + 50; ctx.fillStyle = '#ccc'; ctx.fillRect(60, y - 30, W - 120, 2);
+    const line = (l, v, bold, ok) => { F(bold ? '700' : '400', bold ? 28 : 24); T(l, 740, y, 'left'); T(v, X.a, y, 'right'); if (ok != null) { F('700', 24); T(ok ? '✓' : '!', 1210, y, 'left', ok ? '#047857' : '#b45309'); } y += bold ? 0 : 46; };
+    line('Quantity total', sumQ.toFixed(2) + ' Kg', false, d[1].ok); line('Sales subtotal', sub.toFixed(2) + ' AED', false, d[2].ok); line('VAT 5%', vat.toFixed(2) + ' AED', false, d[3].ok);
+    ctx.fillStyle = '#111'; ctx.fillRect(740, y - 32, 430, 2); y += 14; line('Invoice total', tot.toFixed(2) + ' AED', true, d[4].ok);
+    F('400', 20); T('Every line: qty × price = amount ' + d[0].calc + '. Amber rows need a look.', 70, H - 70, 'left', '#777');
+  }
+  function drawPrev() { const cv = $('invPrevCv'); if (cv && rows.length) drawInvoice(cv); }
+  const saveBlob = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); };
+  /* a JPEG inside a one-page PDF, no library needed */
+  function jpegToPdf(dataUrl, w, h) {
+    const jpg = Uint8Array.from(atob(dataUrl.split(',')[1]), c => c.charCodeAt(0)), pw = 595, ph = Math.round(595 * h / w), enc = new TextEncoder(), parts = [], off = [];
+    let len = 0; const add = b => { b = typeof b === 'string' ? enc.encode(b) : b; parts.push(b); len += b.length; };
+    add('%PDF-1.4\n'); const obj = (id, body) => { off[id] = len; add(`${id} 0 obj\n`); add(body); add('\nendobj\n'); };
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>'); obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+    obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+    off[4] = len; add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); add(jpg); add('\nendstream\nendobj\n');
+    const cs = `q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`; obj(5, `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+    const x0 = len; add('xref\n0 6\n0000000000 65535 f \n'); for (let i = 1; i <= 5; i++) add(String(off[i]).padStart(10, '0') + ' 00000 n \n'); add(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${x0}\n%%EOF`);
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  const saveJpg = () => { const cv = $('invPrevCv'); if (cv) cv.toBlob(b => saveBlob(b, `invoice-${invNo || 'clean'}.jpg`), 'image/jpeg', .92); };
+  const savePdf = () => { const cv = $('invPrevCv'); if (cv) saveBlob(jpegToPdf(cv.toDataURL('image/jpeg', .92), cv.width, cv.height), `invoice-${invNo || 'clean'}.pdf`); };
   function sumUp() {
     const nm = rows.filter(x => x.pick < 0).length, sum = rows.reduce((a, x) => a + (x.amount || 0), 0); let rc = '';
     if (recon) { const hit = recon.hit != null && Math.abs(recon.hit - sum) <= .06;
       rc = hit ? `<span class="iv-chip g">✓ Total matches invoice ${recon.hit.toFixed(2)}</span>` : recon.state === 'diff' || recon.state === 'fixed' ? `<span class="iv-chip a">Invoice shows ${recon.hit.toFixed(2)} — check amber lines</span>` : ''; }
-    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)${aiKey() ? '' : ' — AI reader would fix these'}</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
+    renderChk(); drawPrev(); $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)${aiKey() ? '' : ' — AI reader would fix these'}</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
   }
   function sys(i) {
     const x = rows[i], c = x.pick >= 0 ? x.cands[x.pick].r : null, B = $('invBody');
