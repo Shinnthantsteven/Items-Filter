@@ -461,7 +461,8 @@
     'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and subtotal = the "Sales subtotal"/"Net amount" before VAT only if this part shows it, otherwise null. ' +
     'Also read the printed totals when this part shows them: qty_total = the "Quantity" figure in the small tax box under the table (sum of all quantities), vat = "Sales tax amount" / VAT, total = the final "Total" including VAT; otherwise null. Read numbers exactly; do not invent lines.';
   /* The server function holds the key, so users never paste anything. If it is not deployed yet, a pasted key still works, then the built-in reader. */
-  const proxyUrl = () => { try { return window.INVOICE_READER_URL || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL + '/functions/v1/read-invoice' : ''); } catch (e) { return ''; } };
+  const READER_URL = 'https://iztijgvxklgeudyrxcbq.supabase.co/functions/v1/read-invoice';   // where the read-invoice function is deployed
+  const proxyUrl = () => window.INVOICE_READER_URL || READER_URL;
   let proxyDead = false;
   const aiOn = () => !!aiKey() || (!!proxyUrl() && !proxyDead);
   async function callAI(model, body, key) {
