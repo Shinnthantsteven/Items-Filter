@@ -3,32 +3,24 @@ var mq=matchMedia('(max-width:700px)');
 function mob(){return mq.matches;}
 
 var css=`
-#qkb{position:fixed;left:0;right:0;bottom:0;z-index:5000;display:none;flex-direction:column;gap:6px;padding:8px 4px max(8px,env(safe-area-inset-bottom));
-background:color-mix(in srgb,var(--card-bg) 88%,transparent);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border-top:1px solid var(--glass-edge)}
-#qkb.open{display:flex}
-.kr{display:flex;justify-content:center;gap:5px}
-.kk{flex:1;max-width:38px;height:42px;border:none;border-radius:8px;background:rgba(255,255,255,.1);color:var(--text);font:600 18px 'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
-[data-theme="light"] .kk{background:rgba(0,0,0,.07)}
-.kk:active{transform:scale(.94);background:rgba(16,185,129,.35)}
-.kk.sp{flex:5;max-width:none;font-size:13px}
-.kk.bk{flex:0 0 52px;max-width:52px;color:var(--danger)}
-.kb-bar{display:flex;gap:8px;align-items:center;padding:0 4px}
-#kbDisp{flex:1;min-height:38px;display:flex;align-items:center;padding:0 12px;border-radius:10px;background:var(--input-bg);border:1px solid var(--glass-edge);font-weight:700;font-size:15px;overflow:hidden;white-space:pre}
-#kbDisp.empty{color:#64748b;font-weight:500}
-#kbDisp i{display:inline-block;width:2px;height:1.1em;background:var(--brand);margin-left:1px;animation:kbb 1s step-end infinite}
-@keyframes kbb{50%{opacity:0}}
-.kb-btn{height:38px;border:none;border-radius:10px;padding:0 14px;font:800 14px 'Plus Jakarta Sans',sans-serif;touch-action:manipulation}
 .chip{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 10px;border:1px solid var(--glass-edge);border-radius:22px;background:var(--input-bg);color:var(--text);font:800 12px monospace;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
 .chip.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:var(--brand)}
 @media(max-width:700px){
+:root{--kb:0px}
+.portal-bar{width:calc(100% - 20px);max-width:none;bottom:calc(10px + env(safe-area-inset-bottom,0px) + var(--kb,0px));border-radius:26px;background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);overflow:hidden}
+.portal-bar::before{display:none}
+.bar-upload-btn{width:44px;height:50px;font-size:19px}
+.bar-search-wrap{min-width:0;padding:0 8px 0 12px;gap:8px}
+#searchIn{min-width:0;width:100%;font-size:16px;padding:15px 0;-webkit-user-select:text;user-select:text;touch-action:manipulation}
+.bar-count{font-size:10px;padding:3px 8px;max-width:84px;overflow:hidden;text-overflow:ellipsis}
+.bar-exit-btn{padding:0 14px;height:50px;font-size:12px;border-radius:0}
+#toast{bottom:calc(76px + env(safe-area-inset-bottom,0px) + var(--kb,0px))}
+#aiBadge{bottom:calc(76px + env(safe-area-inset-bottom,0px) + var(--kb,0px));right:14px}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 body{display:flex;flex-direction:column}
 .top-nav{flex-shrink:0;background:var(--bg-color);padding:calc(10px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 10px calc(14px + env(safe-area-inset-left,0px))}.logo-text{font-size:16px;gap:10px}.logo-wrap{width:34px;height:34px}
 .top-nav>div:last-child>div{display:none}
-.content-container{flex:1 1 0;min-height:0;height:auto;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;padding:0 0 130px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-mask-image:linear-gradient(to bottom,#000 calc(100% - 150px),rgba(0,0,0,.45) calc(100% - 88px),rgba(0,0,0,.2) 100%);
--webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 150px),rgba(0,0,0,.45) calc(100% - 88px),rgba(0,0,0,.2) 100%)}
-body.kb .content-container{mask-image:none;-webkit-mask-image:none}
+.content-container{flex:1 1 0;min-height:0;height:auto;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;padding:0 0 calc(86px + env(safe-area-inset-bottom,0px) + var(--kb,0px));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 table,tbody,tr{display:block;width:100%;max-width:100%}
 table{table-layout:auto;overflow:hidden}
 .content-container *{min-width:0}
@@ -108,59 +100,42 @@ function fb(t,d){
   document.body.removeChild(a);
 }
 
-var kb=document.createElement('div');kb.id='qkb';
-var rows=['1234567890','qwertyuiop','asdfghjkl','zxcvbnm'];
-var h=rows.map(function(r,i){
-  return '<div class="kr">'+r.split('').map(function(c){return '<button type="button" class="kk" data-k="'+c+'">'+c+'</button>';}).join('')
-  +(i==3?'<button type="button" class="kk bk" data-k="bk">⌫</button>':'')+'</div>';
-}).join('');
-h+='<div class="kr"><button type="button" class="kk sp" data-k=" ">space</button></div>'
- +'<div class="kb-bar"><div id="kbDisp" class="empty">Search…</div>'
- +'<button type="button" class="kb-btn" id="kbClr" style="background:rgba(239,68,68,.15);color:#ef4444">✕</button>'
- +'<button type="button" class="kb-btn" id="kbDone" style="background:var(--brand);color:#020617">Done</button></div>';
-kb.innerHTML=h;document.body.appendChild(kb);
-
-var q='',bt=null,bi=null,disp=document.getElementById('kbDisp'),si=document.getElementById('searchIn');
-function draw(){
-  disp.textContent=q||'Search…';disp.className=q?'':'empty';
-  if(q)disp.appendChild(document.createElement('i'));
-}
-function apply(){si.value=q;si.dispatchEvent(new Event('input'));draw();}
-function press(k){
-  if(k==='bk')q=q.slice(0,-1);else q+=k;
-  if(navigator.vibrate)navigator.vibrate(5);
-  apply();
-}
-function stop(){clearTimeout(bt);clearInterval(bi);}
-kb.addEventListener('pointerdown',function(e){
-  var b=e.target.closest('[data-k]');if(!b)return;
-  e.preventDefault();press(b.dataset.k);
-  if(b.dataset.k==='bk')bt=setTimeout(function(){bi=setInterval(function(){press('bk');},60);},350);
-});
-kb.addEventListener('pointerup',stop);kb.addEventListener('pointercancel',stop);kb.addEventListener('pointerleave',stop);
-document.getElementById('kbClr').addEventListener('pointerdown',function(e){e.preventDefault();q='';apply();});
-document.getElementById('kbDone').addEventListener('pointerdown',function(e){e.preventDefault();closeKb();});
-
-function layout(){
-  var c=document.querySelector('.content-container');
-  if(!kb.classList.contains('open')){c.style.height='';c.style.flex='';c.style.paddingBottom='';return;}
-  var top=c.getBoundingClientRect().top,vh=(window.visualViewport&&visualViewport.height)||innerHeight;
-  c.style.flex='none';c.style.height=Math.max(120,vh-top-kb.offsetHeight)+'px';c.style.paddingBottom='20px';
-}
-function openKb(){if(!mob())return;q=si.value;kb.classList.add('open');document.body.classList.add('kb');draw();requestAnimationFrame(layout);}
-function closeKb(){kb.classList.remove('open');document.body.classList.remove('kb');layout();}
-document.querySelector('.bar-search-wrap').addEventListener('click',openKb);
-
+var si=document.getElementById('searchIn');
+/* real phone keyboard: normal input, search-style Enter key, no auto-capitalise/correct */
 function sync(){
-  if(mob()){si.setAttribute('readonly','');si.setAttribute('inputmode','none');}
-  else{si.removeAttribute('readonly');si.removeAttribute('inputmode');closeKb();}
+  si.removeAttribute('readonly');
+  si.setAttribute('inputmode','search');si.setAttribute('enterkeyhint','search');
+  si.setAttribute('autocomplete','off');si.setAttribute('autocorrect','off');si.setAttribute('autocapitalize','off');si.setAttribute('spellcheck','false');
 }
 mq.addEventListener('change',function(){sync();if(db.length)renderPage(true);});
 sync();
+si.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();si.blur();}});
+
+/* keep the bar docked right above the keyboard (Android/iOS keyboards overlay the page; visualViewport tells us how much) */
+var vv=window.visualViewport,root=document.documentElement;
+function dock(){
+  if(!mob()){root.style.setProperty('--kb','0px');return;}
+  var kbH=vv?Math.max(0,Math.round(innerHeight-vv.height-vv.offsetTop)):0;
+  root.style.setProperty('--kb',(kbH>80?kbH:0)+'px');
+  if(kbH>80&&document.activeElement===si)window.scrollTo(0,0);
+}
+if(vv){vv.addEventListener('resize',dock);vv.addEventListener('scroll',dock);}
+window.addEventListener('resize',dock);
+si.addEventListener('focus',function(){setTimeout(dock,50);setTimeout(dock,300);});
+si.addEventListener('blur',function(){setTimeout(dock,50);});
+dock();
+
+/* tapping outside the search bar (list, header) closes the keyboard */
+document.addEventListener('touchstart',function(e){
+  if(!mob()||document.activeElement!==si)return;
+  if(e.target.closest&&e.target.closest('.portal-bar'))return;
+  si.blur();
+},{passive:true});
 
 document.addEventListener('touchmove',function(e){
   if(!mob())return;
-  if(e.target.closest&&e.target.closest('.content-container,#sideMenu,.upload-card,#invModal'))return;
+  if(e.target.closest&&e.target.closest('.content-container,#sideMenu,.upload-card,#invModal,#lightbox'))return;
+  if(e.target===si||(e.target.closest&&e.target.closest('.portal-bar')))return;
   e.preventDefault();
 },{passive:false});
 
