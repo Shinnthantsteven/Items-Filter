@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Chef2Chef | Master Code Engine</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
@@ -40,7 +40,7 @@
         /* ── TOP NAV ── */
         .top-nav{padding:15px 40px;display:flex;justify-content:space-between;align-items:center;background:transparent;border-bottom:1.5px solid rgba(255,255,255,.18);position:sticky;top:0;z-index:2000}
         [data-theme="light"] .top-nav{border-bottom-color:rgba(0,0,0,.1)}
-        .menu-btn{font-size:26px;cursor:pointer;color:var(--brand)}
+        .menu-btn{font-size:26px;cursor:pointer;color:var(--brand);-webkit-tap-highlight-color:transparent}
         .logo-text{font-weight:800;font-size:20px;display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;letter-spacing:-.5px}
 
         /* ── LOGIN SCREEN ── */
@@ -138,7 +138,7 @@
         #fileInDrop{display:none}
     </style>
 </head>
-<body onload="document.getElementById('passIn').focus()">
+<body onload="if(!matchMedia('(max-width:700px)').matches){var e=document.getElementById('emailIn');(e.value?document.getElementById('passIn'):e).focus()}">
 
 <!-- SIDE MENU -->
 <div id="sideMenu">
@@ -236,7 +236,7 @@
     <button class="bar-upload-btn" title="Load new file" onclick="document.getElementById('fileIn').click()">📁</button>
     <div class="bar-search-wrap">
         <span class="bar-search-icon">🔍</span>
-        <input type="text" id="searchIn" placeholder="Search items, suppliers, categories…">
+        <input type="search" id="searchIn" placeholder="Search items, suppliers, categories…" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
         <span class="bar-count" id="resultCount">—</span>
     </div>
     <button class="bar-exit-btn" onclick="document.getElementById('searchIn').value='';document.getElementById('searchIn').dispatchEvent(new Event('input'))">CLEAR</button>
@@ -709,6 +709,7 @@ function buildRow(r){
 function handlePhotoClick(e,wrap){e.stopPropagation();const img=wrap.querySelector('.prod-photo-img');if(img&&img.classList.contains('visible'))openLightbox(img.src,wrap.dataset.desc||'',wrap.dataset.id||'');}
 function handleQuickCopy(e){if(e.target.closest('.prod-photo-wrap'))return;const cell=e.target.closest('td');if(!cell)return;navigator.clipboard.writeText(cell.innerText).then(()=>{const t=document.getElementById('toast');t.style.display='block';if(navigator.vibrate)navigator.vibrate(50);setTimeout(()=>t.style.display='none',600);});}
 </script>
+    <script src="invoice-engine.js"></script>
     <script src="invoice-scanner.js"></script>
     <script src="mobile.js"></script>   
 </body>

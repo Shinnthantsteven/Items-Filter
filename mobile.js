@@ -1,3 +1,7 @@
+/* Phone layout for the item list.
+   - uses the phone's REAL keyboard (typing, paste, voice, Arabic, symbols all work)
+   - search bar is docked at the bottom and always sits right above the keyboard
+   - items show as cards instead of a wide table */
 (function(){
 var mq=matchMedia('(max-width:700px)');
 function mob(){return mq.matches;}
@@ -6,21 +10,13 @@ var css=`
 .chip{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 10px;border:1px solid var(--glass-edge);border-radius:22px;background:var(--input-bg);color:var(--text);font:800 12px monospace;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
 .chip.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:var(--brand)}
 @media(max-width:700px){
-:root{--kb:0px}
-.portal-bar{width:calc(100% - 20px);max-width:none;bottom:calc(10px + env(safe-area-inset-bottom,0px) + var(--kb,0px));border-radius:26px;background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);overflow:hidden}
-.portal-bar::before{display:none}
-.bar-upload-btn{width:44px;height:50px;font-size:19px}
-.bar-search-wrap{min-width:0;padding:0 8px 0 12px;gap:8px}
-#searchIn{min-width:0;width:100%;font-size:16px;padding:15px 0;-webkit-user-select:text;user-select:text;touch-action:manipulation}
-.bar-count{font-size:10px;padding:3px 8px;max-width:84px;overflow:hidden;text-overflow:ellipsis}
-.bar-exit-btn{padding:0 14px;height:50px;font-size:12px;border-radius:0}
-#toast{bottom:calc(76px + env(safe-area-inset-bottom,0px) + var(--kb,0px))}
-#aiBadge{bottom:calc(76px + env(safe-area-inset-bottom,0px) + var(--kb,0px));right:14px}
-html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
-body{display:flex;flex-direction:column}
+html,body{position:fixed;left:0;right:0;top:0;bottom:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+body{display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
 .top-nav{flex-shrink:0;background:var(--bg-color);padding:calc(10px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 10px calc(14px + env(safe-area-inset-left,0px))}.logo-text{font-size:16px;gap:10px}.logo-wrap{width:34px;height:34px}
 .top-nav>div:last-child>div{display:none}
-.content-container{flex:1 1 0;min-height:0;height:auto;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;padding:0 0 calc(86px + env(safe-area-inset-bottom,0px) + var(--kb,0px));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.top-nav>div:first-child{gap:6px!important}
+.menu-btn{padding:8px 10px;margin:-8px 0 -8px -10px;line-height:1;touch-action:manipulation}
+.content-container{flex:1 1 0;min-height:0;height:auto;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;padding:0 0 12px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;mask-image:none;-webkit-mask-image:none}
 table,tbody,tr{display:block;width:100%;max-width:100%}
 table{table-layout:auto;overflow:hidden}
 .content-container *{min-width:0}
@@ -46,7 +42,29 @@ td.m-card{display:flex;align-items:center;gap:12px;min-height:calc((100dvh - 150
 .m-pills{grid-area:4/1/5/3;display:flex;flex-wrap:wrap;gap:4px}
 .m-mpn{grid-area:5/1/6/3;font-family:monospace;font-size:10px;color:#64748b}
 .m-sup:empty,.m-pills:empty,.m-um:empty{display:none}
-.login-card,.upload-card{width:calc(100% - 32px);padding:32px 22px}
+
+/* ── search bar: docked at the bottom, right above the phone keyboard ── */
+.portal-bar{position:relative;left:auto;bottom:auto;transform:none;flex-shrink:0;width:100%;max-width:none;gap:8px;padding:8px calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));border:none;border-top:1px solid var(--glass-edge);border-radius:0;background:var(--bg-color)}
+.portal-bar::before{display:none}
+.bar-upload-btn{width:44px;height:46px;border:none;border-radius:23px;background:var(--input-bg);opacity:.8}
+.bar-search-wrap{flex:1 1 auto;min-width:0;height:46px;padding:0 8px 0 14px;gap:8px;border:1.5px solid var(--glass-edge);border-radius:23px;background:var(--input-bg);cursor:text}
+.portal-bar:focus-within .bar-search-wrap{border-color:var(--brand)}
+#searchIn{flex:1 1 auto;min-width:0;width:100%;height:100%;padding:0;font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+#searchIn::-webkit-search-cancel-button,#searchIn::-webkit-search-decoration{-webkit-appearance:none;display:none}
+.bar-count{font-size:10px;padding:3px 8px}
+.bar-exit-btn{display:none;flex:none;height:46px;padding:0 16px;border-radius:23px;font-size:12px;touch-action:manipulation}
+.portal-bar.has-q .bar-exit-btn{display:block}
+#toast{bottom:calc(72px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 32px);padding:10px 20px;text-align:center}
+#aiBadge{bottom:calc(72px + env(safe-area-inset-bottom,0px));right:12px}
+
+/* ── login / upload / menu: must scroll when the keyboard is open ── */
+#loginScreen,#uploadScreen{overflow-y:auto;justify-content:flex-start;padding:max(16px,env(safe-area-inset-top)) 0 16px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.login-card,.upload-card{width:calc(100% - 32px);padding:28px 20px;margin:auto}
+.login-card input{font-size:18px;padding:16px}
+.knife-box{font-size:56px;margin:auto 0 12px}
+#sideMenu{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));max-width:86vw}
+.menu-item{padding:16px 15px}
+.iv-q,.iv-pick select,.iv-pick input,.iv-ctl select,.iv-paste textarea,.iv-ai input{font-size:16px!important}
 }`;
 var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 
@@ -100,42 +118,37 @@ function fb(t,d){
   document.body.removeChild(a);
 }
 
-var si=document.getElementById('searchIn');
-/* real phone keyboard: normal input, search-style Enter key, no auto-capitalise/correct */
-function sync(){
-  si.removeAttribute('readonly');
-  si.setAttribute('inputmode','search');si.setAttribute('enterkeyhint','search');
-  si.setAttribute('autocomplete','off');si.setAttribute('autocorrect','off');si.setAttribute('autocapitalize','off');si.setAttribute('spellcheck','false');
-}
-mq.addEventListener('change',function(){sync();if(db.length)renderPage(true);});
-sync();
-si.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();si.blur();}});
-
-/* keep the bar docked right above the keyboard (Android/iOS keyboards overlay the page; visualViewport tells us how much) */
-var vv=window.visualViewport,root=document.documentElement;
-function dock(){
-  if(!mob()){root.style.setProperty('--kb','0px');return;}
-  var kbH=vv?Math.max(0,Math.round(innerHeight-vv.height-vv.offsetTop)):0;
-  root.style.setProperty('--kb',(kbH>80?kbH:0)+'px');
-  if(kbH>80&&document.activeElement===si)window.scrollTo(0,0);
-}
-if(vv){vv.addEventListener('resize',dock);vv.addEventListener('scroll',dock);}
-window.addEventListener('resize',dock);
-si.addEventListener('focus',function(){setTimeout(dock,50);setTimeout(dock,300);});
-si.addEventListener('blur',function(){setTimeout(dock,50);});
-dock();
-
-/* tapping outside the search bar (list, header) closes the keyboard */
+/* ── search box: the phone's own keyboard ── */
+var si=document.getElementById('searchIn'),bar=document.querySelector('.portal-bar'),wrap=document.querySelector('.bar-search-wrap'),vv=window.visualViewport;
+si.removeAttribute('readonly');si.removeAttribute('inputmode');
+si.setAttribute('type','search');si.setAttribute('inputmode','search');si.setAttribute('enterkeyhint','search');
+si.setAttribute('autocomplete','off');si.setAttribute('autocorrect','off');si.setAttribute('autocapitalize','none');si.setAttribute('spellcheck','false');
+si.addEventListener('input',function(){bar.classList.toggle('has-q',!!si.value);});
+si.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();si.blur();}});   // "Search" key on the keyboard closes it, results stay
+wrap.addEventListener('click',function(e){if(e.target!==si)si.focus();});
+document.querySelector('.bar-exit-btn').addEventListener('click',function(){bar.classList.remove('has-q');if(mob())si.focus();});
+/* starting to scroll the list hides the keyboard so more results are visible */
 document.addEventListener('touchstart',function(e){
-  if(!mob()||document.activeElement!==si)return;
-  if(e.target.closest&&e.target.closest('.portal-bar'))return;
-  si.blur();
+  if(mob()&&document.activeElement===si&&!(e.target.closest&&e.target.closest('.portal-bar')))si.blur();
 },{passive:true});
 
+/* keep the whole app exactly as tall as the space above the keyboard, so the search bar is never hidden behind it */
+function fit(){
+  var b=document.body.style;
+  if(!mob()){b.height='';b.top='';b.bottom='';return;}
+  var h=vv?vv.height:innerHeight;
+  b.height=Math.round(h)+'px';b.top=Math.round(vv?vv.offsetTop:0)+'px';b.bottom='auto';
+}
+if(vv){vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit);}
+addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,250);});
+mq.addEventListener('change',function(){fit();if(db.length)renderPage(true);});
+fit();
+if(mob()&&db.length)renderPage(true);   // list was drawn before this file loaded (fast connection) → redraw as cards
+
+/* block page-drag everywhere except places that really scroll or take text */
 document.addEventListener('touchmove',function(e){
   if(!mob())return;
-  if(e.target.closest&&e.target.closest('.content-container,#sideMenu,.upload-card,#invModal,#lightbox'))return;
-  if(e.target===si||(e.target.closest&&e.target.closest('.portal-bar')))return;
+  if(e.target.closest&&e.target.closest('.content-container,#sideMenu,.upload-card,.login-card,#loginScreen,#uploadScreen,#invModal,input,textarea,select'))return;
   e.preventDefault();
 },{passive:false});
 
