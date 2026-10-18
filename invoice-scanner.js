@@ -1,4 +1,4 @@
-/* Invoice Scanner v5 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
+/* Invoice Scanner v9 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
    Uses globals from index.html: db (items), imageMap, openLightbox, XLSX. Libraries load only when first used.
    Pipeline:  document enhancer (deskew · flatten shadows · 2 cleaned versions) → several OCR passes →
               line reader that repairs OCR digits using qty × price = amount → passes are merged line by line →
@@ -172,6 +172,20 @@
   const UNIT_FIRST = new RegExp(`^(.*?)\\s+(${UOMS})\\s+((?:\\d[\\d,]*(?:\\.\\d+)?\\s+){2,}\\d[\\d,]*(?:\\.\\d+)?)\\s*$`, 'i');
   const KNOWN = new RegExp(`^(${UOMS})$`, 'i');
   const num = s => parseFloat(String(s).replace(/,/g, ''));
+  /* wide rows (Barakat / Gemini / Excel copy):  <item no> <desc> <date> <qty> <unit> <price> <discount> <discount %> <amount> <print code %> */
+  function parseWide(l) {
+    const toks = l.split(/\s+/), isN = t => /^\d[\d,]*(\.\d+)?$/.test(t); let u = -1;
+    for (let k = 1; k < toks.length - 2; k++) if (KNOWN.test(toks[k]) && isN(toks[k - 1])) { u = k; break; }
+    if (u < 0) return null;
+    const after = toks.slice(u + 1), nums = after.filter(isN).map(num);
+    if (nums.length < 2 || !(nums.length >= 3 || after.some(t => /%$/.test(t)))) return null;   // plain "qty unit price amount" rows stay with the old readers
+    const qty = num(toks[u - 1]), price = nums[0], amount = nums[nums.length - 1], disc = nums.length >= 3 ? nums[1] : 0;
+    let left = toks.slice(0, u - 1).filter(t => !/^\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}$/.test(t)), no = '';
+    if (left.length && /^\d{5,7}$/.test(left[0])) no = left.shift();
+    const d = left.join(' ').replace(/^\d{1,3}\s+(?=[A-Za-z])/, '').trim();
+    if (!/[a-z]{3}/i.test(d) || SKIP.test(d) || !(qty > 0)) return null;
+    return { desc: d, descs: [d], itemNo: no, qty, unit: toks[u], price, amount, ok: Math.abs(qty * price - disc - amount) <= tolA(amount), cq: [G(qty)], cn: [G(price), G(amount)] };
+  }
   function parseClean(l) {
     const ag = l.match(UNIT_FIRST);
     if (ag) {
@@ -180,6 +194,7 @@
         return { desc, descs: [desc], itemNo: '', qty: n[0], unit: ag[2], price: n[1], amount, ok: net != null, cq: [G(n[0])], cn: [G(n[1]), G(amount)] }; }
       return null;
     }
+    const w = parseWide(l); if (w) return w;
     const m = l.match(ROW); if (!m) return null;
     let d = m[1].replace(/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/g, ' ').replace(/^\s*\d{1,3}\s+(?=\S*\d)/, '').trim(), no = '';
     const first = d.split(' ')[0];
@@ -331,6 +346,7 @@
       let c = best(inPool); x.other = false;
       if (!c.length && x.price > 0) c = db.filter(r => inPool(r) && parseFloat(r.cost) > 0 && Math.abs(parseFloat(r.cost) - x.price) / x.price <= .01).slice(0, 6).map(r => ({ r, s: .3 }));   // name unreadable → items with exactly this price
       if (!c.length || c[0].s < 0.5) { const c2 = best(null); if (c2.length && (!c.length || c2[0].s > c[0].s)) { c = c2; x.other = true; } }
+      if (c.length > 1 && x.price > 0) { const top = c[0].s, near = c.filter(k => k.s >= top - .12), rest = c.filter(k => k.s < top - .12), dist = k => { const v = parseFloat(k.r.cost); return v > 0 ? Math.abs(v - x.price) / x.price : 9; }; near.sort((a, b) => dist(a) - dist(b) || b.s - a.s); c = [...near, ...rest]; }   // 2–3 codes with the same name: pick the closest price
       const L = learned(x) || (x.itemNo && db.find(r => r.manu && String(r.manu).replace(/\D/g, '') === x.itemNo)); if (L) c = [{ r: L, s: 3 }, ...c.filter(k => k.r !== L)].slice(0, 8);
       x.cands = c; x.pick = c.length ? 0 : -1;
     });
@@ -459,11 +475,14 @@
     }
     const res = T ? mergeParsed(best, base) : best;   // the full-page pass adds the totals printed under the table + any row the crop missed
     const E = window.InvEngine; res.eng = { rows: E && eng.passes.length ? eng.passes.reduce((acc, p) => acc ? E.mergeRows(acc, p) : p, null) : [], printed: E ? E.mergePrinted(eng.printed) : null };
+    res.head = first.lines.slice(0, 45).join(' ');
     return res;
   }
   /* "AI eyes": Google Gemini reads the picture directly (free key from aistudio.google.com). Result is still checked by qty × price = amount. */
   const AIK = 'ivGeminiKey', AIM = 'ivGeminiModel';
-  const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };
+  /* The Gemini key lives on the server (Supabase Edge Function 'read-invoice', secret GEMINI_API_KEY). The app sends the picture plus the person's login. */
+  const READER_URL = 'https://iztijgvxklgeudyrxcbq.supabase.co/functions/v1/read-invoice';
+  const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };   // optional own key (developer use); normally empty → the server function is used
   const aiModel = () => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } };
   const AI_NUM = { type: 'NUMBER', nullable: true };
   const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, qty_total: AI_NUM, vat: AI_NUM, total: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
@@ -475,9 +494,15 @@
     const key = aiKey(), model = aiModel(), b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
     const body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
     for (let t = 0; ; t++) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      let r;
+      if (key) r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      else {
+        let tok = ''; try { tok = (await sb.auth.getSession()).data.session.access_token; } catch (e) { }
+        try { r = await fetch(READER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) }); }
+        catch (e) { throw new Error('AI reader unreachable (' + e.message + ') — check the Supabase function'); }
+      }
       if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
-      if (!r.ok) throw new Error('AI reader: ' + (await r.text()).slice(0, 160));
+      if (!r.ok) { const tx = await r.text(); let m = tx; try { m = JSON.parse(tx).error || (JSON.parse(tx).error && JSON.parse(tx).error.message) || tx; } catch (e) { } throw new Error(`AI reader (HTTP ${r.status}): ${String(typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)}`); }
       return JSON.parse(((await r.json()).candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '{}');
     }
   }
@@ -492,7 +517,6 @@
   }
   /* The page goes to the AI in 2–3 overlapping slices at full resolution (one small picture of the whole page loses thin ink). */
   async function aiReadTiles(canvas, label) {
-    if (!aiKey()) return null;
     const W = canvas.width, H = canvas.height, ratio = H / W, n = ratio > 1.2 ? 3 : ratio > .8 ? 2 : 1, step = Math.ceil(H / n), ov = Math.round(H * .06);
     const res = [], foot = [], pr = { S: [], Q: [], V: [], T: [] }; let no = '';
     for (let k = 0; k < n; k++) {
@@ -505,17 +529,19 @@
     }
     return { res, no, foot, printed: pr };
   }
-  /* AI first; the built-in OCR only runs when the AI result does not add up (or there is no key). */
+  /* Strong OCR + the number checks first. The AI (Supabase function) is only used when the OCR result does not add up — e.g. a Barakat photo. */
+  const ocrSure = o => { if (!o || !o.res.length || !o.res.every(r => r.ok)) return false; const sum = o.res.reduce((t, r) => t + (r.amount || 0), 0); return !o.foot.length || o.foot.some(f => Math.abs(f - sum) <= .06) || !o.foot.some(f => f > sum * .8 && f < sum * 1.3); };
   async function readPage(src, label) {
-    const v = await enhanceVariants(src); let ai = null;
-    if (aiKey()) { try { ai = await aiReadTiles(v.soft, label); } catch (e) { console.warn(e); status(String(e.message).slice(0, 120)); } }
-    if (ai && ai.res.length) {
-      const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), sumQ = ai.res.reduce((t, x) => t + (x.qty || 0), 0), sure = ai.res.every(r => r.ok) && (!ai.foot.length || ai.foot.some(f => Math.abs(f - sum) <= .06)) && (!ai.printed.Q.length || ai.printed.Q.some(f => Math.abs(f.v - sumQ) <= .006));
-      if (sure) return ai;
-    }
-    await load(TESS); const ocr = await ocrPage(v, label);
-    if (ai && ai.res.length) { const m = mergeParsed(ai, ocr); m.eng = ocr.eng; m.printed = ai.printed; m.aiRows = ai.res; return m; }   // AI lines first (best names), OCR repairs / adds
-    return ocr;
+    const v = await enhanceVariants(src); let ocr = null, ai = null;
+    try { await load(TESS); ocr = await ocrPage(v, label); } catch (e) { console.warn(e); }
+    if (ocrSure(ocr)) return ocr;
+    let aiErr = '';
+    status(label + ': hard to read — asking the AI reader…'); try { ai = await aiReadTiles(v.soft, label); } catch (e) { console.warn(e); aiErr = String(e.message).slice(0, 200); }
+    if (!(ai && ai.res.length)) { if (!ocr) throw new Error('Could not read this picture' + (aiErr ? ' — ' + aiErr : '')); status(aiErr ? aiErr + ' — showing the OCR result; check the amber lines against the paper.' : 'AI reader found no lines — check the amber lines against the paper.'); return ocr; }
+    const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), sumQ = ai.res.reduce((t, x) => t + (x.qty || 0), 0), sure = ai.res.every(r => r.ok) && (!ai.foot.length || ai.foot.some(f => Math.abs(f - sum) <= .06)) && (!ai.printed.Q.length || ai.printed.Q.some(f => Math.abs(f.v - sumQ) <= .006));
+    if (ocr) ai.head = ocr.head;
+    if (sure || !ocr) return ai;
+    const m = mergeParsed(ai, ocr); m.eng = ocr.eng; m.printed = ai.printed; m.aiRows = ai.res; m.head = ocr.head; return m;   // AI lines first (best names), OCR repairs / adds
   }
   const status = t => { const s = $('invStatus'); if (s) s.textContent = t; };
   window._invEnh = enhanceVariants;   // exposed for testing
@@ -588,8 +614,7 @@
     const n = [];
     if (!arithOk(x)) n.push(`qty × price = ${fmt2(x.qty * x.price)}, not ${fmt2(x.amount)}`);
     if (x.qty >= 250) n.push('very large quantity — was a decimal point lost?');
-    if (x.ref && x.price && Math.abs(x.price - x.ref) / x.ref > .5) n.push(`our list price is ${fmt2(x.ref)}`);
-    if (!n.length && !x.locked && x.conf > 1.0) { const r0 = x.reads && x.reads[0]; n.push('adjusted by the checks' + (r0 ? ' (first read: ' + r0.q + ' × ' + (r0.n || []).join(' / ') + ')' : '') + ' — compare with the paper'); }
+    if (!n.length && !x.locked && x.conf > 1.0 && !(x.reads && x.reads[0] && (() => { const r0 = x.reads[0], f = v => parseFloat(String(v).replace(/,/g, '')), ns = (r0.n || []).map(f); return f(r0.q) === x.qty && ns.includes(x.price) && ns.includes(x.amount); })())) { const r0 = x.reads && x.reads[0]; n.push('adjusted by the checks' + (r0 ? ' (first read: ' + r0.q + ' × ' + (r0.n || []).join(' / ') + ')' : '') + ' — compare with the paper'); }
     return n.join(' · ');
   };
   const checkOk = () => { const C = window.InvEngine.checks(rows, printedNums()); return C.allOk && !rows.some(x => !arithOk(x)); };
@@ -644,9 +669,9 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     const b = document.querySelector('#invModal .iv-bar'); if (!b) return;
     if (!rows.length) { b.style.display = 'none'; return; } b.style.display = '';
     b.innerHTML = stage === 'check' ? `<button id="ckAdd">＋ Add line</button><button class="p" id="ckGo">${checkOk() ? '✔ Looks right — match codes' : 'Match codes anyway'}</button>`
-      : `<button id="ckBack">← Check numbers</button><button class="p" id="invXls">⬇ Excel</button><button id="invCopy">Copy all</button>`;
+      : `<button id="ckBack">← Check numbers</button><button class="p" id="invQb">Copy list for QuickBooks</button><button id="invXls">⬇ Excel</button><button id="invCopy">Copy all</button>`;
     const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
-    on('ckAdd', addBlankLine); on('ckGo', confirmCheck); on('ckBack', () => { stage = 'check'; render(); }); on('invXls', exportXls); on('invCopy', copyTable);
+    on('ckAdd', addBlankLine); on('ckGo', confirmCheck); on('ckBack', () => { stage = 'check'; render(); }); on('invXls', exportXls); on('invCopy', copyTable); on('invQb', copyQb);
   }
   /* a clean, machine-made copy of what was read: downloadable picture, or print → PDF */
   const cleanRows = () => rows.map((x, i) => [i + 1, x.name || x.desc, fmt(x.qty), x.unit || 'Kg', money(x.price), money(x.amount)]);
@@ -744,20 +769,16 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 @media(max-width:899px){.iv-tblwrap{display:none}.iv-cards{display:block}.iv-scroll{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}.iv-go,.iv-sec{flex:1}.iv-enh canvas{width:100%}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
-    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner</h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
+    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v9</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
 <div class="iv-scroll"><div class="iv-wrap">
   <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
     <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
   <div class="iv-ctl">
-    <select id="invPreset"><option value="barakat">Barakat (BkVgCh / BkFrCh)</option><option value="ag">AG Vegetables (VgCh / FrCh)</option><option value="any">Any supplier</option></select>
     <button class="iv-sec" id="invEnhBtn">✨ Enhance preview</button>
     <button class="iv-go" id="invRun">Scan &amp; Match</button>
   </div>
-  <input type="hidden" id="invSup" value="Barakat"><input type="hidden" id="invPre" value="BkVg,BkFr">
+  <input type="hidden" id="invSup" value=""><input type="hidden" id="invPre" value="">
   <details class="iv-enh" id="invEnh"><summary>Enhanced document (what the reader sees)</summary><div id="invEnhOut" class="iv-pv"></div></details>
-  <details class="iv-ai"><summary>🤖 Optional: AI reader with your own free Gemini key</summary>
-    <p>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, paste it here. It stays only in this browser. The invoice picture is sent to Google when it is on. It reads first; the built-in reader only steps in when the numbers do not add up. Leave empty to use the built-in reader only.</p>
-    <input id="invAiKey" type="password" placeholder="Gemini API key (optional)" autocomplete="off"></details>
   <details class="iv-paste"><summary>📋 Paste invoice table — e.g. the list a free AI chat (Gemini / ChatGPT) extracted from the photo</summary><textarea id="invPaste" rows="5" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
   <div class="iv-st" id="invStatus"></div>
   <div id="invBody"></div>
@@ -769,8 +790,6 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); }));
     ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); }));
     drop.addEventListener('drop', e => { inp.files = e.dataTransfer.files; inp.onchange(); });
-    $('invAiKey').value = aiKey(); $('invAiKey').onchange = () => { try { localStorage.setItem(AIK, $('invAiKey').value.trim()); } catch (e) { } status($('invAiKey').value.trim() ? 'AI reader is ON.' : 'AI reader is off.'); };
-    $('invPreset').onchange = () => { const P = { barakat: ['Barakat', 'BkVg,BkFr'], ag: ['AG Veg', 'VgCh,FrCh'], any: ['', ''] }[$('invPreset').value]; $('invSup').value = P[0]; $('invPre').value = P[1]; if (rows.length) { match(); render(); } };
     $('invBody').addEventListener('click', e => {
       if (e.target.closest('select,input')) return;
       const ph = e.target.closest('.iv-ph[data-full]'); if (ph) { if (typeof openLightbox === 'function') openLightbox(ph.dataset.full, ph.dataset.label || '', ph.dataset.code || ''); return; }
@@ -806,7 +825,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       else for (const f of files) {
         status('Reading ' + f.name + '…'); const mine = [];
         if (/\.pdf$/i.test(f.name)) {
-          const buf = await f.arrayBuffer(), tl = await pdfLines(buf.slice(0)), p = withPr(parseLines(tl), tl);
+          const buf = await f.arrayBuffer(), tl = await pdfLines(buf.slice(0)), p = withPr(parseLines(tl), tl); p.head = tl.slice(0, 45).join(' ');
           if (p.res.length) mine.push(p);
           else { const pages = await pdfToImages(buf); for (let i = 0; i < pages.length; i++) { pagePics.push(pages[i].toDataURL('image/jpeg', .6)); mine.push(await readPage(pages[i], `${f.name} p${i + 1}`)); } }
         } else { const u = URL.createObjectURL(f); pagePics.push(u); mine.push(await readPage(u, f.name)); }
@@ -814,6 +833,8 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       }
       if (worker) { worker.terminate(); worker = null; }
       const E = window.InvEngine;
+      { const head = parts.map(p => p.head || '').join(' ') + ' ' + files.map(f => f.name).join(' '), P = /barakat|100009274|importers of fresh/i.test(head) ? ['Barakat', 'BkVg,BkFr'] : /gholami|\bAG\s*veg/i.test(head) ? ['AG Veg', 'VgCh,FrCh'] : ['', ''];   // supplier recognised from the invoice itself
+        $('invSup').value = P[0]; $('invPre').value = P[1]; }
       rows = parts.flatMap(p => partRows(p)); missingNo = E ? [] : fixSeq(rows); invNo = (parts.find(p => p.no) || {}).no || '';
       if (!rows.length) return status('Could not find item lines. Try the ✨ Enhance preview, a sharper photo, the AI reader, or paste the invoice text.');
       printedC = E ? E.mergePrinted(parts.flatMap(p => [p.printed, p.eng && p.eng.printed].filter(Boolean))) : null; typed = {}; recon = null;
@@ -873,7 +894,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     const set = (f, html, cls) => B.querySelectorAll(`[data-f="${f}"][data-i="${i}"]`).forEach(el => { el.innerHTML = html; if (cls !== undefined) el.classList.toggle('none', cls); });
     set('code', c ? esc(c.id) : 'No match', !c); set('desc', c ? esc(c.desc) : '— pick an item —'); set('uom', esc(uomOf(x)));
     set('qty', fmt(x.qty)); set('price', money(x.price)); set('amount', money(x.amount));
-    { const sc = c ? parseFloat(c.cost) : 0; set('pnote', sc > 0 && x.price > 0 && Math.abs(x.price - sc) / sc > .4 ? '⚠ our price ' + sc.toFixed(2) : ''); }
+    set('pnote', '');   // our list price is only a hint for choosing between look-alike codes — never a warning
     B.querySelectorAll(`.iv-card[data-i="${i}"],tr[data-i="${i}"]`).forEach(el => el.classList.toggle('warn', bad(x)));
     B.querySelectorAll(`.iv-nums input[data-i="${i}"]`).forEach(n => { if (document.activeElement !== n) n.value = x[n.dataset.k]; });
     B.querySelectorAll(`[data-f="ph"][data-i="${i}"]`).forEach(el => setPhoto(el, c));
@@ -893,5 +914,11 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     return { '#': i + 1, 'Invoice No': invNo, 'Our Code': c ? c.id : '', 'Our Item': c ? c.desc : '(NO MATCH)', 'Invoice Item': x.desc, Qty: x.qty, UOM: uomOf(x), 'Invoice Cost': x.price, 'System Cost': c ? c.cost : '', Amount: x.amount }; });
   function exportXls() { if (!rows.length) return; const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out()), 'Invoice');
     if (window.InvEngine) { const C = window.InvEngine.checks(rows, printedNums()), P = printedNums(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{ Check: 'Quantity total', Lines: C.sumQ, Invoice: P.qty ?? '' , OK: C.list[1].ok == null ? '' : C.list[1].ok ? 'YES' : 'NO' }, { Check: 'Sales subtotal', Lines: C.sumA, Invoice: P.subtotal ?? '', OK: C.list[2].ok == null ? '' : C.list[2].ok ? 'YES' : 'NO' }, { Check: 'VAT 5%', Lines: C.vat, Invoice: P.vat ?? '', OK: C.list[3].ok == null ? '' : C.list[3].ok ? 'YES' : 'NO' }, { Check: 'Invoice total', Lines: C.tot, Invoice: P.total ?? '', OK: C.list[4].ok == null ? '' : C.list[4].ok ? 'YES' : 'NO' }]), 'Checks'); } XLSX.writeFile(wb, `invoice-${invNo || 'matched'}.xlsx`); }
+  /* One line per item, tab-separated, no header: Code · Item · Qty · UOM · Rate · Amount — paste into a sheet or a QuickBooks grid. */
+  function copyQb() {
+    if (!rows.length) return; const t = rows.map(x => { const c = x.pick >= 0 ? x.cands[x.pick].r : null; return [c ? c.id : '', c ? c.desc : (x.name || x.desc), fmt(x.qty), uomOf(x), money(x.price), money(x.amount)].join('\t'); }).join('\n'), unm = rows.filter(x => x.pick < 0).length;
+    const done = () => status(`Copied ${rows.length} lines (Code · Item · Qty · UOM · Rate · Amount)${unm ? ` — ${unm} without a matching item` : ''}. Now paste.`);
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(done, () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { } ta.remove(); });
+  }
   function copyTable() { if (!rows.length) return; const o = out(); navigator.clipboard.writeText([Object.keys(o[0]).join('\t'), ...o.map(r => Object.values(r).join('\t'))].join('\n')).then(() => status('Copied — paste into Excel')); }
 })();
