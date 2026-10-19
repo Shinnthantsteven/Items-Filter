@@ -282,7 +282,9 @@
     if (inv && set.has('lettuce') && !LETTUCE_KINDS.some(k => set.has(k))) set.add('romaine');   // plain "lettuce" means Lettuce Romaine in our list
     return set;
   };
-  const MOD = ['baby', 'mini', 'jumbo', 'organic', 'large', 'small'];
+  const MOD = ['baby', 'mini', 'jumbo', 'organic', 'large', 'small', 'fresh', 'local', 'bell'];   // size / style words: never the item itself
+  const COLOR = ['red', 'green', 'yellow', 'orange', 'purple', 'white', 'gold', 'black', 'brown', 'pink'];
+  const COLOR_ALIAS = { orange: ['gold', 'yellow'], gold: ['orange', 'yellow'] };   // "Cauliflower Orange" is "Cauliflower Gold" in our list
   const invUom = u => { u = String(u || '').toLowerCase(); return /^kg|kilo/.test(u) ? 'Kg' : /^(pcs|piece|each|pc)/.test(u) ? 'Pc' : /^(pk|pack)/.test(u) ? 'Pkt' : /^(ltr|litre|liter|l$)/.test(u) ? 'Ltr' : /bunch/.test(u) ? 'Bunch' : /box/.test(u) ? 'Box' : /tray/.test(u) ? 'Tray' : /carton|case|ctn/.test(u) ? 'Carton' : u; };
   const ourBase = r => String(r.um || '').split(' (')[0];
   const uomOk = (r, u) => !r.um || invUom(u).toLowerCase() === ourBase(r).toLowerCase() || (invUom(u) === 'Carton' && /case/i.test(r.um));
@@ -327,19 +329,32 @@
 
   function candidates(desc, allow, price, unit) {
     const A = [...tok(desc, true)]; if (!A.length) return [];
+    const isMod = t => MOD.includes(t), isCol = t => COLOR.includes(t);
+    let N = A.filter(t => !isMod(t) && !isCol(t) && t.length >= 3); if (!N.length) N = A.filter(t => !isMod(t)); if (!N.length) N = A;   // the item's NAME words
     const ix = index(), cand = new Map();
-    A.forEach((t, ai) => fuzzy(t).forEach(([k, s]) => ix.vocab.get(k).forEach(r => {
-      if (allow && !allow(r)) return; let a = cand.get(r); if (!a) cand.set(r, a = new Array(A.length).fill(0)); if (s > a[ai]) a[ai] = s;
-    })));
+    A.forEach((t, ai) => {
+      fuzzy(t).forEach(([k, s]) => ix.vocab.get(k).forEach(r => {
+        if (allow && !allow(r)) return; let a = cand.get(r); if (!a) cand.set(r, a = new Array(A.length).fill(0)); if (s > a[ai]) a[ai] = s;
+      }));
+      (COLOR_ALIAS[t] || []).forEach(k => (ix.vocab.get(k) || []).forEach(r => {
+        if (allow && !allow(r)) return; let a = cand.get(r); if (!a) cand.set(r, a = new Array(A.length).fill(0)); if (.8 > a[ai]) a[ai] = .8;
+      }));
+    });
     const out = [];
     cand.forEach((a, r) => {
-      const hit = a.filter(v => v > 0).length, M = a.reduce((x, y) => x + y, 0);
-      const eff = A.filter((t, i) => a[i] > 0 || t.length >= 4).length || 1, B = r._ta.length;   // short unmatched junk ("pp", "tom") is ignored
-      let s = 2 * M / (eff + B);
-      if (hit >= eff) { s = Math.max(s, .6 + .3 * M / B); if (B === eff && M >= eff - .01) s += .15; }
-      MOD.forEach(m => { if (A.includes(m) !== r._ta.includes(m)) s -= .25; });   // "Baby" on one side only = a different item (Pepper Yellow vs Pepper Yellow Baby)
+      const W = i => isMod(A[i]) ? 0 : isCol(A[i]) ? 1 : 2.5;   // name word counts most, colour next, "baby" nothing
+      const rt = r._ta.filter(t => !isMod(t)), B = rt.reduce((x, t) => x + (isCol(t) ? 1 : 2.5), 0);
+      let M = 0, T = 0; A.forEach((t, i) => { const w = W(i); if (!w) return; if (a[i] > 0 || t.length >= 4) T += w; M += w * a[i]; });
+      if (!M) return;
+      const nameHit = N.some(n => { const i = A.indexOf(n); return a[i] > 0; });
+      if (!nameHit) return;   // never offer an item that does not even contain the invoice item's name word (Carrot / Zucchini for Capsicum)
+      let s = 2 * M / ((T || 1) + (B || 1));
+      if (M >= T - .01) s = Math.max(s, .6 + .3 * M / (B || 1));   // everything on the invoice line was found
+      if (Math.abs(M - B) < .01 && M >= T - .01) s += .15;          // and nothing extra in ours
+      
+      const ib = A.includes('baby'), rb = r._ta.includes('baby'); if (ib && rb) s += .08; else if (ib !== rb) s -= .03;   // tie-break only
       const c = parseFloat(r.cost);
-      if (s > .2 && price && c) { const d = Math.abs(c - price) / price; s += d <= .03 ? .12 : d <= .1 ? .07 : d <= .25 ? .02 : d > .6 ? -.08 : 0; }
+      if (s > .2 && price && c) { const d = Math.abs(c - price) / price; s += d <= .03 ? .12 : d <= .1 ? .07 : d <= .25 ? .02 : d > .6 ? -.02 : 0; }
       if (s > .2 && unit && uomOk(r, unit)) s += .06;
       if (s > .2) out.push({ r, s });
     });
@@ -636,7 +651,7 @@
 <div class="ck-tot">${box('qty', 'Quantity total', C.sumQ, .006)}${box('subtotal', 'Sales subtotal', C.sumA, .06)}${box('vat', 'VAT 5%', C.vat, .06)}${box('total', 'Invoice total', C.tot, .06)}</div>
 ${miss ? `<div class="ck-card warnc">The invoice totals are higher than your lines. A line may be missing${miss.qty ? `: <b>${fmt2(miss.qty)} × ${fmt2(miss.price)} = ${fmt2(miss.amount)}</b>` : `: worth <b>${fmt2(miss.amount)}</b>`} <button class="iv-sec" id="ckMiss" style="padding:6px 12px;font-size:12px">+ Add it</button></div>` : ''}
 ${ignored.length ? `<div class="ck-card">Ignored as stray text: ${ignored.map(x => esc(x.name || x.desc)).join(', ')}</div>` : ''}
-<div class="ck-list">${rows.map((x, i) => { const note = rowNote(x), warn = !arithOk(x) || (!x.locked && x.conf > 1.0) || x.qty >= 250;
+<div class="ck-list">${rows.map((x, i) => { const note = rowNote(x), warn = !arithOk(x) || (!x.locked && x.conf > 1.0 && !checkOk()) || x.qty >= 250;
       return `<div class="ck-row ${warn ? 'warn' : ''}" data-i="${i}"><span class="ck-n">${i + 1}</span><input class="ck-d" data-f="name" value="${esc(x.name || x.desc)}" aria-label="item name">
 <div class="ck-nums"><label>Qty<input inputmode="decimal" data-f="qty" value="${fmt(x.qty)}"></label><span class="ck-u">${esc(x.unit || 'Kg')}</span><label>Price<input inputmode="decimal" data-f="price" value="${fmt(x.price)}"></label><label>Amount<input inputmode="decimal" data-f="amount" value="${fmt(x.amount)}"></label></div>
 <span class="ck-st">${warn ? '⚠️' : x.locked ? '✏️' : '✓'}</span><button class="ck-x" data-del title="Remove line">✕</button>
@@ -752,11 +767,11 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 .iv-chg{display:inline-block;margin-top:6px;font-size:12px;color:var(--iv-muted);text-decoration:underline;cursor:pointer}
 .warn{box-shadow:inset 3px 0 0 var(--iv-warn)}.warn .amt{color:var(--iv-warn)}
 /* desktop: table */
-.iv-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+.iv-tbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:14px}.iv-tbl th:nth-child(1),.iv-tbl td:nth-child(1){width:34px;padding-left:10px;padding-right:4px}.iv-tbl th:nth-child(2){width:27%}.iv-tbl th:nth-child(3){width:118px}.iv-tbl th:nth-child(5){width:56px}.iv-tbl th:nth-child(6){width:64px}.iv-tbl th:nth-child(7){width:78px}.iv-tbl th:nth-child(8){width:92px}
 .iv-tbl th{text-align:left;font-size:11px;font-weight:700;color:var(--iv-muted);padding:10px 12px;border-bottom:1px solid var(--glass-edge);position:sticky;top:-20px;background:var(--bg-color);z-index:2}
 .iv-tbl td{padding:12px;border-bottom:1px solid var(--glass-edge);vertical-align:middle}
 .iv-tbl tr:hover td{background:var(--iv-soft)}.iv-tbl .r{text-align:right;font-variant-numeric:tabular-nums}
-.iv-tbl .it{display:flex;gap:12px;align-items:flex-start;min-width:300px}.iv-tbl th{white-space:nowrap}.iv-tbl td.inv{min-width:260px;width:30%;white-space:normal;overflow-wrap:anywhere;line-height:1.35}.iv-tot{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin:14px 0 4px}.iv-tot div{padding:10px 16px;border-radius:14px;background:var(--iv-soft);font-size:13px;font-weight:700}.iv-tot b{font-size:15px;margin-left:6px}.iv-tot .g{color:var(--iv-ok)}.iv-tot .a{color:var(--iv-warn)}.iv-tbl .it>div{flex:1;min-width:0}
+.iv-tbl .it{display:flex;gap:12px;align-items:flex-start}.iv-tbl td.inv{white-space:normal;overflow-wrap:break-word;word-break:normal;line-height:1.35;font-weight:600}.iv-tbl td{padding:12px 8px}.iv-tot{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin:14px 0 4px}.iv-tot div{padding:10px 16px;border-radius:14px;background:var(--iv-soft);font-size:13px;font-weight:700}.iv-tot b{font-size:15px;margin-left:6px}.iv-tot .g{color:var(--iv-ok)}.iv-tot .a{color:var(--iv-warn)}.iv-tbl .it>div{flex:1;min-width:0}
 .iv-tbl .nm{font-weight:700;margin-bottom:2px}.iv-sub{font-size:12px;color:var(--iv-muted)}
 /* phone: cards */
 .iv-cards{display:none}
