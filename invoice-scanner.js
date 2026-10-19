@@ -1,4 +1,4 @@
-/* Invoice Scanner v9 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
+/* Invoice Scanner v10 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
    Uses globals from index.html: db (items), imageMap, openLightbox, XLSX. Libraries load only when first used.
    Pipeline:  document enhancer (deskew · flatten shadows · 2 cleaned versions) → several OCR passes →
               line reader that repairs OCR digits using qty × price = amount → passes are merged line by line →
@@ -535,8 +535,9 @@
     const v = await enhanceVariants(src); let ocr = null, ai = null;
     try { await load(TESS); ocr = await ocrPage(v, label); } catch (e) { console.warn(e); }
     if (ocrSure(ocr)) return ocr;
-    let aiErr = '';
+    let aiErr = ''; window._invAiErr = '';
     status(label + ': hard to read — asking the AI reader…'); try { ai = await aiReadTiles(v.soft, label); } catch (e) { console.warn(e); aiErr = String(e.message).slice(0, 200); }
+    window._invAiErr = aiErr;
     if (!(ai && ai.res.length)) { if (!ocr) throw new Error('Could not read this picture' + (aiErr ? ' — ' + aiErr : '')); status(aiErr ? aiErr + ' — showing the OCR result; check the amber lines against the paper.' : 'AI reader found no lines — check the amber lines against the paper.'); return ocr; }
     const sum = ai.res.reduce((t, x) => t + (x.amount || 0), 0), sumQ = ai.res.reduce((t, x) => t + (x.qty || 0), 0), sure = ai.res.every(r => r.ok) && (!ai.foot.length || ai.foot.some(f => Math.abs(f - sum) <= .06)) && (!ai.printed.Q.length || ai.printed.Q.some(f => Math.abs(f.v - sumQ) <= .006));
     if (ocr) ai.head = ocr.head;
@@ -652,6 +653,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       const row = t.closest('.ck-row'); if (row && t.dataset.f) ckEdit(+row.dataset.i, t.dataset.f, t.value);
     });
     B.addEventListener('click', e => {
+      { const t0 = e.target, im0 = t0.closest && t0.closest('[data-orig]'); if (im0 && typeof openLightbox === 'function') { openLightbox(im0.src, 'Original page ' + (+im0.dataset.orig + 1), invNo); return; } if (t0.closest && t0.closest('#ckJpg')) { cleanJpg(); return; } if (t0.closest && t0.closest('#ckPdf')) { cleanPdf(); return; } }
       if (stage !== 'check') return; const t = e.target, row = t.closest && t.closest('.ck-row'), i = row ? +row.dataset.i : -1;
       if (t.closest('[data-del]') && i >= 0) { rows.splice(i, 1); solveRows(); render(); return; }
       const alt = t.closest('[data-alt]'); if (alt && i >= 0) { const a = rows[i].alt[+alt.dataset.alt]; if (a) { Object.assign(rows[i], { qty: a.q, price: a.p, amount: a.a, locked: true }); solveRows(); render(); } return; }
@@ -661,6 +663,15 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     });
   }
   function addBlankLine() { rows.push({ desc: '', name: '', descs: [''], itemNo: '', qty: 1, unit: 'Kg', price: 0, amount: 0, ok: false, locked: true, cq: [], cn: [], raw: '(added by hand)', cands: [], pick: -1 }); solveRows(); render(); }
+  /* A bad read is never shown as if it were the invoice. */
+  let held = [];
+  function unreadable(why) {
+    rows = []; const ai = window._invAiErr;
+    $('invBody').innerHTML = `<div class="ck-card" style="margin:12px 0;padding:16px"><b>Could not read this invoice reliably.</b><br>I am not showing guesses.<br><span class="iv-sub">${esc(String(why || '').replace(/^Error:\s*/, ''))}${ai && !String(why || '').includes(ai) ? '<br>AI reader: ' + esc(ai) : ''}</span><br><br>Try a sharper photo, the original PDF, or paste the invoice table in the box above.${held.length ? ' <span class="iv-chg" id="ckShowAnyway">Show what was read anyway (not reliable)</span>' : ''}</div>`;
+    const b = document.querySelector('#invModal .iv-bar'); if (b) b.style.display = 'none'; status('Could not read this invoice reliably.');
+    const a = $('ckShowAnyway'); if (a) a.onclick = () => { rows = held; stage = 'check'; solveRows(); render(); };
+  }
+  window._invUnreadable = unreadable;
   function confirmCheck() {
     rows.forEach(x => { if (x.name) { x.descs = [x.name, ...(x.descs || []).filter(d => d !== x.name)]; x.desc = x.name; } });
     match(); stage = 'match'; render(); status(`${rows.length} lines matched — check the codes, then copy or export`);
@@ -769,7 +780,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 @media(max-width:899px){.iv-tblwrap{display:none}.iv-cards{display:block}.iv-scroll{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}.iv-go,.iv-sec{flex:1}.iv-enh canvas{width:100%}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
-    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v9</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
+    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v10</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
 <div class="iv-scroll"><div class="iv-wrap">
   <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
     <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
@@ -840,8 +851,11 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       printedC = E ? E.mergePrinted(parts.flatMap(p => [p.printed, p.eng && p.eng.printed].filter(Boolean))) : null; typed = {}; recon = null;
       window._invRaw = parts.flatMap(p => p.res.map(r => r.raw)); stage = 'check'; origPages = pagePics;
       rows.forEach(x => { if (!x.descs) x.descs = [x.desc]; });
-      if (E) solveRows(); render(); try { $('invBody').scrollIntoView({ block: 'start' }); } catch (e) { }
-    } catch (e) { console.error(e); status('Error: ' + e.message); }
+      if (E) solveRows();
+      { const U = uiPrinted(), sumA = rows.reduce((t, x) => t + (x.amount || 0), 0);
+        if (!rows.every(arithOk) || (U.subtotal && Math.abs(U.subtotal.v - sumA) > .06)) { held = rows; return unreadable(rows.some(x => !arithOk(x)) ? 'some lines do not multiply out' : `the lines add up to ${sumA.toFixed(2)} but the invoice says ${U.subtotal.v.toFixed(2)}`); } }
+      confirmCheck(); try { $('invBody').scrollIntoView({ block: 'start' }); } catch (e) { }
+    } catch (e) { console.error(e); unreadable(e.message); }
     finally { btn.disabled = false; }
   }
 
@@ -851,8 +865,9 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
   const picker = i => `<div class="iv-pick"><select data-i="${i}"></select><input class="iv-q" data-i="${i}" placeholder="Search all items…">
 <div class="iv-nums"><label>Qty<input type="number" step="any" data-k="qty" data-i="${i}"></label><label>Cost<input type="number" step="any" data-k="price" data-i="${i}"></label><label>Amount<input type="number" step="any" data-k="amount" data-i="${i}"></label></div></div>`;
   function render() { ckWire(); if (stage === 'check') renderCheck(); else renderMatch(); setBar(); }
+  const origBlock = () => `${origPages.length ? `<details class="iv-raw" open><summary>Original page (tap to enlarge)</summary><div class="ck-orig">${origPages.map((u, i) => `<img src="${u}" data-orig="${i}" alt="page ${i + 1}">`).join('')}</div></details>` : ''}<div class="iv-sum" style="margin:8px 0"><button class="iv-sec" id="ckPdf" style="padding:9px 14px;font-size:13px">🖨 Clean invoice (PDF)</button><button class="iv-sec" id="ckJpg" style="padding:9px 14px;font-size:13px">⬇ Clean invoice (JPG)</button></div>`;
   function renderMatch() {
-    $('invBody').innerHTML = `<div class="iv-sum" id="invSum"></div>
+    $('invBody').innerHTML = `${origBlock()}<div class="iv-sum" id="invSum"></div>
 <div class="iv-cards">${rows.map((x, i) => `<div class="iv-card" data-i="${i}">
   <div class="iv-c1"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><div class="iv-sub">Invoice: ${esc(x.desc)}</div></div></div>
   <div class="iv-c2"><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span><span class="iv-uom" data-f="uom" data-i="${i}"></span><span class="iv-cost" data-f="price" data-i="${i}" data-copy="1"></span></div>
@@ -884,10 +899,10 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
   }
   function sumUp() {
     const nm = rows.filter(x => x.pick < 0).length, sum = rows.reduce((a, x) => a + (x.amount || 0), 0); let rc = '';
-    if (window.InvEngine && printedC) { const C = window.InvEngine.checks(rows, printedNums()), wr = C.list.filter(x => x.ok === false); rc = wr.length ? `<span class="iv-chip a">✗ ${wr.map(x => x.label).join(', ')} differ from invoice</span>` : C.list.some((x, i) => i && x.ok) ? '<span class="iv-chip g">✓ Totals match invoice</span>' : ''; }
+    if (window.InvEngine && printedC) { const C = window.InvEngine.checks(rows, printedNums()), wr = C.list.filter(x => x.ok === false); rc = C.list.slice(1).map(x => `<span class="iv-chip ${x.ok === false ? 'a' : x.ok ? 'g' : ''}">${x.ok === true ? '✓ ' : x.ok === false ? '✗ ' : ''}${x.label} ${fmt2(x.got)}${x.ok === false && x.want != null ? ' (invoice ' + fmt2(x.want) + ')' : ''}</span>`).join(''); }
     else if (recon) { const hit = recon.hit != null && Math.abs(recon.hit - sum) <= .06;
       rc = hit ? `<span class="iv-chip g">✓ Total matches invoice ${recon.hit.toFixed(2)}</span>` : recon.state === 'diff' || recon.state === 'fixed' ? `<span class="iv-chip a">Invoice shows ${recon.hit.toFixed(2)} — check amber lines</span>` : ''; }
-    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)${aiKey() ? '' : ' — AI reader would fix these'}</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
+    $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
   }
   function sys(i) {
     const x = rows[i], c = x.pick >= 0 ? x.cands[x.pick].r : null, B = $('invBody');
