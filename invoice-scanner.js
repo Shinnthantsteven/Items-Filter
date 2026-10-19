@@ -1,4 +1,4 @@
-/* Invoice Scanner v10 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
+/* Invoice Scanner v12 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
    Uses globals from index.html: db (items), imageMap, openLightbox, XLSX. Libraries load only when first used.
    Pipeline:  document enhancer (deskew · flatten shadows · 2 cleaned versions) → several OCR passes →
               line reader that repairs OCR digits using qty × price = amount → passes are merged line by line →
@@ -481,7 +481,7 @@
   /* "AI eyes": Google Gemini reads the picture directly (free key from aistudio.google.com). Result is still checked by qty × price = amount. */
   const AIK = 'ivGeminiKey', AIM = 'ivGeminiModel';
   /* The Gemini key lives on the server (Supabase Edge Function 'read-invoice', secret GEMINI_API_KEY). The app sends the picture plus the person's login. */
-  const READER_URL = 'https://iztijgvxklgeudyrxcbq.supabase.co/functions/v1/read-invoice';
+  const readerUrl = () => SUPABASE_URL + '/functions/v1/read-invoice';   // the function lives in the app's own Supabase project
   const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };   // optional own key (developer use); normally empty → the server function is used
   const aiModel = () => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } };
   const AI_NUM = { type: 'NUMBER', nullable: true };
@@ -498,7 +498,8 @@
       if (key) r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       else {
         let tok = ''; try { tok = (await sb.auth.getSession()).data.session.access_token; } catch (e) { }
-        try { r = await fetch(READER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) }); }
+        if (!tok) throw new Error('Please log in to the app first');
+        try { r = await fetch(readerUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) }); }
         catch (e) { throw new Error('AI reader unreachable (' + e.message + ') — check the Supabase function'); }
       }
       if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
@@ -780,7 +781,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 @media(max-width:899px){.iv-tblwrap{display:none}.iv-cards{display:block}.iv-scroll{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}.iv-go,.iv-sec{flex:1}.iv-enh canvas{width:100%}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
-    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v10</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
+    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v12</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
 <div class="iv-scroll"><div class="iv-wrap">
   <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
     <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
