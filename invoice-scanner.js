@@ -1,4 +1,4 @@
-/* Invoice Scanner v13 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
+/* Invoice Scanner v15 (+ invoice-engine.js: number checks, totals, step-2 'check the numbers') — upload a supplier invoice (PDF / photo), read it line by line, match each line to our item codes.
    Uses globals from index.html: db (items), imageMap, openLightbox, XLSX. Libraries load only when first used.
    Pipeline:  document enhancer (deskew · flatten shadows · 2 cleaned versions) → several OCR passes →
               line reader that repairs OCR digits using qty × price = amount → passes are merged line by line →
@@ -515,8 +515,11 @@
     'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
     'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and - only if this part shows them, otherwise null - subtotal = the "Sales subtotal"/"Net amount" before VAT, qty_total = the printed "Quantity" total, vat = "Sales tax amount", total = the final invoice "Total". Read numbers exactly; do not invent lines.';
   async function aiCall(canvas, k, n) {
-    const key = aiKey(); let model = aiModel(); const b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
-    const body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
+    const key = aiKey(); let model = aiModel(), lvl = 0;
+    /* Picture size steps: the server function has a small memory limit (error 546 WORKER_RESOURCE_LIMIT), so start moderate and shrink further if it complains */
+    const SIZES = [[1600, .85], [1200, .78], [900, .7], [700, .65]];
+    const enc = () => { const [mw, q] = SIZES[lvl], sc = Math.min(1, mw / canvas.width); let c = canvas; if (sc < 1) { c = mk(Math.round(canvas.width * sc), Math.round(canvas.height * sc)); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(canvas, 0, 0, c.width, c.height); } return c.toDataURL('image/jpeg', q).split(',')[1]; };
+    let body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: enc() } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
     for (let t = 0; ; t++) {
       let r;
       if (key) r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -526,6 +529,7 @@
         try { r = await fetch(readerUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) }); }
         catch (e) { throw new Error('AI reader unreachable (' + e.message + ') — check the Supabase function'); }
       }
+      if (((r.status === 546 || r.status === 504) ? lvl < 1 : (r.status === 413 || r.status === 500 || r.status === 502) && lvl < SIZES.length - 1)) { lvl++; body.contents[0].parts[1].inline_data.data = enc(); status(`AI reader: picture too big for the server, retrying smaller (${lvl}/${SIZES.length - 1})…`); continue; }
       if (r.status === 404) { const nx = AI_MODELS[AI_MODELS.indexOf(model) + 1] || (AI_MODELS.includes(model) ? null : AI_MODELS[0]); if (nx) { try { localStorage.removeItem(AIM); } catch (e) { } model = nx; continue; } }
       if (r.ok) aiGood = model;
       if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
@@ -807,7 +811,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 @media(max-width:899px){.iv-tblwrap{display:none}.iv-cards{display:block}.iv-scroll{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}.iv-go,.iv-sec{flex:1}.iv-enh canvas{width:100%}}`;
     document.head.appendChild(st);
     const m = document.createElement('div'); m.id = 'invModal';
-    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v13</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
+    m.innerHTML = `<div class="iv-top"><h2>📄 Invoice Scanner <small style="font-size:11px;opacity:.6;font-weight:600">v15</small></h2><button class="iv-x" onclick="document.getElementById('invModal').classList.remove('open')">✕</button></div>
 <div class="iv-scroll"><div class="iv-wrap">
   <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
     <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
