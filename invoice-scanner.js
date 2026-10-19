@@ -274,7 +274,7 @@
 
   /* ══════════════ ENGINE 2 — choosing our item ══════════════ */
   const STOP = new Set(['kg', 'pcs', 'pc', 'pkt', 'fresh', 'the', 'of', 'and', 'by', 'size', 'pp']);
-  const SYN = { capsicum: 'pepper', courgette: 'zucchini', aubergine: 'eggplant', brinjal: 'eggplant', rocket: 'arugula', coriander: 'cilantro', shiso: 'shisho', romain: 'romaine', cos: 'romaine', rockmelon: 'melon', cantaloupe: 'melon' };
+  const SYN = { capsicum: 'pepper', courgette: 'zucchini', aubergine: 'eggplant', brinjal: 'eggplant', rocket: 'arugula', coriander: 'cilantro', shiso: 'shisho', romain: 'romaine', cos: 'romaine', rockmelon: 'melon', cantaloupe: 'melon', zuchini: 'zucchini', zucchinis: 'zucchini', capsicums: 'pepper', cauli: 'cauliflower', broc: 'broccoli', cuc: 'cucumber', cucum: 'cucumber', strawbery: 'strawberry', rasp: 'raspberry', lemmon: 'lemon' };
   const LETTUCE_KINDS = ['romaine', 'iceberg', 'lollo', 'oak', 'butter', 'rosso', 'frisee', 'curly', 'batavia', 'green', 'red', 'mix', 'baby', 'lamb', 'little', 'gem', 'rossa', 'bionda', 'mesclun'];
   const stem = t => /oes$/.test(t) ? t.slice(0, -2) : /ies$/.test(t) && t.length > 4 ? t.slice(0, -3) + 'y' : t.length > 3 ? t.replace(/s$/, '') : t;
   const tok = (s, inv) => {
@@ -282,6 +282,7 @@
     if (inv && set.has('lettuce') && !LETTUCE_KINDS.some(k => set.has(k))) set.add('romaine');   // plain "lettuce" means Lettuce Romaine in our list
     return set;
   };
+  const MOD = ['baby', 'mini', 'jumbo', 'organic', 'large', 'small'];
   const invUom = u => { u = String(u || '').toLowerCase(); return /^kg|kilo/.test(u) ? 'Kg' : /^(pcs|piece|each|pc)/.test(u) ? 'Pc' : /^(pk|pack)/.test(u) ? 'Pkt' : /^(ltr|litre|liter|l$)/.test(u) ? 'Ltr' : /bunch/.test(u) ? 'Bunch' : /box/.test(u) ? 'Box' : /tray/.test(u) ? 'Tray' : /carton|case|ctn/.test(u) ? 'Carton' : u; };
   const ourBase = r => String(r.um || '').split(' (')[0];
   const uomOk = (r, u) => !r.um || invUom(u).toLowerCase() === ourBase(r).toLowerCase() || (invUom(u) === 'Carton' && /case/i.test(r.um));
@@ -308,6 +309,11 @@
     const ix = index(); let o = ix.fz.get(t); if (o) return o; o = [];
     if (ix.vocab.has(t)) o.push([t, 1]);
     if (t.length >= 4) ix.keys.forEach(k => { if (k !== t) { const s = tokSim(t, k); if (s) o.push([k, s]); } });
+    if (t.length >= 3 && !ix.vocab.has(t)) {   // invoice abbreviation: "Cap" = capsicum = pepper, "Yell" = yellow, "Caul" = cauliflower
+      const seen = new Set(o.map(z => z[0])), add = (k, s) => { if (ix.vocab.has(k) && !seen.has(k)) { seen.add(k); o.push([k, s]); } };
+      Object.keys(SYN).forEach(w => { if (w.startsWith(t)) add(SYN[w], .9); });
+      ix.keys.filter(k => k.startsWith(t) && k.length > t.length).sort((a, b) => a.length - b.length).slice(0, 4).forEach(k => add(k, .88 - Math.min(.2, (k.length - t.length) * .02)));
+    }
     ix.fz.set(t, o); return o;
   }
   /* What the user taught us before: remembers every manual pick */
@@ -331,6 +337,7 @@
       const eff = A.filter((t, i) => a[i] > 0 || t.length >= 4).length || 1, B = r._ta.length;   // short unmatched junk ("pp", "tom") is ignored
       let s = 2 * M / (eff + B);
       if (hit >= eff) { s = Math.max(s, .6 + .3 * M / B); if (B === eff && M >= eff - .01) s += .15; }
+      MOD.forEach(m => { if (A.includes(m) !== r._ta.includes(m)) s -= .25; });   // "Baby" on one side only = a different item (Pepper Yellow vs Pepper Yellow Baby)
       const c = parseFloat(r.cost);
       if (s > .2 && price && c) { const d = Math.abs(c - price) / price; s += d <= .03 ? .12 : d <= .1 ? .07 : d <= .25 ? .02 : d > .6 ? -.08 : 0; }
       if (s > .2 && unit && uomOk(r, unit)) s += .06;
@@ -346,7 +353,7 @@
       let c = best(inPool); x.other = false;
       if (!c.length && x.price > 0) c = db.filter(r => inPool(r) && parseFloat(r.cost) > 0 && Math.abs(parseFloat(r.cost) - x.price) / x.price <= .01).slice(0, 6).map(r => ({ r, s: .3 }));   // name unreadable → items with exactly this price
       if (!c.length || c[0].s < 0.5) { const c2 = best(null); if (c2.length && (!c.length || c2[0].s > c[0].s)) { c = c2; x.other = true; } }
-      if (c.length > 1 && x.price > 0) { const top = c[0].s, near = c.filter(k => k.s >= top - .12), rest = c.filter(k => k.s < top - .12), dist = k => { const v = parseFloat(k.r.cost); return v > 0 ? Math.abs(v - x.price) / x.price : 9; }; near.sort((a, b) => dist(a) - dist(b) || b.s - a.s); c = [...near, ...rest]; }   // 2–3 codes with the same name: pick the closest price
+      if (c.length > 1 && x.price > 0) { const top = c[0].s, near = c.filter(k => k.s >= top - .16), rest = c.filter(k => k.s < top - .16), dist = k => { const v = parseFloat(k.r.cost); return v > 0 ? Math.abs(v - x.price) / x.price : 9; }; near.sort((a, b) => dist(a) - dist(b) || b.s - a.s); c = [...near, ...rest]; }   // 2–3 codes with the same name: pick the closest price
       const L = learned(x) || (x.itemNo && db.find(r => r.manu && String(r.manu).replace(/\D/g, '') === x.itemNo)); if (L) c = [{ r: L, s: 3 }, ...c.filter(k => k.r !== L)].slice(0, 8);
       x.cands = c; x.pick = c.length ? 0 : -1;
     });
@@ -732,10 +739,10 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 .iv-st{font-size:13px;color:var(--iv-muted);margin:8px 2px 14px;min-height:18px}
 .iv-sum{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
 .iv-chip{padding:7px 14px;border-radius:50px;background:var(--iv-soft);font-size:12px;font-weight:700}.iv-chip.a{color:var(--iv-warn)}.iv-chip.g{color:var(--iv-ok)}
-.iv-bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;padding:12px 24px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg-color);border-top:1px solid var(--glass-edge)}
+.iv-bar{z-index:20;position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;padding:12px 24px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg-color);border-top:1px solid var(--glass-edge)}
 .iv-bar button{flex:1;max-width:260px;padding:14px;border-radius:14px;border:none;font:800 14px inherit;cursor:pointer;background:var(--iv-soft);color:var(--text)}
 .iv-bar button.p{background:var(--brand);color:#fff}
-.iv-pw{width:56px;height:56px;margin:0}.iv-c1 .iv-pw{width:64px;height:64px;border-radius:14px}.iv-c1 .iv-pw .prod-photo-bg,.iv-c1 .iv-pw .prod-photo-img{border-radius:14px}.iv-c1 .iv-pw .prod-photo-emoji{font-size:28px}
+.iv-pw{width:56px;height:56px;margin:0;isolation:isolate}.iv-ph,.prod-photo-wrap{isolation:isolate}.iv-c1 .iv-pw{width:64px;height:64px;border-radius:14px}.iv-c1 .iv-pw .prod-photo-bg,.iv-c1 .iv-pw .prod-photo-img{border-radius:14px}.iv-c1 .iv-pw .prod-photo-emoji{font-size:28px}
 .iv-ph{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--iv-soft);cursor:zoom-in;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
 .iv-code{font:800 14px ui-monospace,monospace;color:var(--brand);cursor:pointer;white-space:nowrap}.iv-code.none{color:#dc2626}
 .iv-uom{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:rgba(16,185,129,.12);color:var(--iv-ok)}
@@ -749,7 +756,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 .iv-tbl th{text-align:left;font-size:11px;font-weight:700;color:var(--iv-muted);padding:10px 12px;border-bottom:1px solid var(--glass-edge);position:sticky;top:-20px;background:var(--bg-color);z-index:2}
 .iv-tbl td{padding:12px;border-bottom:1px solid var(--glass-edge);vertical-align:middle}
 .iv-tbl tr:hover td{background:var(--iv-soft)}.iv-tbl .r{text-align:right;font-variant-numeric:tabular-nums}
-.iv-tbl .it{display:flex;gap:12px;align-items:flex-start;min-width:340px}.iv-tbl .it>div{flex:1;min-width:0}
+.iv-tbl .it{display:flex;gap:12px;align-items:flex-start;min-width:300px}.iv-tbl th{white-space:nowrap}.iv-tbl td.inv{min-width:260px;width:30%;white-space:normal;overflow-wrap:anywhere;line-height:1.35}.iv-tot{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin:14px 0 4px}.iv-tot div{padding:10px 16px;border-radius:14px;background:var(--iv-soft);font-size:13px;font-weight:700}.iv-tot b{font-size:15px;margin-left:6px}.iv-tot .g{color:var(--iv-ok)}.iv-tot .a{color:var(--iv-warn)}.iv-tbl .it>div{flex:1;min-width:0}
 .iv-tbl .nm{font-weight:700;margin-bottom:2px}.iv-sub{font-size:12px;color:var(--iv-muted)}
 /* phone: cards */
 .iv-cards{display:none}
@@ -786,11 +793,9 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
   <label class="iv-drop" id="invDrop"><span style="font-size:26px">⬆️</span><b>Tap to choose invoice</b><small id="invFiles">PDF or photo — you can pick several pages</small>
     <input type="file" id="invFile" accept=".pdf,image/*" multiple hidden></label>
   <div class="iv-ctl">
-    <button class="iv-sec" id="invEnhBtn">✨ Enhance preview</button>
     <button class="iv-go" id="invRun">Scan &amp; Match</button>
   </div>
   <input type="hidden" id="invSup" value=""><input type="hidden" id="invPre" value="">
-  <details class="iv-enh" id="invEnh"><summary>Enhanced document (what the reader sees)</summary><div id="invEnhOut" class="iv-pv"></div></details>
   <details class="iv-paste"><summary>📋 Paste invoice table — e.g. the list a free AI chat (Gemini / ChatGPT) extracted from the photo</summary><textarea id="invPaste" rows="5" placeholder="Strawberry Pp  10/07/2026  3.00 Kg 50.00 150.00"></textarea></details>
   <div class="iv-st" id="invStatus"></div>
   <div id="invBody"></div>
@@ -811,20 +816,11 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t) return;
       navigator.clipboard.writeText(t).then(() => status('Copied: ' + t));
     });
-    $('invRun').onclick = run; $('invEnhBtn').onclick = previewEnhance; setBar();
+    $('invRun').onclick = run; setBar();
   }
   window.openInvoiceScanner = function () { build(); $('invModal').classList.add('open'); if (!db.length) status('Load the item list first.'); };
   document.addEventListener('DOMContentLoaded', build);
 
-  async function previewEnhance() {
-    const f = [...$('invFile').files][0]; if (!f) return status('Choose a photo or scanned PDF first.');
-    try {
-      status('Enhancing…'); let src;
-      if (/\.pdf$/i.test(f.name)) src = (await pdfToImages(await f.arrayBuffer(), 1800))[0]; else src = URL.createObjectURL(f);
-      const v = await enhanceVariants(src), o = $('invEnhOut'); o.innerHTML = ''; o.appendChild(v.soft); o.appendChild(v.bin); $('invEnh').open = true;
-      status('Enhanced' + (v.angle ? ` (straightened ${v.angle.toFixed(1)}°)` : '') + ' — left: soft version, right: black & white. The reader uses both.');
-    } catch (e) { status('Error: ' + e.message); }
-  }
 
   async function run() {
     if (!db.length) return status('Load the item list first.');
@@ -848,7 +844,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       { const head = parts.map(p => p.head || '').join(' ') + ' ' + files.map(f => f.name).join(' '), P = /barakat|100009274|importers of fresh/i.test(head) ? ['Barakat', 'BkVg,BkFr'] : /gholami|\bAG\s*veg/i.test(head) ? ['AG Veg', 'VgCh,FrCh'] : ['', ''];   // supplier recognised from the invoice itself
         $('invSup').value = P[0]; $('invPre').value = P[1]; }
       rows = parts.flatMap(p => partRows(p)); missingNo = E ? [] : fixSeq(rows); invNo = (parts.find(p => p.no) || {}).no || '';
-      if (!rows.length) return status('Could not find item lines. Try the ✨ Enhance preview, a sharper photo, the AI reader, or paste the invoice text.');
+      if (!rows.length) return status('Could not find item lines. Try a sharper photo, the AI reader, or paste the invoice text.');
       printedC = E ? E.mergePrinted(parts.flatMap(p => [p.printed, p.eng && p.eng.printed].filter(Boolean))) : null; typed = {}; recon = null;
       window._invRaw = parts.flatMap(p => p.res.map(r => r.raw)); stage = 'check'; origPages = pagePics;
       rows.forEach(x => { if (!x.descs) x.descs = [x.desc]; });
@@ -876,7 +872,8 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
   <span class="iv-chg">Change item / edit</span> <span class="iv-chg iv-del">Remove line</span>${picker(i)}</div>`).join('')}</div>
 <div class="iv-tblwrap"><table class="iv-tbl"><thead><tr><th>#</th><th>Our item</th><th>Code</th><th>Invoice item</th><th class="r">Qty</th><th>UOM</th><th class="r">Cost</th><th class="r">Amount</th></tr></thead><tbody>${rows.map((x, i) => `<tr data-i="${i}"><td>${i + 1}</td>
 <td><div class="it"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><span class="iv-chg">Change / edit</span> <span class="iv-chg iv-del">Remove</span>${picker(i)}</div></div></td>
-<td><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span></td><td>${esc(x.desc)} <span class="iv-sub" data-f="pnote" data-i="${i}"></span></td><td class="r" data-f="qty" data-i="${i}"></td><td><span class="iv-uom" data-f="uom" data-i="${i}"></span></td><td class="r" data-f="price" data-i="${i}" data-copy="1"></td><td class="r amt" data-f="amount" data-i="${i}"></td></tr>`).join('')}</tbody></table></div>
+<td><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span></td><td class="inv">${esc(x.desc)} <span class="iv-sub" data-f="pnote" data-i="${i}"></span></td><td class="r" data-f="qty" data-i="${i}"></td><td><span class="iv-uom" data-f="uom" data-i="${i}"></span></td><td class="r" data-f="price" data-i="${i}" data-copy="1"></td><td class="r amt" data-f="amount" data-i="${i}"></td></tr>`).join('')}</tbody></table></div>
+<div class="iv-tot" id="invTot"></div>
 <p class="iv-sub"><button class="iv-sec" id="invAdd" style="padding:9px 16px;font-size:13px">+ Add line</button> Tap a code, item or cost to copy it. Tap a photo to enlarge. A line that is not on the invoice? Press Remove.</p>
 <details class="iv-raw"><summary>What the reader saw (for checking)</summary><pre>${esc((window._invRaw || []).join('\n'))}</pre></details>`;
     $('invBody').querySelectorAll('select').forEach(sel => sel.onchange = () => { const i = +sel.dataset.i; rows[i].pick = +sel.value; if (rows[i].pick >= 0) learn(rows[i], rows[i].cands[rows[i].pick].r.id); sys(i); sumUp(); });
@@ -903,6 +900,8 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
     if (window.InvEngine && printedC) { const C = window.InvEngine.checks(rows, printedNums()), wr = C.list.filter(x => x.ok === false); rc = C.list.slice(1).map(x => `<span class="iv-chip ${x.ok === false ? 'a' : x.ok ? 'g' : ''}">${x.ok === true ? '✓ ' : x.ok === false ? '✗ ' : ''}${x.label} ${fmt2(x.got)}${x.ok === false && x.want != null ? ' (invoice ' + fmt2(x.want) + ')' : ''}</span>`).join(''); }
     else if (recon) { const hit = recon.hit != null && Math.abs(recon.hit - sum) <= .06;
       rc = hit ? `<span class="iv-chip g">✓ Total matches invoice ${recon.hit.toFixed(2)}</span>` : recon.state === 'diff' || recon.state === 'fixed' ? `<span class="iv-chip a">Invoice shows ${recon.hit.toFixed(2)} — check amber lines</span>` : ''; }
+    { const T = $('invTot'); if (T) { const q = rows.reduce((a, x) => a + (+x.qty || 0), 0), vat = Math.round(sum * 5) / 100, tot = sum + vat, P = (typeof printedNums === 'function' && printedC) ? printedNums() : {}, cls = (v, w) => w == null ? '' : Math.abs(v - w) <= .06 ? 'g' : 'a';
+      T.innerHTML = `<div>Qty total<b>${(Math.round(q * 1000) / 1000)}</b></div><div class="${cls(sum, P.subtotal)}">Sales subtotal<b>${sum.toFixed(2)}</b></div><div class="${cls(vat, P.vat)}">VAT 5%<b>${vat.toFixed(2)}</b></div><div class="${cls(tot, P.total)}">Invoice total<b>${tot.toFixed(2)}</b></div>`; } }
     $('invSum').innerHTML = `<span class="iv-chip">${rows.length} lines</span>${missingNo.length ? `<span class="iv-chip a">Invoice line ${missingNo.join(', ')} not read — use + Add line</span>` : ''}${rows.some(bad) ? `<span class="iv-chip a">${rows.filter(bad).length} doubtful (amber)</span>` : ''}${nm ? `<span class="iv-chip a">${nm} no match</span>` : ''}<span class="iv-chip">Total ${sum.toFixed(2)}</span>${rc}`;
   }
   function sys(i) {
