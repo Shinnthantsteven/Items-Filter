@@ -229,7 +229,8 @@
   /* our own price list is a strong hint: a price close to what we normally pay is more likely right than one 10× off */
   function applyRef(row) {
     if (!row.ref || !(row.ref > 0) || !row.tri) return;
-    row.tri.forEach(c => { if (c.ref === row.ref) return; const d = Math.abs(c.p - row.ref) / row.ref; c.ref = row.ref; c.c = Math.max(0, Math.round((c.c + (d <= .02 ? -1.3 : d <= .1 ? -.6 : d > .3 ? .9 : 0)) * 100) / 100); });
+    row.tri.forEach(c => { if (c.ref === row.ref) return; const d = Math.abs(c.p - row.ref) / row.ref; c.ref = row.ref; const ra = c.p / row.ref, shifted = [10, .1, 100, .01].some(k => Math.abs(ra / k - 1) <= .2);   // price is our usual one × or ÷ 10: the typical lost / extra decimal point
+      c.c = Math.max(0, Math.round((c.c + (d <= .02 ? -1.6 : d <= .1 ? -.8 : d > .3 ? (shifted ? 2.2 : .9) : 0)) * 100) / 100); });
     row.tri.sort((a, b) => a.c - b.c);
   }
 
