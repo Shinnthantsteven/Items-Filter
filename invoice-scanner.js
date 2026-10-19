@@ -282,7 +282,10 @@
     if (inv && set.has('lettuce') && !LETTUCE_KINDS.some(k => set.has(k))) set.add('romaine');   // plain "lettuce" means Lettuce Romaine in our list
     return set;
   };
-  const MOD = ['baby', 'mini', 'jumbo', 'organic', 'large', 'small', 'fresh', 'local', 'bell'];   // size / style words: never the item itself
+  const MOD = ['baby', 'mini', 'jumbo', 'organic', 'large', 'small', 'fresh', 'local', 'bell', 'medium', 'big'];
+  const QUAL = ['baby', 'mini', 'jumbo', 'large', 'small', 'medium', 'big', 'organic'];   // words that MAKE a different item (Pears ≠ Pears Baby, Corn ≠ Baby Corn): both sides must agree
+  const QSYN = { big: 'large', mini: 'baby' };
+  const qset = L => new Set(L.filter(t => QUAL.includes(t)).map(t => QSYN[t] || t));   // size / style words: never the item itself
   const COLOR = ['red', 'green', 'yellow', 'orange', 'purple', 'white', 'gold', 'black', 'brown', 'pink'];
   const COLOR_ALIAS = { orange: ['gold', 'yellow'], gold: ['orange', 'yellow'] };   // "Cauliflower Orange" is "Cauliflower Gold" in our list
   const invUom = u => { u = String(u || '').toLowerCase(); return /^kg|kilo/.test(u) ? 'Kg' : /^(pcs|piece|each|pc)/.test(u) ? 'Pc' : /^(pk|pack)/.test(u) ? 'Pkt' : /^(ltr|litre|liter|l$)/.test(u) ? 'Ltr' : /bunch/.test(u) ? 'Bunch' : /box/.test(u) ? 'Box' : /tray/.test(u) ? 'Tray' : /carton|case|ctn/.test(u) ? 'Carton' : u; };
@@ -352,11 +355,12 @@
       if (M >= T - .01) s = Math.max(s, .6 + .3 * M / (B || 1));   // everything on the invoice line was found
       if (Math.abs(M - B) < .01 && M >= T - .01) s += .15;          // and nothing extra in ours
       
-      const ib = A.includes('baby'), rb = r._ta.includes('baby'); if (ib && rb) s += .08; else if (ib !== rb) s -= .03;   // tie-break only
+      const QI = qset(A), QR = qset(r._ta); let qm = 0; QI.forEach(t => { if (!QR.has(t)) qm++; }); QR.forEach(t => { if (!QI.has(t)) qm++; });
+      if (qm) s -= .22 * qm; else if (QI.size) s += .1;   // invoice says plain "Pears" → "Pears Baby" loses; invoice says "Baby Corn" → plain "Corn" loses
       const c = parseFloat(r.cost);
       if (s > .2 && price && c) { const d = Math.abs(c - price) / price; s += d <= .03 ? .12 : d <= .1 ? .07 : d <= .25 ? .02 : d > .6 ? -.02 : 0; }
       if (s > .2 && unit && uomOk(r, unit)) s += .06;
-      if (s > .2) out.push({ r, s });
+      if (s > .2) out.push({ r, s, qm });
     });
     return out.sort((a, b) => b.s - a.s).slice(0, 8);
   }
@@ -364,11 +368,11 @@
     const sup = $('invSup').value.trim().toLowerCase(), pre = $('invPre').value.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
     const inPool = r => (!sup || (r.sup || '').toLowerCase().includes(sup)) && (!pre.length || pre.some(p => (r.id || '').toLowerCase().startsWith(p)));
     rows.forEach(x => {
-      const best = (allow) => { let c = []; (x.descs || [x.desc]).forEach(d => candidates(d, allow, x.price, x.unit).forEach(k => { const e = c.find(z => z.r === k.r); if (!e) c.push(k); else if (k.s > e.s) e.s = k.s; })); return c.sort((a, b) => b.s - a.s).slice(0, 8); };
+      const best = (allow) => { let c = []; (x.descs || [x.desc]).forEach(d => candidates(d, allow, x.price, x.unit).forEach(k => { const e = c.find(z => z.r === k.r); if (!e) c.push(k); else if (k.s > e.s) { e.s = k.s; e.qm = k.qm; } })); return c.sort((a, b) => b.s - a.s).slice(0, 8); };
       let c = best(inPool); x.other = false;
       if (!c.length && x.price > 0) c = db.filter(r => inPool(r) && parseFloat(r.cost) > 0 && Math.abs(parseFloat(r.cost) - x.price) / x.price <= .01).slice(0, 6).map(r => ({ r, s: .3 }));   // name unreadable → items with exactly this price
       if (!c.length || c[0].s < 0.5) { const c2 = best(null); if (c2.length && (!c.length || c2[0].s > c[0].s)) { c = c2; x.other = true; } }
-      if (c.length > 1 && x.price > 0) { const top = c[0].s, near = c.filter(k => k.s >= top - .16), rest = c.filter(k => k.s < top - .16), dist = k => { const v = parseFloat(k.r.cost); return v > 0 ? Math.abs(v - x.price) / x.price : 9; }; near.sort((a, b) => dist(a) - dist(b) || b.s - a.s); c = [...near, ...rest]; }   // 2–3 codes with the same name: pick the closest price
+      if (c.length > 1 && x.price > 0) { const top = c[0].s, near = c.filter(k => k.s >= top - .16), rest = c.filter(k => k.s < top - .16), dist = k => { const v = parseFloat(k.r.cost); return v > 0 ? Math.abs(v - x.price) / x.price : 9; }; near.sort((a, b) => (a.qm || 0) - (b.qm || 0) || dist(a) - dist(b) || b.s - a.s); c = [...near, ...rest]; }   // 2–3 codes with the same name: pick the closest price
       const L = learned(x) || (x.itemNo && db.find(r => r.manu && String(r.manu).replace(/\D/g, '') === x.itemNo)); if (L) c = [{ r: L, s: 3 }, ...c.filter(k => k.r !== L)].slice(0, 8);
       x.cands = c; x.pick = c.length ? 0 : -1;
     });
@@ -641,11 +645,13 @@
     rows = keep; decoded = D; decoded.missing = E.missingLine(D.sumQ, D.sumA, inp);
   }
   window._invDbg = () => JSON.stringify({ printed: printedC, rows: rows.map(x => ({ n: x.name, ref: x.ref, sup: x.support, q: x.qty, p: x.price, a: x.amount, c: x.conf, tri: (x.tri || []).slice(0, 4) })) }, null, 0);
+  const priceOdd = x => !x.locked && x.ref > 0 && x.price > 0 && (x.price / x.ref >= 3 || x.price / x.ref <= 1 / 3);   // 100 where we normally pay 10: a lost decimal point
   const arithOk = x => Math.abs(x.qty * x.price - x.amount) <= .011 + x.amount * .001;
   const rowNote = x => {
     const n = [];
     if (!arithOk(x)) n.push(`qty × price = ${fmt2(x.qty * x.price)}, not ${fmt2(x.amount)}`);
     if (x.qty >= 250) n.push('very large quantity — was a decimal point lost?');
+    if (priceOdd(x)) n.push(`price ${fmt2(x.price)} but we usually pay ${fmt2(x.ref)} — check qty and decimal point`);
     if (!n.length && !x.locked && x.conf > 1.0 && !(x.reads && x.reads[0] && (() => { const r0 = x.reads[0], f = v => parseFloat(String(v).replace(/,/g, '')), ns = (r0.n || []).map(f); return f(r0.q) === x.qty && ns.includes(x.price) && ns.includes(x.amount); })())) { const r0 = x.reads && x.reads[0]; n.push('adjusted by the checks' + (r0 ? ' (first read: ' + r0.q + ' × ' + (r0.n || []).join(' / ') + ')' : '') + ' — compare with the paper'); }
     return n.join(' · ');
   };
@@ -659,7 +665,7 @@
 <div class="ck-tot">${box('qty', 'Quantity total', C.sumQ, .006)}${box('subtotal', 'Sales subtotal', C.sumA, .06)}${box('vat', 'VAT 5%', C.vat, .06)}${box('total', 'Invoice total', C.tot, .06)}</div>
 ${miss ? `<div class="ck-card warnc">The invoice totals are higher than your lines. A line may be missing${miss.qty ? `: <b>${fmt2(miss.qty)} × ${fmt2(miss.price)} = ${fmt2(miss.amount)}</b>` : `: worth <b>${fmt2(miss.amount)}</b>`} <button class="iv-sec" id="ckMiss" style="padding:6px 12px;font-size:12px">+ Add it</button></div>` : ''}
 ${ignored.length ? `<div class="ck-card">Ignored as stray text: ${ignored.map(x => esc(x.name || x.desc)).join(', ')}</div>` : ''}
-<div class="ck-list">${rows.map((x, i) => { const note = rowNote(x), warn = !arithOk(x) || (!x.locked && x.conf > 1.0 && !checkOk()) || x.qty >= 250;
+<div class="ck-list">${rows.map((x, i) => { const note = rowNote(x), warn = !arithOk(x) || (!x.locked && x.conf > 1.0 && !checkOk()) || x.qty >= 250 || priceOdd(x);
       return `<div class="ck-row ${warn ? 'warn' : ''}" data-i="${i}"><span class="ck-n">${i + 1}</span><input class="ck-d" data-f="name" value="${esc(x.name || x.desc)}" aria-label="item name">
 <div class="ck-nums"><label>Qty<input inputmode="decimal" data-f="qty" value="${fmt(x.qty)}"></label><span class="ck-u">${esc(x.unit || 'Kg')}</span><label>Price<input inputmode="decimal" data-f="price" value="${fmt(x.price)}"></label><label>Amount<input inputmode="decimal" data-f="amount" value="${fmt(x.amount)}"></label></div>
 <span class="ck-st">${warn ? '⚠️' : x.locked ? '✏️' : '✓'}</span><button class="ck-x" data-del title="Remove line">✕</button>
@@ -773,9 +779,11 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 .iv-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.iv-nums label{font-size:10px;font-weight:700;color:var(--iv-muted)}.iv-nums input{margin-top:2px}
 .iv-pick{display:none}.edit>.iv-pick,.edit .iv-pick{display:block}
 .iv-chg{display:inline-block;margin-top:6px;font-size:12px;color:var(--iv-muted);text-decoration:underline;cursor:pointer}
+.iv-done{opacity:.35;pointer-events:none;text-decoration:line-through}
+.iv-next{outline:2px solid var(--brand);outline-offset:3px;border-radius:8px}
 .warn{box-shadow:inset 3px 0 0 var(--iv-warn)}.warn .amt{color:var(--iv-warn)}
 /* desktop: table */
-.iv-tbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:14px}.iv-tbl th:nth-child(1),.iv-tbl td:nth-child(1){width:34px;padding-left:10px;padding-right:4px}.iv-tbl th:nth-child(2){width:27%}.iv-tbl th:nth-child(3){width:118px}.iv-tbl th:nth-child(5){width:56px}.iv-tbl th:nth-child(6){width:64px}.iv-tbl th:nth-child(7){width:78px}.iv-tbl th:nth-child(8){width:92px}
+.iv-tbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:14px}.iv-tbl th:nth-child(1),.iv-tbl td:nth-child(1){width:34px;padding-left:10px;padding-right:4px}.iv-tbl th:nth-child(2){width:25%}.iv-tbl th:nth-child(3){width:112px}.iv-tbl th:nth-child(4){width:30%}.iv-tbl th:nth-child(5){width:46px}.iv-tbl th:nth-child(6){width:58px}.iv-tbl th:nth-child(7){width:72px}.iv-tbl th:nth-child(8){width:84px}
 .iv-tbl th{text-align:left;font-size:11px;font-weight:700;color:var(--iv-muted);padding:10px 12px;border-bottom:1px solid var(--glass-edge);position:sticky;top:-20px;background:var(--bg-color);z-index:2}
 .iv-tbl td{padding:12px;border-bottom:1px solid var(--glass-edge);vertical-align:middle}
 .iv-tbl tr:hover td{background:var(--iv-soft)}.iv-tbl .r{text-align:right;font-variant-numeric:tabular-nums}
@@ -836,8 +844,9 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       const del = e.target.closest('.iv-del'); if (del) { const i = +del.closest('[data-i]').dataset.i; rows.splice(i, 1); recon = recon && { ...recon }; render(); status('Line removed.'); return; }
       const chg = e.target.closest('.iv-chg'); if (chg) { chg.closest('.iv-card,tr').classList.toggle('edit'); return; }
       const el = e.target.closest('[data-copy]'); if (!el) return;
-      const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t) return;
-      navigator.clipboard.writeText(t).then(() => status('Copied: ' + t));
+      const t = el.innerText.trim().replace(/\s*\/\s*\w+$/, ''); if (!t || el.classList.contains('iv-done')) return;
+      const ok = () => { copied.add(ckey(el)); status('Copied: ' + t); markCopied(el); };
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(ok, () => { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); let g = false; try { g = document.execCommand('copy'); } catch (e) { } ta.remove(); if (g) ok(); else status('Copy blocked by the browser — select the text and copy it by hand.'); });
     });
     $('invRun').onclick = run; setBar();
   }
@@ -868,7 +877,7 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
         $('invSup').value = P[0]; $('invPre').value = P[1]; }
       rows = parts.flatMap(p => partRows(p)); missingNo = E ? [] : fixSeq(rows); invNo = (parts.find(p => p.no) || {}).no || '';
       if (!rows.length) return status('Could not find item lines. Try a sharper photo, the AI reader, or paste the invoice text.');
-      printedC = E ? E.mergePrinted(parts.flatMap(p => [p.printed, p.eng && p.eng.printed].filter(Boolean))) : null; typed = {}; recon = null;
+      printedC = E ? E.mergePrinted(parts.flatMap(p => [p.printed, p.eng && p.eng.printed].filter(Boolean))) : null; typed = {}; recon = null; copied.clear();
       window._invRaw = parts.flatMap(p => p.res.map(r => r.raw)); stage = 'check'; origPages = pagePics;
       rows.forEach(x => { if (!x.descs) x.descs = [x.desc]; });
       if (E) solveRows();
@@ -884,6 +893,14 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
   const bad = x => !(Math.abs(x.qty * x.price - x.amount) <= tolA(x.amount));
   const picker = i => `<div class="iv-pick"><select data-i="${i}"></select><input class="iv-q" data-i="${i}" placeholder="Search all items…">
 <div class="iv-nums"><label>Qty<input type="number" step="any" data-k="qty" data-i="${i}"></label><label>Cost<input type="number" step="any" data-k="price" data-i="${i}"></label><label>Amount<input type="number" step="any" data-k="amount" data-i="${i}"></label></div></div>`;
+  const copied = new Set(), ckey = el => ((el.closest('[data-i]') || el).dataset.i || '') + '|' + (el.dataset.f || '') + '|' + (el.closest('.iv-card') ? 'c' : 't');
+  function markCopied(last) {   // copied cells go faint and unclickable; the next one not yet copied gets a ring and scrolls into view
+    const all = [...document.querySelectorAll('#invBody [data-copy]')].filter(e => e.offsetParent !== null);
+    all.forEach(e => { e.classList.toggle('iv-done', copied.has(ckey(e))); e.classList.remove('iv-next'); });
+    const from = last ? all.indexOf(last) : -1, nx = all.slice(from + 1).find(e => !e.classList.contains('iv-done')) || all.find(e => !e.classList.contains('iv-done'));
+    if (last && nx) { nx.classList.add('iv-next'); try { nx.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { } }
+  }
+  window._invResetCopied = () => { copied.clear(); markCopied(); status('Copy marks cleared — you can copy again.'); };
   function render() { ckWire(); if (stage === 'check') renderCheck(); else renderMatch(); setBar(); }
   const origBlock = () => `${origPages.length ? `<details class="iv-raw" open><summary>Original page (tap to enlarge)</summary><div class="ck-orig">${origPages.map((u, i) => `<img src="${u}" data-orig="${i}" alt="page ${i + 1}">`).join('')}</div></details>` : ''}<div class="iv-sum" style="margin:8px 0"><button class="iv-sec" id="ckPdf" style="padding:9px 14px;font-size:13px">🖨 Clean invoice (PDF)</button><button class="iv-sec" id="ckJpg" style="padding:9px 14px;font-size:13px">⬇ Clean invoice (JPG)</button></div>`;
   function renderMatch() {
@@ -897,14 +914,14 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
 <td><div class="it"><span class="iv-ph" data-f="ph" data-i="${i}"></span><div><div class="nm" data-f="desc" data-i="${i}" data-copy="1"></div><span class="iv-chg">Change / edit</span> <span class="iv-chg iv-del">Remove</span>${picker(i)}</div></div></td>
 <td><span class="iv-code" data-f="code" data-i="${i}" data-copy="1"></span></td><td class="inv">${esc(x.desc)} <span class="iv-sub" data-f="pnote" data-i="${i}"></span></td><td class="r" data-f="qty" data-i="${i}"></td><td><span class="iv-uom" data-f="uom" data-i="${i}"></span></td><td class="r" data-f="price" data-i="${i}" data-copy="1"></td><td class="r amt" data-f="amount" data-i="${i}"></td></tr>`).join('')}</tbody></table></div>
 <div class="iv-tot" id="invTot"></div>
-<p class="iv-sub"><button class="iv-sec" id="invAdd" style="padding:9px 16px;font-size:13px">+ Add line</button> Tap a code, item or cost to copy it. Tap a photo to enlarge. A line that is not on the invoice? Press Remove.</p>
+<p class="iv-sub"><button class="iv-sec" id="invAdd" style="padding:9px 16px;font-size:13px">+ Add line</button> Tap a code, item or cost to copy it (it fades once copied). <a href="#" onclick="window._invResetCopied();return false">Reset copied</a>. Tap a photo to enlarge. A line that is not on the invoice? Press Remove.</p>
 <details class="iv-raw"><summary>What the reader saw (for checking)</summary><pre>${esc((window._invRaw || []).join('\n'))}</pre></details>`;
     $('invBody').querySelectorAll('select').forEach(sel => sel.onchange = () => { const i = +sel.dataset.i; rows[i].pick = +sel.value; if (rows[i].pick >= 0) learn(rows[i], rows[i].cands[rows[i].pick].r.id); sys(i); sumUp(); });
     $('invAdd').onclick = () => { rows.push({ desc: '', descs: [''], itemNo: '', qty: 1, unit: 'Kg', price: 0, amount: 0, ok: false, cq: [], cn: [], raw: '(added by hand)', cands: [], pick: -1, edit: true }); render(); const t = $('invBody').querySelectorAll('tr[data-i],.iv-card[data-i]'); t.forEach(el => { if (+el.dataset.i === rows.length - 1) el.classList.add('edit'); }); status('Line added at the bottom — search the item, then set qty and cost.'); };
     $('invBody').querySelectorAll('.iv-q').forEach(q => q.oninput = () => search(+q.dataset.i, q.value));
     $('invBody').querySelectorAll('.iv-nums input').forEach(n => n.onchange = () => { const i = +n.dataset.i, v = parseFloat(n.value); if (isNaN(v)) return; rows[i][n.dataset.k] = v;
       const x = rows[i]; if (n.dataset.k !== 'amount') x.amount = Math.round(x.qty * x.price * 100) / 100; sys(i); sumUp(); });
-    rows.forEach((_, i) => { opts(i); sys(i); }); sumUp();
+    rows.forEach((_, i) => { opts(i); sys(i); }); sumUp(); markCopied();
   }
   function opts(i) {
     const x = rows[i];
