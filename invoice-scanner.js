@@ -505,7 +505,9 @@
   /* The Gemini key lives on the server (Supabase Edge Function 'read-invoice', secret GEMINI_API_KEY). The app sends the picture plus the person's login. */
   const readerUrl = () => SUPABASE_URL + '/functions/v1/read-invoice';   // the function lives in the app's own Supabase project
   const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };   // optional own key (developer use); normally empty → the server function is used
-  const aiModel = () => { try { return localStorage.getItem(AIM) || 'gemini-2.5-flash'; } catch (e) { return 'gemini-2.5-flash'; } };
+  const AI_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3-flash', 'gemini-2.5-flash'];   // newest first: Google retires old models, so on "404 no longer available" the next one is tried automatically
+  let aiGood = null;
+  const aiModel = () => { try { return aiGood || localStorage.getItem(AIM) || AI_MODELS[0]; } catch (e) { return aiGood || AI_MODELS[0]; } };
   const AI_NUM = { type: 'NUMBER', nullable: true };
   const AI_SCHEMA = { type: 'OBJECT', properties: { invoice_no: { type: 'STRING', nullable: true }, subtotal: AI_NUM, qty_total: AI_NUM, vat: AI_NUM, total: AI_NUM, lines: { type: 'ARRAY', items: { type: 'OBJECT', properties: { item_no: { type: 'STRING', nullable: true }, description: { type: 'STRING' }, qty: AI_NUM, unit: { type: 'STRING', nullable: true }, price: AI_NUM, amount: AI_NUM }, required: ['description'] } } }, required: ['lines'] };
   const aiPrompt = (k, n) => 'This image is part ' + k + ' of ' + n + ' of a supplier invoice page for fresh fruit and vegetables (may be a faint photocopy). The parts overlap a little, so a line can appear twice - that is fine. ' +
@@ -513,7 +515,7 @@
     'Some lines may be partly covered by a printed banner: still return the line, and use null for any number you cannot actually read - never guess a number. ' +
     'Also return invoice_no (e.g. 1101-SO-002844463) if visible, and - only if this part shows them, otherwise null - subtotal = the "Sales subtotal"/"Net amount" before VAT, qty_total = the printed "Quantity" total, vat = "Sales tax amount", total = the final invoice "Total". Read numbers exactly; do not invent lines.';
   async function aiCall(canvas, k, n) {
-    const key = aiKey(), model = aiModel(), b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
+    const key = aiKey(); let model = aiModel(); const b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
     const body = { contents: [{ parts: [{ text: aiPrompt(k, n) }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: AI_SCHEMA } };
     for (let t = 0; ; t++) {
       let r;
@@ -524,6 +526,8 @@
         try { r = await fetch(readerUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ model, body }) }); }
         catch (e) { throw new Error('AI reader unreachable (' + e.message + ') — check the Supabase function'); }
       }
+      if (r.status === 404) { const nx = AI_MODELS[AI_MODELS.indexOf(model) + 1] || (AI_MODELS.includes(model) ? null : AI_MODELS[0]); if (nx) { try { localStorage.removeItem(AIM); } catch (e) { } model = nx; continue; } }
+      if (r.ok) aiGood = model;
       if ((r.status === 429 || r.status === 503) && t < 2) { await new Promise(z => setTimeout(z, 4000 * (t + 1))); continue; }
       if (!r.ok) { const tx = await r.text(); let m = tx; try { m = JSON.parse(tx).error || (JSON.parse(tx).error && JSON.parse(tx).error.message) || tx; } catch (e) { } throw new Error(`AI reader (HTTP ${r.status}): ${String(typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)}`); }
       return JSON.parse(((await r.json()).candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '{}');
