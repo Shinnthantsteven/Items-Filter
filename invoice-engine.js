@@ -50,11 +50,13 @@
         put(v, base + c + (decp.length === 1 ? .1 : 0));
       } else if (L >= 3) {  // no point: invoices print 2 decimals, so the point was probably lost  ("6000" → 60.00)
         put(parseInt(ds, 10) / 100, base + c + .2); put(parseInt(ds, 10), base + c + 1.1);
+        if (L === 4 && /0$/.test(ds)) put(parseInt(ds, 10) / 1000, base + c + .35);   // "7500" = 7.500: rates are printed with 3 decimals on some invoices
         if (L === 3) put(parseInt(ds, 10) / 10, base + c + 1.4);
       } else if (L === 2) {
         put(parseInt(ds, 10), base + c + .3); put(parseInt(ds, 10) / 100, base + c + .7); put(parseInt(ds, 10) / 10, base + c + .9);
       } else put(parseInt(ds, 10), base + c + .2);
     });
+    if (/^\d{1,3}[.,]\d{3}$/.test(s)) put(parseFloat(s.replace(',', '.')), base + .15);   // 15,000 / 7.500 / 2.800: a rate printed with 3 decimals
     if (o.exact) { const v = parseFloat(String(raw)); if (v > 0) [-2, -1, 1, 2].forEach(k => put(v * Math.pow(10, k), 1.4 * Math.abs(k))); }   // an exact reading can still lose / gain a decimal point
     return [...out].map(([v, c]) => ({ v, c })).sort((a, b) => a.c - b.c);
   }
@@ -128,15 +130,19 @@
     const toks = [...line.matchAll(/\S+/g)].map(m => ({ t: m[0].replace(/^[|\[(!]+|[|\])]+$/g, ''), i: m.index })).filter(x => x.t && !/^(jpe?g|png)$/i.test(x.t));   // pasted from a chat: image tags are not data
     for (let k = 1; k < toks.length - 1; k++) {
       if (!UNIT.test(toks[k].t)) continue;
-      const qt = toks[k - 1].t; if (isDateTok(qt) || !numCands(qt).length) continue;
-      let right = toks.slice(k + 1).map(x => x.t);
+      let qt = toks[k - 1].t, ag = false;
+      /* AG layout:  <no> <name> UOM QTY RATE DISC GROSS VAT% VAT AMOUNT — the quantity stands to the RIGHT of the unit */
+      if (!numCands(qt).length && toks[k + 1] && numCands(toks[k + 1].t).length && toks.slice(k + 1).filter(x => numCands(x.t).length).length >= 5) { ag = true; qt = toks[k + 1].t; }
+      if (!ag && (isDateTok(qt) || !numCands(qt).length)) continue;
+      let right = toks.slice(ag ? k + 2 : k + 1).map(x => x.t);
+      if (ag && right.length >= 5 && /^[5SsO]\s?[.,]?\s?[0OodD]{1,2}[0-9dDo]?$/.test(right[right.length - 3])) right.splice(right.length - 3, 1);   // the 5.00 VAT-% column
       while (right.length && /%/.test(right[right.length - 1])) right.pop();
       if (right.length && /^[5SsO0]$/.test(right[right.length - 1]) && right.length >= 3) right.pop();   // "5%" whose % was lost
       if (right.length >= 2 && /^\d{2,5}$/.test(right[right.length - 2]) && /^\d{2}$/.test(right[right.length - 1])) right.splice(-2, 2, right[right.length - 2] + '.' + right[right.length - 1]);   // "360 00" → 360.00
       right = right.filter(t => !/%/.test(t));
       const n = right.filter(t => !/^[0Oo]+([.,][0Oo]+)?$/.test(t) && numCands(t).length); if (!n.length) continue;   // 0.00 = discount column, not a number we need
       /* name = the run of word-like tokens left of the date / quantity */
-      let left = toks.slice(0, k - 1).map(x => x.t), no = '';
+      let left = toks.slice(0, ag ? k : k - 1).map(x => x.t), no = '';
       const di = left.findIndex(isDateTok); if (di >= 0) left = left.slice(0, di);
       if (left.length > 1 && /^[0-9A-Za-z|!]{5,7}$/.test(left[0]) && (left[0].match(/[0-9OTIlGSB|]/g) || []).length >= 4) no = left.shift().replace(/[OoQD]/g, '0').replace(/[TIl|!]/g, '1').replace(/[Ss]/g, '5').replace(/[Bb]/g, '8').replace(/\D/g, '');
       left = left.filter(t => (t.match(/[A-Za-z]/g) || []).length >= Math.max(2, t.length * .6));
@@ -151,18 +157,22 @@
   /* ── the totals printed under the table: subtotal, VAT, total (and quantity total) ── */
   function parsePrinted(lines, vatRate = .05) {
     const toks = []; let on = false;
+    const itemLike = l => rowFromLine(l) || (/\b(k[a-z|1l9]{1,2}|kgs?|pcs?|pkt|box|bunch|ctn|ltr)\b/i.test(l) && (l.match(/\d+[.,]\d{2,3}/g) || []).length >= 3);   // a table row (qty × rate = gross → +VAT) must never be mistaken for the totals
     lines.forEach((l, li) => {
       if (/al aweer|p\.?o\.? ?box: ?\d|@\w+\.\w+|contact@/i.test(l)) { on = false; return; }
+      if (itemLike(l) || /printed\s+(on|by|at)|page\s*\d|\d\s*of\s*\d|store the products/i.test(l)) return;   // table rows, print stamp, page number: not totals
+      { const w = l.search(/\bonly\b/i); if (w >= 0) l = l.slice(w + 4); }   // "AED FOUR THOUSAND … 15 / 100 ONLY  AED Net Total 4,307.15": the words are not numbers
       if (/sales\s*tax|subtotal|round|total|currency|net\s*amount|amount\s*origin|quantity|\bAED\b|SR\w{3,}/i.test(l)) on = true;
       if (!on) return;
-      l.split(/\s+/).forEach(t => { const c = numCands(t.replace(/^[^\w]+|[^\w%]+$/g, '')); if (c.length) toks.push({ t, c, li }); });
+      const lab = /gross|sub\s*total|net\s*total|invoice\s*total|\btotal\b/i.test(l);
+      l.split(/\s+/).forEach(t => { const c = numCands(t.replace(/^[^\w]+|[^\w%]+$/g, '')); if (c.length) toks.push({ t, c, li, lab }); });
     });
     const out = { S: [], Q: [], V: [], T: [] };
     if (!toks.length) return out;
-    const all = []; toks.forEach((x, ti) => x.c.forEach(c => c.v >= 5 && all.push({ ...c, ti })));
+    const all = []; toks.forEach((x, ti) => x.c.forEach(c => c.v >= 5 && all.push({ ...c, ti, lab: x.lab })));
     let bestPair = null;
     all.forEach(s => all.forEach(t => { if (s.ti === t.ti || t.v <= s.v) return;
-      if (Math.abs(r2(s.v * (1 + vatRate)) - t.v) > .0105) return; const c = s.c + t.c; if (!bestPair || c < bestPair.c) bestPair = { s, t, c }; }));
+      if (Math.abs(r2(s.v * (1 + vatRate)) - t.v) > .0105) return; const c = s.c + t.c - (s.lab ? .5 : 0) - (t.lab ? .5 : 0) - Math.min(.3, s.v / 1e5); if (!bestPair || c < bestPair.c) bestPair = { s, t, c }; }));   // labelled "Gross Total" / "Net Total" and the larger pair win
     if (bestPair) {
       out.S.push({ v: bestPair.s.v, c: Math.max(0, bestPair.s.c - .5) }); out.T.push({ v: bestPair.t.v, c: bestPair.t.c }); out.V.push({ v: r2(bestPair.t.v - bestPair.s.v), c: 0 });
       /* the same subtotal read elsewhere on the page gives a second opinion (Barakat prints it three times) */
@@ -170,7 +180,7 @@
       /* quantity total: printed as  <amount origin> <QUANTITY> <sales tax amount>  — it is the number just left of the VAT figure */
       const vi = toks.findIndex(x => x.c.some(c => Math.abs(c.v - out.V[0].v) <= .2));
       if (vi > 0 && toks[vi - 1].li === toks[vi].li) toks[vi - 1].c.forEach(c => { if (c.v > .5 && c.v < bestPair.s.v && c.c <= 1.6) out.Q.push({ v: c.v, c: c.c + .3 }); });
-      else all.forEach(x => { if (x.ti !== bestPair.s.ti && x.ti !== bestPair.t.ti && x.v > 0.5 && x.v < bestPair.s.v && x.c <= 1.2) out.Q.push({ v: x.v, c: x.c + 1.4 }); });
+      else all.forEach(x => { if (/quantity|\bqty\b|total\s*qty/i.test(lines[toks[x.ti].li] || '') && x.ti !== bestPair.s.ti && x.ti !== bestPair.t.ti && x.v > 0.5 && x.v < bestPair.s.v && x.c <= 1.2) out.Q.push({ v: x.v, c: x.c + 1.4 }); });
     } else {
       all.forEach(x => { if (x.c <= .6) out.S.push({ v: x.v, c: x.c + 2 }); });
     }
