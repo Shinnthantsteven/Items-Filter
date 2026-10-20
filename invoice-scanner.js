@@ -898,8 +898,8 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       if (E) solveRows();
       { const U = uiPrinted(), sumA = rows.reduce((t, x) => t + (x.amount || 0), 0);
         const subBad = U.subtotal && Math.abs(U.subtotal.v - sumA) > .06;
-        if (!rows.every(arithOk) || (subBad && !U.subtotal.typed && !rows.every(x => x.locked || x.conf <= 1.0))) { held = rows; return unreadable(rows.some(x => !arithOk(x)) ? 'some lines do not multiply out' : `the lines add up to ${sumA.toFixed(2)} but the invoice says ${U.subtotal.v.toFixed(2)}`); }
-        if (subBad) status(`The lines add up to ${sumA.toFixed(2)} but the photo's subtotal looks like ${U.subtotal.v.toFixed(2)} — every line multiplies out, so check the totals against the paper and type the right one.`); }
+        if (!rows.every(arithOk) || (subBad && !U.subtotal.typed && !rows.every(x => x.locked || x.conf <= 1.0) && !(printedC && printedC.T.length && printedC.S.length && printedC.S[0].c <= .2))) { held = rows; return unreadable(rows.some(x => !arithOk(x)) ? 'some lines do not multiply out' : `the lines add up to ${sumA.toFixed(2)} but the invoice says ${U.subtotal.v.toFixed(2)}`); }
+        if (subBad) status(`The lines add up to ${sumA.toFixed(2)} but the invoice subtotal is ${U.subtotal.v.toFixed(2)} (the total checks out with VAT) — some lines were misread: fix the amber ones against the page below.`); else if (false) status(`The lines add up to ${sumA.toFixed(2)} but the photo's subtotal looks like ${U.subtotal.v.toFixed(2)} — every line multiplies out, so check the totals against the paper and type the right one.`); }
       confirmCheck(); try { $('invBody').scrollIntoView({ block: 'start' }); } catch (e) { }
     } catch (e) { console.error(e); unreadable(e.message); }
     finally { btn.disabled = false; }
