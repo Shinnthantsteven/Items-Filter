@@ -330,7 +330,12 @@
   }
   function learned(x) { const L = lget(), id = (x.itemNo && L['n:' + x.itemNo]) || L[lkey(x.desc)]; return id ? db.find(r => r.id === id) : null; }
 
+  function unglue(desc) {   // "BABYCORN" → "BABY CORN", "BANANALEAVES" → "BANANA LEAVES": OCR often loses the space between two known words
+    const ix = index(), known = t => { t = SYN[stem(t)] || stem(t); return ix.vocab.has(t) || QUAL.includes(t) || COLOR.includes(t); };
+    return String(desc).replace(/[A-Za-z]{7,}/g, w => { const lw = w.toLowerCase(); if (known(lw)) return w; for (let i = 3; i <= lw.length - 3; i++) if (known(lw.slice(0, i)) && known(lw.slice(i))) return w.slice(0, i) + ' ' + w.slice(i); return w; });
+  }
   function candidates(desc, allow, price, unit) {
+    desc = unglue(desc);
     const A = [...tok(desc, true)]; if (!A.length) return [];
     const isMod = t => MOD.includes(t), isCol = t => COLOR.includes(t);
     let N = A.filter(t => !isMod(t) && !isCol(t) && t.length >= 3); if (!N.length) N = A.filter(t => !isMod(t)); if (!N.length) N = A;   // the item's NAME words
@@ -611,12 +616,20 @@
     const ocr = p.eng && p.eng.rows.length ? p.eng.rows : [], ai = legacy.filter(r => r.ai && r.reads);
     if (ai.length && ocr.length) return E.mergeRows(ai.map(r => ({ ...r, reads: [...r.reads], support: 2 })), ocr);
     if (ai.length) return legacy;
-    return ocr.length >= Math.max(3, legacy.length) ? ocr : legacy;
+    if (ocr.length >= Math.max(3, legacy.length)) return ocr;
+    if (ocr.length >= 3 && legacy.length) {   // the engine read some lines the old reader could not (and the other way round): keep both, in invoice order
+      const lg = legacy.map(r => ({ ...r, reads: r.reads ? [...r.reads] : [], descs: [r.desc], support: 1 }));
+      return E.mergeRows(ocr.map(r => ({ ...r, reads: [...r.reads] })), lg);
+    }
+    return legacy;
   }
   function triOf(x) {
     const E = window.InvEngine;
     if (x.reads && x.reads.length) { const t = E.rowTriples(x); if (t.length) return t; }
-    return [x.qty, x.price, x.amount].every(Number.isFinite) ? [{ q: x.qty, p: x.price, a: x.amount, c: x.ok ? 0 : 2.5 }] : [];
+    if (![x.qty, x.price, x.amount].every(Number.isFinite)) return [];
+    const t = [{ q: x.qty, p: x.price, a: x.amount, c: x.ok ? 0 : 2.5 }];
+    if (!x.ok && x.price > 0 && x.qty > 0 && x.qty !== x.price) t.push({ q: x.price, p: x.qty, a: x.amount, c: 2.5 + .35 });   // qty and price may be swapped: our price list decides
+    return t;
   }
   function refPrice(x) {   // what we normally pay for this item (from our own list) — a strong hint for the price
     if (!db.length) return 0; let best = null;
@@ -629,7 +642,9 @@
       if (x.locked) { x.tri = [{ q: x.qty, p: x.price, a: x.amount, c: 0 }]; x.drop = undefined; return; }
       if (!x.tri0) x.tri0 = triOf(x);
       x.tri = x.tri0.map(t => ({ q: t.q, p: t.p, a: t.a, c: t.c, c0: t.c }));
-      x.ref = refPrice(x); E.applyRef(x);
+      x.ref = refPrice(x);
+      if (x.ref > 0) { const cur = x.tri[0]; if (cur && cur.q > 0 && cur.p > 0 && cur.q !== cur.p && Math.abs(cur.p - x.ref) / x.ref > .3 && Math.abs(cur.q - x.ref) / x.ref <= .1 && !x.tri.some(t => t.q === cur.p && t.p === cur.q)) x.tri.push({ q: cur.p, p: cur.q, a: cur.a, c: cur.c + .35, c0: cur.c + .35 }); }   // qty and price swapped? our price list decides
+      E.applyRef(x);
       x.drop = (!x.ai && !x.vat && x.reads && (x.support || 2) <= 1) ? 1.2 : undefined;   // a line only one pass saw may be stray text
     });
     const inp = decodeInput(), D = E.decode(rows, inp), keep = []; ignored = [];
@@ -882,7 +897,9 @@ ${origPages.length ? `<details class="iv-raw" open><summary>Original photo / pag
       rows.forEach(x => { if (!x.descs) x.descs = [x.desc]; });
       if (E) solveRows();
       { const U = uiPrinted(), sumA = rows.reduce((t, x) => t + (x.amount || 0), 0);
-        if (!rows.every(arithOk) || (U.subtotal && Math.abs(U.subtotal.v - sumA) > .06)) { held = rows; return unreadable(rows.some(x => !arithOk(x)) ? 'some lines do not multiply out' : `the lines add up to ${sumA.toFixed(2)} but the invoice says ${U.subtotal.v.toFixed(2)}`); } }
+        const subBad = U.subtotal && Math.abs(U.subtotal.v - sumA) > .06;
+        if (!rows.every(arithOk) || (subBad && !U.subtotal.typed && !rows.every(x => x.locked || x.conf <= 1.0))) { held = rows; return unreadable(rows.some(x => !arithOk(x)) ? 'some lines do not multiply out' : `the lines add up to ${sumA.toFixed(2)} but the invoice says ${U.subtotal.v.toFixed(2)}`); }
+        if (subBad) status(`The lines add up to ${sumA.toFixed(2)} but the photo's subtotal looks like ${U.subtotal.v.toFixed(2)} — every line multiplies out, so check the totals against the paper and type the right one.`); }
       confirmCheck(); try { $('invBody').scrollIntoView({ block: 'start' }); } catch (e) { }
     } catch (e) { console.error(e); unreadable(e.message); }
     finally { btn.disabled = false; }
